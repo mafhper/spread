@@ -1,3 +1,6 @@
+# Workflow para deploy automático no GitHub Pages
+# Utiliza --legacy-peer-deps para resolver conflitos de dependências
+
 name: Deploy to GitHub Pages
 
 on:
@@ -21,9 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       
       - name: Build
         run: npm run build

@@ -1,14 +1,12 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
-
 import tailwindcss from '@tailwindcss/vite';
 
-// https://astro.build/config
 export default defineConfig({
-  base: '/spread',
-  site: 'https://mafhper.github.io',
-
+  // Remove o tailwind() da lista de integrations
+  integrations: [],
+  
+  // Adicione o plugin Vite
   vite: {
-    plugins: [tailwindcss()]
-  }
+    plugins: [tailwindcss()],
+  },
 });
