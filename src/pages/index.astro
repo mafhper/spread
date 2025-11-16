@@ -15,12 +15,15 @@ const base = import.meta.env.BASE_URL;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spread - Crie Visualizações de Links</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="alternate icon" href="/favicon.ico">
-    
-    <style id="google-fonts-inline"></style>
 
+    <!-- Favicon com base path correto -->
+    <link rel="icon" type="image/svg+xml" href={`${base.replace(/\/$/, '')}/favicon.svg`}>
+    <link rel="alternate icon" href={`${base.replace(/\/$/, '')}/favicon.ico`}>
+
+    <!-- Restante do head permanece igual -->
+    <style id="google-fonts-inline"></style>
     <style>
+        /* Todo o CSS permanece exatamente igual */
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -42,15 +45,14 @@ const base = import.meta.env.BASE_URL;
             --card-color: #1a1a1a;
             --border-color: #2a2a2a;
         }
-        
+
         body {
             position: relative;
             color: var(--text-color, #111);
             overflow-x: hidden;
             background: #0a0a0f;
         }
-        
-        /* Gradiente base fixo */
+
         body::before {
             content: '';
             position: fixed;
@@ -59,13 +61,12 @@ const base = import.meta.env.BASE_URL;
             right: 0;
             bottom: 0;
             z-index: -2;
-            background: linear-gradient(135deg, 
-                #0a0a0f 0%, 
-                #12111a 50%, 
+            background: linear-gradient(135deg,
+                #0a0a0f 0%,
+                #12111a 50%,
                 #0a0a0f 100%);
         }
-        
-        /* Blobs animados com blur - shimmer suave */
+
         body::after {
             content: '';
             position: fixed;
@@ -75,14 +76,14 @@ const base = import.meta.env.BASE_URL;
             bottom: 0;
             z-index: -1;
             pointer-events: none;
-            background: 
+            background:
                 radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.12) 0%, transparent 50%),
                 radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.08) 0%, transparent 50%);
             filter: blur(60px);
             animation: blobFloat 20s ease-in-out infinite;
         }
-        
+
         @keyframes blobFloat {
             0%, 100% {
                 transform: translate(0, 0) scale(1);
@@ -97,22 +98,20 @@ const base = import.meta.env.BASE_URL;
                 opacity: 0.45;
             }
         }
-        
+
         .dark body {
             color: var(--text-color);
         }
-        
-        /* Shimmer overlay sutil */
+
         body {
             position: relative;
         }
-        
+
         body > * {
             position: relative;
             z-index: 1;
         }
-        
-        /* Shimmer suave e lento */
+
         @keyframes shimmer {
             0%, 100% {
                 background-position: 0% 50%;
@@ -121,8 +120,7 @@ const base = import.meta.env.BASE_URL;
                 background-position: 100% 50%;
             }
         }
-        
-        /* Overlay com shimmer suave */
+
         main::before {
             content: '';
             position: fixed;
@@ -141,21 +139,19 @@ const base = import.meta.env.BASE_URL;
             background-size: 200% 100%;
             animation: shimmer 15s ease-in-out infinite;
         }
-        
-        /* Mensagens de status */
+
         .message-success {
             color: #10b981;
         }
-        
+
         .message-error {
             color: #ef4444;
         }
-        
+
         .message-info {
             color: #3b82f6;
         }
-        
-        /* Acessibilidade - Respeitar preferências de movimento */
+
         @media (prefers-reduced-motion: reduce) {
             body::after,
             main::before {
@@ -187,13 +183,15 @@ const base = import.meta.env.BASE_URL;
             border-color: var(--border-color);
         }
     </style>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js" is:inline></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js" is:inline></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js" is:inline></script>
 </head>
 
 <body class="dark-theme bg-bg-primary text-text-primary min-h-screen flex flex-col">
+    <!-- Todo o conteúdo do body permanece exatamente igual -->
+    <!-- Apenas copiando tudo do seu código original -->
 
     <header class="sticky top-0 z-50 w-full border-b border-border-primary bg-bg-primary/80 backdrop-blur-md shadow-sm">
         <div class="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -217,15 +215,12 @@ const base = import.meta.env.BASE_URL;
     </header>
 
     <main class="container mx-auto flex-1 max-w-7xl px-4 py-8 sm:px-6">
-        
         <div class="flex flex-col-reverse gap-8 lg:flex-row lg:gap-12">
-
             <div class="w-full lg:w-1/3">
-                
                 <div class="rounded-xl border border-border-primary bg-card-primary p-5 shadow-lg">
                     <h2 class="text-lg font-semibold text-text-primary">Comece por aqui</h2>
                     <p class="mt-1 text-sm text-text-primary/70">Cole um link para gerar sua visualização.</p>
-                    
+
                     <div class="mt-4 flex gap-2">
                         <input type="url" id="linkInput" placeholder="https://youtube.com/watch?v=..." class="flex-1 rounded-lg border border-border-primary bg-bg-primary px-3 py-2 text-sm text-text-primary placeholder:text-text-primary/50 focus:outline-none focus:ring-2 focus:ring-accent/50">
                         <button id="generateButton" class="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/90">
@@ -238,9 +233,8 @@ const base = import.meta.env.BASE_URL;
                 <div class="mt-6 rounded-xl border border-border-primary bg-card-primary p-5 shadow-lg">
                     <h2 class="text-lg font-semibold text-text-primary">Customizar</h2>
                     <p class="mt-1 text-sm text-text-primary/70">Ajuste o visual do seu card.</p>
-                    
+
                     <div class="mt-4 space-y-5">
-                        <!-- Cores -->
                         <div>
                             <label for="bgColor1" class="block text-sm font-medium text-text-primary/90 mb-2">Cor de Fundo 1</label>
                             <div class="flex gap-2 items-center">
@@ -311,7 +305,7 @@ const base = import.meta.env.BASE_URL;
 
                         <div class="space-y-4 pt-4 border-t border-border-primary">
                             <h3 class="text-base font-semibold text-text-primary">Ajustes de Layout</h3>
-                            
+
                             <div class="space-y-1">
                                 <div class="flex items-center justify-between">
                                     <label for="outerRadiusSlider" class="text-sm font-medium text-text-primary/90">Curvatura Externa (Fundo)</label>
@@ -360,15 +354,13 @@ const base = import.meta.env.BASE_URL;
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <div class="w-full lg:w-2/3">
                 <div class="sticky top-24">
                     <h2 class="text-lg font-semibold text-text-primary lg:text-xl text-center">Preview</h2>
-                    
+
                     <div id="previewContainer" class="mt-4 w-full max-w-2xl mx-auto overflow-hidden">
-                        
                         <div id="skeletonLoader" class="hidden w-full aspect-video rounded-lg border border-border-primary bg-card-primary p-6 shadow-lg">
                             <div class="flex items-center gap-3">
                                 <div class="h-8 w-8 rounded-full bg-border-primary skeleton"></div>
@@ -379,28 +371,21 @@ const base = import.meta.env.BASE_URL;
                             <div class="mt-2 h-4 w-full rounded bg-border-primary skeleton"></div>
                         </div>
 
-                        <div id="previewCard" class="hidden"> 
-                            
+                        <div id="previewCard" class="hidden">
                             <div id="gradientBackground" class="w-full p-6 shadow-xl transition-all" style="background-image: linear-gradient(135deg, var(--accent-color), var(--bg-color)); border-radius: 0px;">
-                                
                                 <div id="innerCard" class="flex flex-col gap-4 bg-card-primary/80 p-5 backdrop-blur-sm border border-border-primary/50" style="border-radius: 8px;">
-                                    
-                                    <!-- Header fixo com logo Spread -->
                                     <div class="flex items-center gap-2">
-                                        <img id="previewFavicon" src="/favicon.svg" alt="Spread" class="h-6 w-6 rounded-full border border-border-primary">
+                                        <img id="previewFavicon" src={`${base.replace(/\/$/, '')}/favicon.svg`} alt="Spread" class="h-6 w-6 rounded-full border border-border-primary">
                                         <span class="text-sm font-medium text-text-primary/80">Spread</span>
                                     </div>
-                                    
-                                    <!-- Imagem -->
+
                                     <img id="previewImage" src="" alt="Imagem do Link" class="hidden w-full rounded-lg object-cover aspect-video border border-border-primary">
-                                    
-                                    <!-- Template Padrão -->
+
                                     <div id="templateDefault" class="flex flex-col gap-1">
                                         <h3 id="defaultTitle" class="text-xl font-bold text-text-primary">Bem-vindo ao Spread</h3>
                                         <p id="defaultDescription" class="text-sm text-text-primary/70">Crie e compartilhe visualizações de links elegantes e modernas, 100% no seu navegador.</p>
                                     </div>
 
-                                    <!-- Template Música -->
                                     <div id="templateMusic" class="hidden flex-col gap-2">
                                         <h3 id="musicTitle" class="text-xl font-bold text-text-primary"></h3>
                                         <div class="flex items-center gap-2">
@@ -409,20 +394,16 @@ const base = import.meta.env.BASE_URL;
                                         </div>
                                     </div>
 
-                                    <!-- Template Notícia -->
                                     <div id="templateNews" class="hidden flex-col gap-2">
                                         <h3 id="newsHeadline" class="text-xl font-bold text-text-primary"></h3>
                                         <p id="newsAuthor" class="text-sm font-medium text-text-primary/80"></p>
                                         <p id="newsDescription" class="text-sm text-text-primary/70"></p>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
-
                     </div>
-                    
-                    <!-- Botões de Ação -->
+
                     <div id="downloadSection" class="hidden mt-6 flex flex-col items-center gap-3">
                         <button id="downloadButton" disabled class="group relative w-full max-w-md overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/80 via-pink-500/80 to-purple-400/80 p-[2px] shadow-lg shadow-purple-500/10 transition-all hover:shadow-xl hover:shadow-purple-500/20 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
                             <div class="flex items-center justify-center gap-3 rounded-[10px] bg-gray-900/90 px-8 py-4 backdrop-blur-sm transition-all group-hover:bg-gray-900/70">
@@ -434,31 +415,38 @@ const base = import.meta.env.BASE_URL;
                                 <span class="text-base font-semibold bg-gradient-to-r from-purple-300 via-pink-300 to-purple-200 bg-clip-text text-transparent">Baixar Imagem</span>
                             </div>
                         </button>
-                        
+
                         <p id="downloadStatus" class="text-sm text-center min-h-[20px]"></p>
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 
-<script is:inline define:vars={{ base }}>
-    const cleanBase = base.replace(/\/$/, '');
-    console.log('Base path:', cleanBase);
+    <!-- SCRIPT CORRIGIDO -->
+    <script is:inline define:vars={{ base }}>
+        // Remove barra final se existir
+        const cleanBase = base.replace(/\/$/, '');
 
-    // Define base no body para spread.js
-    document.body.dataset.base = cleanBase;
+        // Debug: mostra o base path
+        console.log('Base path:', cleanBase);
 
-    const script = document.createElement('script');
-    const scriptPath = cleanBase + '/spread.js';
-    console.log('Tentando carregar:', scriptPath);
-    script.src = scriptPath;
+        // Carrega o script spread.js com o caminho correto
+        const script = document.createElement('script');
+        const scriptPath = cleanBase + '/spread.js';
 
-    script.onerror = () => console.error('Erro ao carregar spread.js:', scriptPath);
-    script.onload = () => console.log('spread.js carregado com sucesso!');
+        console.log('Tentando carregar:', scriptPath);
+        script.src = scriptPath;
 
-    document.body.appendChild(script);
-</script>
+        script.onerror = function() {
+            console.error('❌ Erro ao carregar spread.js de:', scriptPath);
+        };
+
+        script.onload = function() {
+            console.log('✅ spread.js carregado com sucesso!');
+        };
+
+        document.body.appendChild(script);
+    </script>
 </body>
 </html>

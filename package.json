@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro build && vite preview --base=/spread",
     "astro": "astro"
   },
   "dependencies": {
