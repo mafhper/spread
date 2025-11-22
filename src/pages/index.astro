@@ -13,8 +13,6 @@ const base = import.meta.env.BASE_URL;
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Spread - Crie Visualizações de Links</title>
-
-        <!-- Favicons (Light/Dark Mode Support) -->
         <link
             rel="icon"
             type="image/svg+xml"
@@ -27,39 +25,33 @@ const base = import.meta.env.BASE_URL;
             href={`${base.replace(/\/$/, "")}/favicon-dark.svg`}
             media="(prefers-color-scheme: dark)"
         />
-        <!-- Fallback -->
         <link
             rel="icon"
             type="image/svg+xml"
             href={`${base.replace(/\/$/, "")}/favicon-light.svg`}
         />
-
         <link
             rel="alternate icon"
             href={`${base.replace(/\/$/, "")}/favicon.ico`}
         />
-
-        <!-- Google Fonts (Preload) -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <!-- Fonts are now loaded via spread.js to avoid CORS issues with html-to-image -->
-
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@400;600&family=Roboto:wght@400;500;700&display=swap"
+            rel="stylesheet"
+            id="google-fonts-link"
+        />
         <style id="google-fonts-inline"></style>
         <style>
             :root {
-                /* Premium Dark Theme Palette (Zinc/Slate based) */
                 --bg-main: #09090b; /* Zinc 950 */
                 --bg-sidebar: #18181b; /* Zinc 900 */
                 --bg-card: #27272a; /* Zinc 800 */
                 --bg-input: #3f3f46; /* Zinc 700 */
-
                 --border-color: #3f3f46; /* Zinc 700 */
                 --border-hover: #52525b; /* Zinc 600 */
-
                 --text-main: #f4f4f5; /* Zinc 100 */
                 --text-muted: #a1a1aa; /* Zinc 400 */
-
-                /* Vibrant Accents (Purple/Pink) */
                 --accent-primary: #c084fc; /* Purple 400 */
                 --accent-hover: #d8b4fe; /* Purple 300 */
                 --accent-gradient: linear-gradient(
@@ -73,7 +65,6 @@ const base = import.meta.env.BASE_URL;
                 font-family: "Inter", sans-serif;
                 background-color: var(--bg-main);
                 color: var(--text-main);
-                /* overflow: hidden;  Removed global overflow hidden to allow scrolling on mobile if needed */
             }
 
             /* Custom Scrollbar */
