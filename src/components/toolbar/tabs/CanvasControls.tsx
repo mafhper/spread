@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useCardStore } from '../../../store/cardStore';
-import { Smartphone, Square, Monitor, Image as ImageIcon, Maximize, Wand2, Loader2, Upload, Trash2 } from 'lucide-react';
+import { Smartphone, Square, Monitor, Image as ImageIcon, Maximize, Wand2, Loader2, Upload, Trash2, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useColorExtractor } from '../../../hooks/useColorExtractor';
 
@@ -35,7 +35,7 @@ const GRADIENT_ANGLES = [
 export const CanvasControls: React.FC = () => {
     const { 
         canvasSize, cardPosition, colors, gradientStyle, pattern, 
-        customBgImage, image, updateNestedField, updateField 
+        customBgImage, image, updateNestedField, updateField, resetCanvas 
     } = useCardStore();
     const { extractColorsFromImage } = useColorExtractor();
     const [isExtracting, setIsExtracting] = React.useState(false);
@@ -195,14 +195,48 @@ export const CanvasControls: React.FC = () => {
                 <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">Posição do Card</h4>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <span className="text-[10px] text-white/40 block mb-1">X: {cardPosition.x}%</span>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] text-white/40 block">Eixo X</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-mono text-white/40">{cardPosition.x}%</span>
+                                <button 
+                                    onClick={() => updateNestedField('cardPosition', 'x', 0)}
+                                    className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                    title="Resetar X"
+                                >
+                                    <RotateCcw size={8} />
+                                </button>
+                            </div>
+                        </div>
                         <input type="range" min="-50" max="50" step="5" value={cardPosition.x} onChange={(e) => updateNestedField('cardPosition', 'x', parseInt(e.target.value))} className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
                     </div>
                     <div>
-                        <span className="text-[10px] text-white/40 block mb-1">Y: {cardPosition.y}%</span>
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] text-white/40 block">Eixo Y</span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] font-mono text-white/40">{cardPosition.y}%</span>
+                                <button 
+                                    onClick={() => updateNestedField('cardPosition', 'y', 0)}
+                                    className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                    title="Resetar Y"
+                                >
+                                    <RotateCcw size={8} />
+                                </button>
+                            </div>
+                        </div>
                         <input type="range" min="-50" max="50" step="5" value={cardPosition.y} onChange={(e) => updateNestedField('cardPosition', 'y', parseInt(e.target.value))} className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" />
                     </div>
                 </div>
+            </div>
+            {/* Reset Section */}
+            <div className="pt-6 border-t border-white/5">
+                <button 
+                    onClick={resetCanvas}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
+                >
+                    <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                    Resetar Área e Posição
+                </button>
             </div>
         </div>
     );

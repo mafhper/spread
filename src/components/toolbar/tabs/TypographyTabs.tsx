@@ -1,10 +1,10 @@
 import React from 'react';
 import { useCardStore } from '../../../store/cardStore';
-import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { AlignLeft, AlignCenter, AlignRight, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const TypographyTabs: React.FC = () => {
-    const { fontFamily, textAlign, titleSize, subtitleSize, colors, updateField, updateNestedField } = useCardStore();
+    const { fontFamily, textAlign, titleSize, subtitleSize, colors, updateField, updateNestedField, resetTypography } = useCardStore();
 
     const fonts = [
         'Inter', 'Roboto', 'Poppins', 'Montserrat', 'Open Sans', 
@@ -91,7 +91,16 @@ export const TypographyTabs: React.FC = () => {
                 <div className="space-y-2.5">
                     <div className="flex justify-between items-end mb-1">
                         <label htmlFor="title-size-slider" className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Título</label>
-                        <span className="text-[10px] font-mono text-white/60">{titleSize}%</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-white/60">{titleSize}%</span>
+                            <button 
+                                onClick={() => updateField('titleSize', 100)}
+                                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                title="Resetar Tamanho"
+                            >
+                                <RotateCcw size={8} />
+                            </button>
+                        </div>
                     </div>
                     <input 
                         id="title-size-slider"
@@ -104,7 +113,16 @@ export const TypographyTabs: React.FC = () => {
                 <div className="space-y-2.5">
                     <div className="flex justify-between items-end mb-1">
                         <label htmlFor="subtitle-size-slider" className="text-[10px] font-medium text-white/40 uppercase tracking-wider">Subtítulo</label>
-                        <span className="text-[10px] font-mono text-white/60">{subtitleSize}%</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-white/60">{subtitleSize}%</span>
+                            <button 
+                                onClick={() => updateField('subtitleSize', 100)}
+                                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                title="Resetar Tamanho"
+                            >
+                                <RotateCcw size={8} />
+                            </button>
+                        </div>
                     </div>
                     <input 
                         id="subtitle-size-slider"
@@ -113,6 +131,16 @@ export const TypographyTabs: React.FC = () => {
                         className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
                     />
                 </div>
+            </div>
+            {/* Reset Section */}
+            <div className="pt-6 border-t border-white/5">
+                <button 
+                    onClick={resetTypography}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
+                >
+                    <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                    Resetar Categoria (Texto)
+                </button>
             </div>
         </div>
     );

@@ -91,6 +91,7 @@ export const PreviewSection: React.FC = () => {
                       : pattern === 'lines' ? 'repeating-linear-gradient(0deg, transparent, transparent 19px, #ffffff 20px)'
                       : pattern === 'diagonal' ? 'repeating-linear-gradient(45deg, #ffffff 0, #ffffff 1px, transparent 0, transparent 50%)'
                       : pattern === 'noise' ? `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")`
+                      : pattern === 'mesh' ? `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0 L20 10 L10 20 L0 10 Z' fill='none' stroke='white' stroke-width='0.5' opacity='0.2'/%3E%3C/svg%3E")`
                       : 'none',
         backgroundSize: getPatternSize(),
         opacity: pattern === 'none' ? 0 : patternOpacity,
@@ -213,6 +214,7 @@ export const PreviewSection: React.FC = () => {
                 console.log('[PreviewSection] Applying extracted colors to store:', extracted);
                 updateNestedField('colors', 'bg1', extracted.primary);
                 updateNestedField('colors', 'bg2', extracted.secondary);
+                updateField('extractedColors', { bg1: extracted.primary, bg2: extracted.secondary });
             } else {
                 console.warn('[PreviewSection] extractColorsFromImage returned null');
             }
@@ -261,7 +263,11 @@ export const PreviewSection: React.FC = () => {
         const target = exportOnlyRef.current || exportRef.current;
         if (!target) return;
         setIsGenerating(true);
+        updateField('isExporting', true);
+        
         try {
+            // Give a moment for the DOM to update styles (fallback colors)
+            await new Promise(r => setTimeout(r, 100));
             await document.fonts.ready;
             const fontCss = await getEmbeddedFontCSS(currentState.fontFamily);
 
@@ -299,6 +305,7 @@ export const PreviewSection: React.FC = () => {
             alert('Falha ao gerar imagem.');
         } finally {
             setIsGenerating(false);
+            updateField('isExporting', false);
         }
     };
 

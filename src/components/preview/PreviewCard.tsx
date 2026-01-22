@@ -95,7 +95,6 @@ export const PreviewCard: React.FC = () => {
                         }} 
                     />
                 )}
-
                 {/* CONTEÚDO: Card real que pode expandir além do driver */}
                 <div 
                     id="innerCard"
@@ -103,7 +102,6 @@ export const PreviewCard: React.FC = () => {
                     style={{
                         borderRadius: `${layout.innerRadius}px`,
                         backgroundColor: `rgba(20, 20, 20, ${layout.opacity})`, 
-                        backdropFilter: (layout.backdropBlur ?? 0) >= 0 ? `blur(${layout.backdropBlur ?? 0}px)` : 'none',
                         boxShadow: `${layout.shadowOffsetX ?? 0}px ${layout.shadowOffsetY ?? 25}px ${layout.shadowBlur ?? 50}px ${layout.shadowSpread ?? -12}px ${hexToRgba(layout.shadowColor ?? '#000000', layout.shadowOpacity ?? 0.25)}`,
                         gridArea: '1 / 1 / 2 / 2',
                         // Se houver driver, segue altura mínima dele. Senão, auto.

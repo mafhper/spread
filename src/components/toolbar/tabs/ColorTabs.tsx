@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCardStore } from '../../../store/cardStore';
-import { Wand2, Loader2 } from 'lucide-react';
+import { Wand2, Loader2, RotateCcw } from 'lucide-react';
 import { useColorExtractor } from '../../../hooks/useColorExtractor';
 
 const GRADIENT_ANGLES = [
@@ -33,7 +33,7 @@ const COLOR_PRESETS = [
 ];
 
 export const ColorTabs: React.FC = () => {
-    const { colors, gradientStyle, image, updateNestedField, updateField } = useCardStore();
+    const { colors, gradientStyle, image, updateNestedField, updateField, resetColors } = useCardStore();
     const { extractColorsFromImage, isExtracting } = useColorExtractor();
 
     const handleColorChange = (key: 'bg1' | 'bg2' | 'text', val: string) => {
@@ -49,6 +49,7 @@ export const ColorTabs: React.FC = () => {
         if (extracted) {
             handleColorChange('bg1', extracted.primary);
             handleColorChange('bg2', extracted.secondary);
+            updateField('extractedColors', { bg1: extracted.primary, bg2: extracted.secondary });
         }
     };
 
@@ -67,9 +68,10 @@ export const ColorTabs: React.FC = () => {
             {/* Manual Color Pickers */}
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="block text-xs font-medium mb-1.5 text-white/50">Cor 1</label>
+                    <label htmlFor="bg-color-1" className="block text-xs font-medium mb-1.5 text-white/50">Cor 1</label>
                     <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
                         <input 
+                            id="bg-color-1"
                             type="color" 
                             value={colors.bg1}
                             onChange={(e) => handleColorChange('bg1', e.target.value)}
@@ -85,9 +87,10 @@ export const ColorTabs: React.FC = () => {
                 </div>
                 
                 <div>
-                    <label className="block text-xs font-medium mb-1.5 text-white/50">Cor 2</label>
+                    <label htmlFor="bg-color-2" className="block text-xs font-medium mb-1.5 text-white/50">Cor 2</label>
                     <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
                         <input 
+                            id="bg-color-2"
                             type="color" 
                             value={colors.bg2}
                             onChange={(e) => handleColorChange('bg2', e.target.value)}
@@ -105,7 +108,7 @@ export const ColorTabs: React.FC = () => {
 
             {/* Gradient Direction */}
             <div>
-                <label className="block text-xs font-medium mb-2 text-white/50">Direção do Gradiente</label>
+                <span className="block text-xs font-medium mb-2 text-white/50">Direção do Gradiente</span>
                 <div className="grid grid-cols-8 gap-1">
                     {GRADIENT_ANGLES.map((angle) => (
                         <button
@@ -126,7 +129,7 @@ export const ColorTabs: React.FC = () => {
 
             {/* Color Presets */}
             <div>
-                <label className="block text-xs font-medium mb-2 text-white/50">Presets</label>
+                <span className="block text-xs font-medium mb-2 text-white/50">Presets</span>
                 <div className="grid grid-cols-5 gap-2">
                     {COLOR_PRESETS.map(([c1, c2], i) => (
                         <button
@@ -141,6 +144,16 @@ export const ColorTabs: React.FC = () => {
                         />
                     ))}
                 </div>
+            </div>
+            {/* Reset Section */}
+            <div className="pt-6 border-t border-white/5">
+                <button 
+                    onClick={resetColors}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
+                >
+                    <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                    Resetar Categoria (Cores)
+                </button>
             </div>
         </div>
     );

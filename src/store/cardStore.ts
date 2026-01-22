@@ -31,10 +31,11 @@ export interface CardState {
     text: string;
   };
   gradientStyle: string;
-  pattern: 'none' | 'dots' | 'grid' | 'noise' | 'lines' | 'diagonal';
+  pattern: 'none' | 'dots' | 'grid' | 'noise' | 'lines' | 'diagonal' | 'mesh';
   patternOpacity: number;
   patternScale: number;
   customBgImage: string | null;
+  extractedColors: { bg1: string; bg2: string } | null;
   
   // Customization - Layout
   layout: {
@@ -81,6 +82,7 @@ export interface CardState {
   textAlign: 'left' | 'center' | 'right';
   
   activeTab: 'card' | 'photo' | 'canvas' | 'text';
+  isExporting: boolean;
   
   // Actions
   updateField: (field: string, value: unknown) => void;
@@ -90,6 +92,12 @@ export interface CardState {
   setFullState: (state: Partial<CardState>) => void;
   setActiveTab: (tab: 'card' | 'photo' | 'canvas' | 'text') => void;
   resetContent: () => void;
+  resetCard: () => void;
+  resetPhoto: () => void;
+  resetColors: () => void;
+  resetBackground: () => void;
+  resetTypography: () => void;
+  resetCanvas: () => void;
 }
 
 const DEFAULT_STATE = {
@@ -113,6 +121,7 @@ const DEFAULT_STATE = {
   patternOpacity: 0.1,
   patternScale: 1,
   customBgImage: null,
+  extractedColors: null,
   
   layout: {
     aspectRatio: 'aspect-auto',
@@ -129,7 +138,7 @@ const DEFAULT_STATE = {
     shadowSpread: -12,
     shadowColor: '#000000',
     shadowOpacity: 0.25,
-    backdropBlur: 12,
+    backdropBlur: 0,
     cardScale: 1,
     imageOffsetX: 0,
     imageOffsetY: 0,
@@ -154,7 +163,8 @@ const DEFAULT_STATE = {
   titleSize: 100,
   subtitleSize: 100,
   textAlign: 'left' as const,
-  activeTab: 'card' as const
+  activeTab: 'card' as const,
+  isExporting: false
 };
 
 export const useCardStore = create<CardState>()(
@@ -198,7 +208,13 @@ export const useCardStore = create<CardState>()(
         activeTab: 'card'
       }),
 
-      setFullState: (stateUpdate) => set((state) => ({ ...state, ...stateUpdate })),
+      setFullState: (stateUpdate) => set((state) => ({ 
+        ...state, 
+        ...stateUpdate,
+        // Deep merge specifically for layout and colors if they exist in stateUpdate
+        layout: stateUpdate.layout ? { ...state.layout, ...stateUpdate.layout } : state.layout,
+        colors: stateUpdate.colors ? { ...state.colors, ...stateUpdate.colors } : state.colors,
+      })),
       
       reset: () => set({
         ...DEFAULT_STATE,
@@ -207,7 +223,71 @@ export const useCardStore = create<CardState>()(
           bg2: '#be185d',
           text: '#ffffff'
         }
-      })
+      }),
+
+      resetCanvas: () => set((state) => ({
+        ...state,
+        canvasSize: DEFAULT_STATE.canvasSize,
+        cardPosition: DEFAULT_STATE.cardPosition
+      })),
+
+      resetColors: () => set((state) => ({
+        ...state,
+        colors: state.extractedColors 
+          ? { ...state.colors, bg1: state.extractedColors.bg1, bg2: state.extractedColors.bg2 }
+          : DEFAULT_STATE.colors
+      })),
+
+      resetBackground: () => set((state) => ({
+        ...state,
+        gradientStyle: DEFAULT_STATE.gradientStyle,
+        pattern: DEFAULT_STATE.pattern,
+        patternOpacity: DEFAULT_STATE.patternOpacity,
+        patternScale: DEFAULT_STATE.patternScale,
+        customBgImage: DEFAULT_STATE.customBgImage
+      })),
+
+      resetTypography: () => set((state) => ({
+        ...state,
+        fontFamily: DEFAULT_STATE.fontFamily,
+        titleSize: DEFAULT_STATE.titleSize,
+        subtitleSize: DEFAULT_STATE.subtitleSize,
+        textAlign: DEFAULT_STATE.textAlign
+      })),
+
+      resetCard: () => set((state) => ({
+        ...state,
+        layout: {
+          ...state.layout,
+          innerRadius: DEFAULT_STATE.layout.innerRadius,
+          padding: DEFAULT_STATE.layout.padding,
+          opacity: DEFAULT_STATE.layout.opacity,
+          shadowOffsetX: DEFAULT_STATE.layout.shadowOffsetX,
+          shadowOffsetY: DEFAULT_STATE.layout.shadowOffsetY,
+          shadowBlur: DEFAULT_STATE.layout.shadowBlur,
+          shadowSpread: DEFAULT_STATE.layout.shadowSpread,
+          shadowColor: DEFAULT_STATE.layout.shadowColor,
+          shadowOpacity: DEFAULT_STATE.layout.shadowOpacity,
+          backdropBlur: DEFAULT_STATE.layout.backdropBlur,
+          cardScale: DEFAULT_STATE.layout.cardScale,
+          cardAspectRatio: DEFAULT_STATE.layout.cardAspectRatio,
+          showHeader: DEFAULT_STATE.layout.showHeader,
+          headerPosition: DEFAULT_STATE.layout.headerPosition
+        }
+      })),
+
+      resetPhoto: () => set((state) => ({
+        ...state,
+        layout: {
+          ...state.layout,
+          aspectRatio: DEFAULT_STATE.layout.aspectRatio,
+          imagePosition: DEFAULT_STATE.layout.imagePosition,
+          imageFit: DEFAULT_STATE.layout.imageFit,
+          imageScale: DEFAULT_STATE.layout.imageScale,
+          imageOffsetX: DEFAULT_STATE.layout.imageOffsetX,
+          imageOffsetY: DEFAULT_STATE.layout.imageOffsetY
+        }
+      }))
     }),
     {
       name: 'spread-preferences-v3', // 🔥 VERSÃO ATUALIZADA - Invalida cache antigo
@@ -225,6 +305,7 @@ export const useCardStore = create<CardState>()(
         layout: state.layout,
         canvasSize: state.canvasSize,
         cardPosition: state.cardPosition
+        // isExporting is EXCLUDED from persistence
       }),
       merge: (persistedStateValue: unknown, currentState) => {
         const persistedState = persistedStateValue as Partial<CardState> | null;
@@ -245,9 +326,9 @@ export const useCardStore = create<CardState>()(
           isWelcomeState: true,
           activeTab: 'card',
           
-          // 🔥 ENFORCE: Reset crítico de campos problemáticos
-          pattern: 'none', 
-          customBgImage: null,
+          // 🔥 RELAXED: Não reseta mais obrigatoriamente para permitir que o usuário salve estes estados
+          // pattern: 'none', 
+          // customBgImage: null,
           cardPosition: { x: 0, y: 0 },
           
           layout: {

@@ -1,9 +1,9 @@
-import React from 'react';
 import { useCardStore } from '../../../store/cardStore';
+import { RotateCcw } from 'lucide-react';
 
 export const PhotoTabs: React.FC = () => {
-    const { layout, updateNestedField } = useCardStore();
-    const updateLayout = (field: string, val: any): void => updateNestedField('layout', field, val);
+    const { layout, updateNestedField, resetPhoto } = useCardStore();
+    const updateLayout = (field: string, val: unknown): void => updateNestedField('layout', field, val);
 
     return (
         <div className="space-y-6 pt-2">
@@ -11,8 +11,9 @@ export const PhotoTabs: React.FC = () => {
 
             {/* Image Aspect Ratio */}
             <div>
-                <label className="block text-xs font-medium mb-1.5 text-[var(--text-muted)]">Formato da Área da Foto</label>
+                <label htmlFor="photo-aspect-select" className="block text-xs font-medium mb-1.5 text-[var(--text-muted)]">Formato da Área da Foto</label>
                 <select 
+                    id="photo-aspect-select"
                     value={layout.aspectRatio}
                     onChange={(e) => updateLayout('aspectRatio', e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/30 transition-colors"
@@ -31,7 +32,16 @@ export const PhotoTabs: React.FC = () => {
             <div>
                 <div className="flex items-center justify-between mb-1.5">
                     <label htmlFor="photo-zoom-slider" className="text-xs font-medium text-[var(--text-muted)]">Zoom da Foto</label>
-                    <span className="text-xs text-white font-mono">{Math.round(layout.imageScale * 100)}%</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-white font-mono">{Math.round(layout.imageScale * 100)}%</span>
+                        <button 
+                            onClick={() => updateLayout('imageScale', 1)}
+                            className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                            title="Resetar Zoom"
+                        >
+                            <RotateCcw size={10} />
+                        </button>
+                    </div>
                 </div>
                 <input 
                     id="photo-zoom-slider"
@@ -47,7 +57,16 @@ export const PhotoTabs: React.FC = () => {
                 <div>
                     <div className="flex items-center justify-between mb-1.5">
                         <label htmlFor="photo-offset-x" className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wider">Ajuste X</label>
-                        <span className="text-[10px] text-white font-mono">{layout.imageOffsetX}px</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-white font-mono">{layout.imageOffsetX}px</span>
+                            <button 
+                                onClick={() => updateLayout('imageOffsetX', 0)}
+                                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                title="Resetar X"
+                            >
+                                <RotateCcw size={8} />
+                            </button>
+                        </div>
                     </div>
                     <input 
                         id="photo-offset-x"
@@ -60,7 +79,16 @@ export const PhotoTabs: React.FC = () => {
                 <div>
                     <div className="flex items-center justify-between mb-1.5">
                         <label htmlFor="photo-offset-y" className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wider">Ajuste Y</label>
-                        <span className="text-[10px] text-white font-mono">{layout.imageOffsetY}px</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-white font-mono">{layout.imageOffsetY}px</span>
+                            <button 
+                                onClick={() => updateLayout('imageOffsetY', 0)}
+                                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                title="Resetar Y"
+                            >
+                                <RotateCcw size={8} />
+                            </button>
+                        </div>
                     </div>
                     <input 
                         id="photo-offset-y"
@@ -70,6 +98,16 @@ export const PhotoTabs: React.FC = () => {
                         className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
                     />
                 </div>
+            </div>
+            {/* Reset Section */}
+            <div className="pt-6 border-t border-white/5">
+                <button 
+                    onClick={resetPhoto}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
+                >
+                    <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                    Resetar Ajustes de Foto
+                </button>
             </div>
         </div>
     );

@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
 import { useCardStore } from '../../../store/cardStore';
-import { Upload, Trash2 } from 'lucide-react';
+import { Upload, Trash2, RotateCcw } from 'lucide-react';
 
 export const BackgroundTabs: React.FC = () => {
-    const { pattern, customBgImage, updateField } = useCardStore();
+    const { pattern, customBgImage, updateField, patternOpacity, patternScale, resetBackground } = useCardStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,6 +31,7 @@ export const BackgroundTabs: React.FC = () => {
                         { value: 'noise', label: 'Ruído' },
                         { value: 'lines', label: 'Linhas' },
                         { value: 'diagonal', label: 'Diag.' },
+                        { value: 'mesh', label: 'Mesh' },
                     ].map((p) => (
                         <button
                             key={p.value}
@@ -51,25 +52,49 @@ export const BackgroundTabs: React.FC = () => {
                 {pattern !== 'none' && (
                     <div className="mt-4 grid grid-cols-2 gap-4">
                         <div>
-                            <span className="block text-xs font-medium mb-2 text-white/50">Opacidade</span>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="block text-[10px] font-medium text-white/50">Opacidade</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-mono text-white/40">{Math.round(patternOpacity * 100)}%</span>
+                                    <button 
+                                        onClick={() => updateField('patternOpacity', 0.1)}
+                                        className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                        title="Resetar"
+                                    >
+                                        <RotateCcw size={8} />
+                                    </button>
+                                </div>
+                            </div>
                             <input 
                                 type="range" 
                                 min="0" 
                                 max="1" 
                                 step="0.05"
-                                value={useCardStore.getState().patternOpacity}
+                                value={patternOpacity}
                                 onChange={(e) => updateField('patternOpacity', parseFloat(e.target.value))}
                                 className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
                             />
                         </div>
                         <div>
-                            <span className="block text-xs font-medium mb-2 text-white/50">Escala</span>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="block text-[10px] font-medium text-white/50">Escala</span>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-mono text-white/40">{Math.round(patternScale * 100)}%</span>
+                                    <button 
+                                        onClick={() => updateField('patternScale', 1)}
+                                        className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                                        title="Resetar"
+                                    >
+                                        <RotateCcw size={8} />
+                                    </button>
+                                </div>
+                            </div>
                             <input 
                                 type="range" 
                                 min="0.5" 
                                 max="3" 
                                 step="0.1"
-                                value={useCardStore.getState().patternScale}
+                                value={patternScale}
                                 onChange={(e) => updateField('patternScale', parseFloat(e.target.value))}
                                 className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
                             />
@@ -82,7 +107,10 @@ export const BackgroundTabs: React.FC = () => {
                 
                 {!customBgImage ? (
                     <div 
+                        role="button"
+                        tabIndex={0}
                         onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
                         className="flex items-center justify-center w-full px-4 py-4 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-white/40 transition-colors bg-white/5"
                     >
                         <span className="text-xs text-white/50 flex items-center gap-2">
@@ -108,6 +136,16 @@ export const BackgroundTabs: React.FC = () => {
                         </button>
                     </div>
                 )}
+            </div>
+            {/* Reset Section */}
+            <div className="pt-6 border-t border-white/5">
+                <button 
+                    onClick={resetBackground}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
+                >
+                    <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                    Resetar Categoria (Fundo)
+                </button>
             </div>
         </div>
     );
