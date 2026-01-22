@@ -4,15 +4,64 @@ import { AlignLeft, AlignCenter, AlignRight, RotateCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const TypographyTabs: React.FC = () => {
-    const { fontFamily, textAlign, titleSize, subtitleSize, colors, updateField, updateNestedField, resetTypography } = useCardStore();
+    const { 
+        title, description, author, template,
+        fontFamily, textAlign, titleSize, subtitleSize, colors, 
+        updateField, updateNestedField, resetTypography 
+    } = useCardStore();
 
     const fonts = [
         'Inter', 'Roboto', 'Poppins', 'Montserrat', 'Open Sans', 
         'Nunito', 'Raleway', 'Oswald', 'Playfair Display', 'Merriweather'
     ];
 
+    // Determine target field based on template
+    const isMusicTemplate = template === 'music';
+    const subtitleValue = isMusicTemplate ? author : description;
+    
+    const handleSubtitleChange = (value: string) => {
+        if (isMusicTemplate) {
+            updateField('author', value);
+        } else {
+            updateField('description', value);
+        }
+    };
+
     return (
         <div className="space-y-6">
+            {/* 0. Conteúdo de Texto */}
+            <div className="space-y-4">
+                 <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">Conteúdo</h4>
+                 
+                 <div className="space-y-3">
+                    <div>
+                        <label className="block text-[10px] font-medium text-white/40 mb-1.5 uppercase tracking-wider">Título Principal</label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => updateField('title', e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-colors placeholder-white/20"
+                            placeholder="Digite o título..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-[10px] font-medium text-white/40 mb-1.5 uppercase tracking-wider">
+                            {isMusicTemplate ? 'Artista / Autor' : 'Subtítulo / Descrição'}
+                        </label>
+                        <textarea
+                            value={subtitleValue}
+                            onChange={(e) => handleSubtitleChange(e.target.value)}
+                            rows={3}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-colors placeholder-white/20 resize-none"
+                            placeholder={isMusicTemplate ? "Nome do artista..." : "Digite a descrição..."}
+                        />
+                    </div>
+                 </div>
+            </div>
+
+            <div className="w-full h-px bg-white/5" />
+
             {/* 1. Escolha de Fonte */}
             <div className="space-y-3">
                 <span className="block text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">Fonte e Alinhamento</span>

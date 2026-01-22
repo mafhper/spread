@@ -76,14 +76,14 @@ export const SpreadEditor: React.FC = () => {
 
                 </header>
 
-                {/* History Panel (Overlay) */}
-                {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
-                
                 {/* Main Preview Area - fills remaining space, no scroll */}
                 <main className="flex-1 min-h-0 overflow-hidden">
                     <PreviewSection />
                 </main>
             </div>
+            
+            {/* History Panel (Overlay) - Moved to root to ensure z-index priority over Sidebar */}
+            {showHistory && <HistoryPanel onClose={() => setShowHistory(false)} />}
         </div>
     );
 };

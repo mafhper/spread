@@ -8,4 +8,4 @@ export default getViteConfig({
     setupFiles: './packages/tests/setup.ts',
     include: ['packages/tests/**/*.{test,spec}.{js,ts,jsx,tsx}', 'src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
   },
-});
+} as any);

@@ -6,19 +6,17 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { CardTabs } from './tabs/CardTabs';
-import { PhotoTabs } from './tabs/PhotoTabs';
+import { MediaTabs } from './tabs/MediaTabs';
 import { CanvasControls } from './tabs/CanvasControls';
 import { TypographyTabs } from './tabs/TypographyTabs';
 import { ColorTabs } from './tabs/ColorTabs';
-import { BackgroundTabs } from './tabs/BackgroundTabs';
 
-type TabType = 'card' | 'colors' | 'background' | 'photo' | 'canvas' | 'text';
+type TabType = 'card' | 'colors' | 'media' | 'canvas' | 'text';
 
 const TABS = [
     { id: 'card' as const, label: 'Card', icon: Layout },
     { id: 'colors' as const, label: 'Cores', icon: Palette },
-    { id: 'background' as const, label: 'Fundo', icon: ImageIcon },
-    { id: 'photo' as const, label: 'Imagem', icon: ImageIcon }, // Icon collision handled by label
+    { id: 'media' as const, label: 'Mídia', icon: ImageIcon },
     { id: 'text' as const, label: 'Texto', icon: Type },
     { id: 'canvas' as const, label: 'Canvas', icon: Maximize },
 ];
@@ -51,8 +49,7 @@ export const Sidebar: React.FC = () => {
         switch (activeTab) {
             case 'card': return <CardTabs />;
             case 'colors': return <ColorTabs />;
-            case 'background': return <BackgroundTabs />;
-            case 'photo': return <PhotoTabs />;
+            case 'media': return <MediaTabs />;
             case 'canvas': return <CanvasControls />;
             case 'text': return <TypographyTabs />;
         }
