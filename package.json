@@ -26,13 +26,39 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro build && vite preview --base=/spread",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.15.9"
+    "@astrojs/react": "^4.4.2",
+    "astro": "^5.16.12",
+    "clsx": "^2.1.1",
+    "colorthief": "^2.6.0",
+    "downloadjs": "^1.4.7",
+    "html-to-image": "^1.11.13",
+    "lucide-react": "^0.562.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.17",
-    "tailwindcss": "^4.1.17"
+    "@tailwindcss/vite": "^4.1.18",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-astro": "^1.5.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "jsdom": "^27.4.0",
+    "tailwindcss": "^4.1.18",
+    "typescript-eslint": "^8.53.1",
+    "vitest": "^4.0.17"
   }
 }

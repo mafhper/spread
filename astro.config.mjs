@@ -7,13 +7,14 @@
 
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import react from '@astrojs/react';
 
 export default defineConfig({
   // Substitua 'spread' pelo nome do seu repositório
   site: 'https://mafhp.github.io',
   base: '/spread',
   
-  integrations: [],
+  integrations: [react()],
   
   vite: {
     plugins: [tailwindcss()],
