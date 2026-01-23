@@ -30,18 +30,35 @@ export function useHistory() {
   }, [])
 
   const saveToHistory = (currentState: Record<string, unknown>) => {
-    // 🔥 NEW: Extremely aggressive pruning for storage
-    const pruneValue = (val: unknown) =>
-      typeof val === 'string' && val.length > 50000 ? null : val
+    // 🔥 ULTRA AGGRESSIVE: GitHub Pages projects share a 5MB limit per origin.
+    const prune = (val: unknown) =>
+      typeof val === 'string' && val.length > 30000 ? null : val
 
-    const leanState: Record<string, unknown> = { ...currentState }
-    // Remove individual large assets from the nested state to save space
-    if (leanState.image) leanState.image = pruneValue(leanState.image)
-    if (leanState.customBgImage)
-      leanState.customBgImage = pruneValue(leanState.customBgImage)
-    if (leanState.favicon) leanState.favicon = pruneValue(leanState.favicon)
-    // Avoid double-saving the preview image inside fullState
-    delete leanState.previewImage
+    // Strictly pick ONLY data fields to avoid saving functions or circular objects
+    const leanState = {
+      url: currentState.url,
+      title: currentState.title,
+      description: currentState.description,
+      author: currentState.author,
+      domain: currentState.domain,
+      template: currentState.template,
+      colors: currentState.colors,
+      gradientStyle: currentState.gradientStyle,
+      pattern: currentState.pattern,
+      patternOpacity: currentState.patternOpacity,
+      patternScale: currentState.patternScale,
+      layout: currentState.layout,
+      canvasSize: currentState.canvasSize,
+      cardPosition: currentState.cardPosition,
+      fontFamily: currentState.fontFamily,
+      titleSize: currentState.titleSize,
+      subtitleSize: currentState.subtitleSize,
+      textAlign: currentState.textAlign,
+      // Aggressive pruning for large base64
+      image: prune(currentState.image),
+      customBgImage: prune(currentState.customBgImage),
+      favicon: prune(currentState.favicon),
+    }
 
     const newItem: HistoryItem = {
       id:
@@ -51,27 +68,25 @@ export function useHistory() {
       url: currentState.url as string,
       title: currentState.title as string,
       timestamp: Date.now(),
-      // The previewImage (low-res thumbnail) is our primary visual in history
-      previewImage: pruneValue(currentState.previewImage) as string | undefined,
-      fullState: leanState,
+      // Prune preview image too if it somehow exceeds 30KB
+      previewImage: prune(currentState.previewImage) as string | undefined,
+      fullState: leanState as HistoryItem['fullState'],
     }
 
     setHistory(prev => {
-      // Limit to 4 items - each could still be ~1MB if not pruned enough
-      const updated = [newItem, ...prev].slice(0, 4)
+      // Limit to 3 items to be extremely safe on shared origins
+      const updated = [newItem, ...prev].slice(0, 3)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
         return updated
       } catch (e) {
-        console.error('Local storage full, saving only the latest item', e)
-        const singleItem = [newItem]
+        console.warn('Storage failed, saving only latest item', e)
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(singleItem))
-          return singleItem
-        } catch (err) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([newItem]))
+          return [newItem]
+        } catch {
           console.error(
-            'Critical: Cannot save even a single history item.',
-            err
+            'Critical quota error: Local storage full across domain.'
           )
           return prev
         }
