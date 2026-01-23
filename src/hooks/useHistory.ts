@@ -52,7 +52,7 @@ export function useHistory() {
       title: currentState.title as string,
       timestamp: Date.now(),
       // The previewImage (low-res thumbnail) is our primary visual in history
-      previewImage: currentState.previewImage as string | undefined,
+      previewImage: pruneValue(currentState.previewImage) as string | undefined,
       fullState: leanState,
     }
 

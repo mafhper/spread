@@ -368,7 +368,7 @@ export const PreviewSection: React.FC = () => {
       // We use a small pixel ratio to keep base64 string small
       const thumbnailUrl = await toPng(target, {
         ...options,
-        pixelRatio: 0.4,
+        pixelRatio: 0.15, // 🔥 Reduced even more for safety
       })
 
       saveToHistory({ ...currentState, previewImage: thumbnailUrl })
