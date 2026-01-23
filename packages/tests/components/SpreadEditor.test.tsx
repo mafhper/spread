@@ -12,6 +12,11 @@ vi.mock('../../../src/store/cardStore')
 vi.mock('../../../src/services/metadata')
 vi.mock('../../../src/services/exportUtils')
 vi.mock('../../../src/hooks/useColorExtractor')
+vi.mock('../../../src/components/ui/LazyIntersection', () => ({
+  LazyIntersection: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}))
 
 describe('SpreadEditor Component', () => {
   const mockExtractColorsFromImage = vi.fn()

@@ -91,8 +91,10 @@ export const createMockCardStore = (
     // Active tab
     activeTab: 'card',
     isExporting: false,
+    isHydrated: true,
 
     // Actions (mock functions)
+    setHydrated: vi.fn(),
     updateField: vi.fn(),
     updateNestedField: vi.fn(),
     updateLayout: vi.fn(),

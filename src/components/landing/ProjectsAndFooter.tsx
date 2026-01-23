@@ -5,7 +5,8 @@
  */
 
 import React from 'react'
-import { ExternalLink, Heart, Github } from 'lucide-react'
+import { ExternalLink, Heart, Github, ArrowUp } from 'lucide-react'
+import { OptimizedImage } from '../OptimizedImage'
 
 const projects = [
   {
@@ -64,10 +65,11 @@ export const ProjectsAndFooter: React.FC = () => {
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-500`}
                 />
-                <img
+                <OptimizedImage
                   src={project.image}
                   alt={project.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
                 />
                 {/* External Link Icon Overlay */}
                 <div className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-full text-white/50 group-hover:text-white transition-colors border border-white/10">
@@ -181,6 +183,31 @@ export const ProjectsAndFooter: React.FC = () => {
             <p className="mt-2 text-[10px] uppercase tracking-widest opacity-50">
               © {currentYear} Spread
             </p>
+          </div>
+
+          {/* Action: Voltar ao Topo */}
+          <div className="flex justify-center mt-12 mb-4">
+            <button
+              onClick={() => {
+                const container = document.getElementById(
+                  'landing-scroll-container'
+                )
+                if (container) {
+                  container.scrollTo({ top: 0, behavior: 'smooth' })
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-violet-500/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all duration-300 group"
+            >
+              <ArrowUp
+                size={18}
+                className="group-hover:-translate-y-1 transition-transform duration-300"
+              />
+              <span className="text-sm font-bold uppercase tracking-widest">
+                Voltar ao Topo
+              </span>
+            </button>
           </div>
         </footer>
       </div>

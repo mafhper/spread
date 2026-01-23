@@ -2,71 +2,118 @@
 /**
  * Página principal do Spread
  */
-import "../styles/global.css";
-import { SpreadEditor } from "../components/SpreadEditor";
+import '../styles/global.css'
+import { SpreadEditor } from '../components/SpreadEditor'
+import StaticHero from '../components/landing/StaticHero.astro'
 
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL
 ---
 
 <!doctype html>
 <html lang="pt-br" class="dark">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Spread - Crie Visualizações de Links</title>
-        <link
-            rel="icon"
-            type="image/svg+xml"
-            href={`${base.replace(/\/$/, "")}/favicon-light.svg`}
-            media="(prefers-color-scheme: light)"
-        />
-        <link
-            rel="icon"
-            type="image/svg+xml"
-            href={`${base.replace(/\/$/, "")}/favicon-dark.svg`}
-            media="(prefers-color-scheme: dark)"
-        />
-        <style>
-            :root {
-                --bg-main: #09090b; /* Zinc 950 */
-                --bg-sidebar: #18181b; /* Zinc 900 */
-                --bg-card: #27272a; /* Zinc 800 */
-                --bg-input: #3f3f46; /* Zinc 700 */
-                --border-color: #3f3f46; /* Zinc 700 */
-                --border-hover: #52525b; /* Zinc 600 */
-                --text-main: #f4f4f5; /* Zinc 100 */
-                --text-muted: #a1a1aa; /* Zinc 400 */
-                --accent-primary: #c084fc; /* Purple 400 */
-                --accent-hover: #d8b4fe; /* Purple 300 */
-                --accent-gradient: linear-gradient(
-                    135deg,
-                    #c084fc 0%,
-                    #f472b6 100%
-                );
-            }
-            body {
-                font-family: "Inter", sans-serif;
-                background-color: var(--bg-main);
-                color: var(--text-main);
-            }
-            /* Custom Scrollbar */
-            ::-webkit-scrollbar {
-                width: 6px;
-                height: 6px;
-            }
-            ::-webkit-scrollbar-track {
-                background: transparent;
-            }
-            ::-webkit-scrollbar-thumb {
-                background: var(--border-color);
-                border-radius: 3px;
-            }
-            ::-webkit-scrollbar-thumb:hover {
-                background: var(--border-hover);
-            }
-        </style>
-    </head>
-    <body class="h-screen overflow-hidden">
-        <SpreadEditor client:only="react" />
-    </body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Spread - Crie e gerencie visualizações elegantes de links com customização completa, temas dinâmicos e exportação rápida."
+    />
+    <title>Spread - Crie Visualizações de Links</title>
+    <meta name="robots" content="index, follow" />
+    <link rel="sitemap" href="/spread/sitemap-index.xml" />
+    <link rel="canonical" href="https://mafhper.github.io/spread/" />
+    <!-- Preconnect to Font domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href={`${base.replace(/\/$/, '')}/favicon-light.svg`}
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href={`${base.replace(/\/$/, '')}/favicon-dark.svg`}
+      media="(prefers-color-scheme: dark)"
+    />
+    <!-- Preload critical assets -->
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      as="style"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <link
+      rel="preload"
+      href={`${base.replace(/\/$/, '')}/logo.svg`}
+      as="image"
+      fetchpriority="high"
+    />
+    <style is:inline>
+      :root {
+        --bg-main: #09090b;
+        --bg-sidebar: #18181b;
+        --bg-card: #27272a;
+        --bg-input: #3f3f46;
+        --border-color: #3f3f46;
+        --border-hover: #52525b;
+        --text-main: #f4f4f5;
+        --text-muted: #a1a1aa;
+        --accent-primary: #c084fc;
+        --accent-hover: #d8b4fe;
+        --accent-gradient: linear-gradient(135deg, #c084fc 0%, #f472b6 100%);
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        margin: 0;
+      }
+    </style>
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--border-hover);
+      }
+    </style>
+    <script>
+      // RUM Monitoring - Iniciado imediatamente para capturar métricas reais
+      import { onFCP, onLCP, onCLS, onINP } from 'web-vitals'
+
+      const logMetric = (metric) => {
+        const { name, value, rating, id } = metric
+        console.log(`[RUM] ${name}:`, { value, rating, id })
+      }
+
+      onFCP(logMetric)
+      onLCP(logMetric)
+      onCLS(logMetric)
+      onINP(logMetric)
+    </script>
+  </head>
+  <body class="h-screen overflow-hidden bg-zinc-950">
+    <div id="hero-shell" class="absolute inset-0 z-0">
+      <StaticHero />
+    </div>
+    <div class="relative z-10 h-full w-full">
+      <SpreadEditor client:load />
+    </div>
+  </body>
 </html>

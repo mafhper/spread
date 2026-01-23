@@ -82,6 +82,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 alt="Spread"
                 className="w-12 h-12 sm:w-20 sm:h-20 opacity-90 drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] animate-color-shift"
                 style={{ filter: 'brightness(1.3) contrast(1.1)' }}
+                fetchPriority="high"
+                loading="eager"
               />
             </div>
 
@@ -117,15 +119,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               className="flex-1 bg-transparent px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-white placeholder:text-white/30 focus:outline-none min-w-0"
               aria-label="URL"
               onFocus={e => {
-                // Scroll into view to ensure it's above keyboard
-                setTimeout(
-                  () =>
-                    e.target.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'center',
-                    }),
-                  300
-                )
+                // Ensure input is visible on mobile when keyboard appears
+                e.target.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                })
               }}
             />
             <button

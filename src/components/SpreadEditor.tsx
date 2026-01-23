@@ -87,7 +87,10 @@ export const SpreadEditor: React.FC = () => {
     return (
       <div className="h-screen w-full flex flex-col bg-zinc-950 text-white overflow-hidden">
         {/* Landing Page Content (scrollable) */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth snap-y snap-mandatory relative scrollbar-hide">
+        <div
+          id="landing-scroll-container"
+          className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth snap-y snap-mandatory relative scrollbar-hide"
+        >
           {/* Welcome Header (Absolute, scrolls with content) */}
           <header className="absolute top-0 left-0 right-0 z-50 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center bg-transparent backdrop-blur-sm sm:bg-zinc-950/80 sm:backdrop-blur-xl border-b border-white/5 sm:border-white/5">
             <div className="flex items-center gap-3 sm:gap-4">

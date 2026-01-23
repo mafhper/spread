@@ -1,10 +1,3 @@
-/**
- * Landing Page - Main container for welcome state sections
- *
- * Renders a full promotional landing page when user is in welcome state.
- * Includes Hero, Features, Tech Stack, GitHub Activity, About, and Footer.
- */
-
 import React from 'react'
 import { HeroSection } from './HeroSection'
 import { FeatureGrid } from './FeatureGrid'
@@ -12,6 +5,7 @@ import { TechStackSection } from './TechStackSection'
 import { GitHubActivity } from './GitHubActivity'
 import { AboutAuthor } from './AboutAuthor'
 import { ProjectsAndFooter } from './ProjectsAndFooter'
+import { LazyIntersection } from '../ui/LazyIntersection'
 
 interface LandingPageProps {
   inputUrl: string
@@ -37,20 +31,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         />
       </header>
 
-      {/* Feature Grid */}
-      <FeatureGrid />
+      {/* Feature Grid - Higher priority, smaller rootMargin */}
+      <LazyIntersection rootMargin="300px" minHeight="600px">
+        <FeatureGrid />
+      </LazyIntersection>
 
       {/* Tech Stack */}
-      <TechStackSection />
+      <LazyIntersection rootMargin="200px" minHeight="500px">
+        <TechStackSection />
+      </LazyIntersection>
 
       {/* GitHub Activity */}
-      <GitHubActivity />
+      <LazyIntersection rootMargin="200px" minHeight="500px">
+        <GitHubActivity />
+      </LazyIntersection>
 
       {/* About Author */}
-      <AboutAuthor />
+      <LazyIntersection rootMargin="200px" minHeight="600px">
+        <AboutAuthor />
+      </LazyIntersection>
 
       {/* Projects and Footer */}
-      <ProjectsAndFooter />
+      <LazyIntersection rootMargin="100px" minHeight="800px">
+        <ProjectsAndFooter />
+      </LazyIntersection>
     </main>
   )
 }

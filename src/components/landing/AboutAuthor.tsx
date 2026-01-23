@@ -38,6 +38,7 @@ export const AboutAuthor: React.FC = () => {
               src="https://github.com/mafhper.png"
               alt="mafhper"
               className="relative w-20 h-20 sm:w-32 sm:h-32 rounded-full border-2 border-white/10 shadow-2xl"
+              loading="lazy"
             />
           </div>
           <h3 className="text-2xl font-black text-white mb-1">mafhper</h3>

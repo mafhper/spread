@@ -83,8 +83,10 @@ export interface CardState {
 
   activeTab: 'card' | 'photo' | 'canvas' | 'text'
   isExporting: boolean
+  isHydrated: boolean
 
   // Actions
+  setHydrated: (state: boolean) => void
   updateField: (field: string, value: unknown) => void
   updateNestedField: <T extends keyof CardState>(
     section: T,
@@ -172,12 +174,15 @@ const DEFAULT_STATE = {
   textAlign: 'left' as const,
   activeTab: 'card' as const,
   isExporting: false,
+  isHydrated: false,
 }
 
 export const useCardStore = create<CardState>()(
   persist(
     set => ({
       ...DEFAULT_STATE,
+
+      setHydrated: state => set({ isHydrated: state }),
 
       updateField: (field, value) =>
         set(state => ({ ...state, [field]: value })),
