@@ -335,22 +335,22 @@ export const PreviewSection: React.FC = () => {
                   )}
             </div>
             
-            <div className={`flex-shrink-0 w-full max-w-2xl mx-auto px-4 z-20 transition-all duration-1000 ${isWelcomeState ? 'mt-12 py-8' : 'mt-4 py-3'}`}>
-                <div className={`flex gap-3 rounded-2xl p-2 border border-white/10 ring-1 ring-white/5 transition-all duration-500 ${isWelcomeState ? 'bg-black/40 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.5)] scale-110' : 'bg-black/60 backdrop-blur-xl shadow-2xl'}`}>
+            <div className={`flex-shrink-0 w-full max-w-2xl mx-auto px-3 sm:px-4 z-20 transition-all duration-1000 ${isWelcomeState ? 'mt-4 sm:mt-12 py-4 sm:py-8' : 'mt-2 sm:mt-4 py-2 sm:py-3'}`}>
+                <div className={`flex gap-2 sm:gap-3 rounded-2xl p-1.5 sm:p-2 border border-white/10 ring-1 ring-white/5 transition-all duration-500 ${isWelcomeState ? 'bg-black/40 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.5)] sm:scale-110' : 'bg-black/60 backdrop-blur-xl shadow-2xl'}`}>
                     <input
                         type="url"
                         placeholder="Cole seu link aqui..."
                         value={inputUrl}
                         onChange={(e) => setInputUrl(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                        className="flex-1 bg-transparent px-5 py-3 text-base text-white placeholder:text-white/30 focus:outline-none min-w-0"
+                        className="flex-1 bg-transparent px-3 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder:text-white/30 focus:outline-none min-w-0"
                     />
                     <button 
                         onClick={handleGenerate}
                         disabled={isLoadingMetadata}
-                        className="flex-shrink-0 bg-white text-black px-8 py-3 rounded-xl text-base font-black hover:bg-gray-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 flex items-center gap-2 group"
+                        className="flex-shrink-0 bg-white text-black px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-black hover:bg-gray-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 flex items-center gap-2 group min-h-[44px]"
                     >
-                        {isLoadingMetadata ? <Loader2 className="animate-spin w-5 h-5" /> : <><Zap size={18} className="fill-black group-hover:scale-125 transition-transform" /> Gerar</>}
+                        {isLoadingMetadata ? <Loader2 className="animate-spin w-5 h-5" /> : <><Zap size={18} className="fill-black group-hover:scale-125 transition-transform" /> <span className="hidden sm:inline">Gerar</span></>}
                     </button>
                 </div>
             </div>
@@ -438,11 +438,11 @@ export const PreviewSection: React.FC = () => {
             )}
 
             {!isWelcomeState && (
-                <div className="flex-shrink-0 py-6 flex justify-center z-10 mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="flex-shrink-0 py-4 sm:py-6 flex justify-center z-10 mb-2 sm:mb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                     <button 
                         onClick={handleDownload}
                         disabled={isGenerating}
-                        className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-full font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 text-sm"
+                        className="flex items-center gap-2 bg-white text-black px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-bold shadow-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 text-sm min-h-[44px]"
                     >
                         {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
                         {isGenerating ? 'Gerando...' : 'Baixar Imagem'}
