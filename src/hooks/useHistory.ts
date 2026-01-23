@@ -30,11 +30,18 @@ export function useHistory() {
   }, [])
 
   const saveToHistory = (currentState: Record<string, unknown>) => {
-    // Create a lean version of state to save
-    const leanState = { ...currentState }
+    // 🔥 NEW: Extremely aggressive pruning for storage
+    const pruneValue = (val: unknown) =>
+      typeof val === 'string' && val.length > 50000 ? null : val
 
-    // Don't save large base64 strings in history if possible, or limit them
-    // For now, we'll keep the image but limit the array size strictly
+    const leanState: Record<string, unknown> = { ...currentState }
+    // Remove individual large assets from the nested state to save space
+    if (leanState.image) leanState.image = pruneValue(leanState.image)
+    if (leanState.customBgImage)
+      leanState.customBgImage = pruneValue(leanState.customBgImage)
+    if (leanState.favicon) leanState.favicon = pruneValue(leanState.favicon)
+    // Avoid double-saving the preview image inside fullState
+    delete leanState.previewImage
 
     const newItem: HistoryItem = {
       id:
@@ -44,29 +51,28 @@ export function useHistory() {
       url: currentState.url as string,
       title: currentState.title as string,
       timestamp: Date.now(),
-      // Save the main image or custom background as preview
-      previewImage: (currentState.previewImage ||
-        currentState.image ||
-        currentState.customBgImage ||
-        currentState.favicon) as string | undefined,
+      // The previewImage (low-res thumbnail) is our primary visual in history
+      previewImage: currentState.previewImage as string | undefined,
       fullState: leanState,
     }
 
     setHistory(prev => {
-      // Limit to 5 items to prevent QuotaExceeded
-      const updated = [newItem, ...prev].slice(0, 5)
+      // Limit to 4 items - each could still be ~1MB if not pruned enough
+      const updated = [newItem, ...prev].slice(0, 4)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
         return updated
-      } catch {
-        console.error('Local storage full, attempting to save only latest item')
-        // If full, try saving only the new item
+      } catch (e) {
+        console.error('Local storage full, saving only the latest item', e)
         const singleItem = [newItem]
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(singleItem))
           return singleItem
-        } catch (e) {
-          console.error('Critical: Cannot save history item even alone.', e)
+        } catch (err) {
+          console.error(
+            'Critical: Cannot save even a single history item.',
+            err
+          )
           return prev
         }
       }
@@ -75,7 +81,13 @@ export function useHistory() {
 
   const loadFromHistory = (item: HistoryItem) => {
     if (item.fullState) {
-      setFullState({ ...item.fullState, isWelcomeState: false })
+      // If we pruned high-res images to save space, fallback to the thumbnail we kept
+      const stateToRestore = { ...item.fullState }
+      if (!stateToRestore.image && item.previewImage) {
+        stateToRestore.image = item.previewImage
+      }
+
+      setFullState({ ...stateToRestore, isWelcomeState: false })
     }
   }
 
