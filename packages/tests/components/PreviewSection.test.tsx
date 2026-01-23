@@ -16,6 +16,10 @@ vi.mock('../../../src/hooks/useColorExtractor')
 vi.mock('../../../src/services/metadata')
 vi.mock('html-to-image')
 vi.mock('downloadjs')
+vi.mock('../../../src/services/exportUtils', () => ({
+  urlToBase64: vi.fn(),
+  getEmbeddedFontCSS: vi.fn().mockResolvedValue(''),
+}))
 
 describe('PreviewSection Component', () => {
   const mockSaveToHistory = vi.fn()
@@ -36,6 +40,11 @@ describe('PreviewSection Component', () => {
       extractColorsFromImage: mockExtractColorsFromImage,
       isExtracting: false,
       error: null,
+    })
+
+    Object.defineProperty(document, 'fonts', {
+      value: { ready: Promise.resolve() },
+      writable: true,
     })
   })
 
