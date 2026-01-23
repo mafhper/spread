@@ -1,73 +1,63 @@
-# Contribuindo para o Spread
+# Contributing to Spread
 
-Obrigado por considerar contribuir com o Spread! 🎉
+Thank you for considering contributing to Spread. We value community contributions that enhance the technical and visual quality of this project.
 
-## Como Contribuir
+## Development Workflow
 
-1. **Fork o repositório**
-2. **Clone seu fork**
+This project utilizes **Bun** as the primary runtime and package manager.
+
+### Contribution Process
+
+1. **Fork the Repository**
+2. **Clone the Local Repository**
    ```bash
-   git clone https://github.com/SEU-USUARIO/spread.git
+   git clone https://github.com/YOUR-USER/spread.git
    cd spread
    ```
 
-3. **Instale as dependências**
+3. **Dependency Installation**
    ```bash
-   npm install
+   bun install
    ```
 
-4. **Crie uma branch para sua feature**
+4. **Branch Creation**
    ```bash
-   git checkout -b feature/minha-feature
+   git checkout -b feature/contribution-name
    ```
 
-5. **Faça suas alterações**
-   - Mantenha o código limpo e bem documentado
-   - Teste suas alterações localmente com `npm run dev`
+5. **Implementation Guidelines**
+   - Adhere to the modular architecture located in `src/components`.
+   - Maintain code quality and ensure consistency with existing styling.
+   - Validate implementation locally using `bun dev`.
 
-6. **Commit suas alterações**
+6. **Version Control Integration**
+   We utilize semantic commit conventions:
+   - `feat:` for functional enhancements
+   - `fix:` for defect resolution
+   - `docs:` for documentation modifications
+   - `style:` for formatting adjustments
+   - `refactor:` for code restructuring
+   - `test:` for test suite updates
+   - `chore:` for developmental maintenance
+
+7. **Synchronization**
    ```bash
-   git commit -m "feat: adiciona nova funcionalidade"
+   git push origin feature/contribution-name
    ```
 
-7. **Push para seu fork**
-   ```bash
-   git push origin feature/minha-feature
-   ```
+8. **Pull Request Submission**
 
-8. **Abra um Pull Request**
+## Issue Reporting
 
-## Convenções de Commit
+Technical issues or feature requests should be submitted via GitHub Issues, including:
+- Detailed technical descriptions.
+- Procedures for reproduction.
+- Expected behavior versus observed behavior.
 
-Usamos commits semânticos:
+## Code of Conduct
 
-- `feat:` - Nova funcionalidade
-- `fix:` - Correção de bug
-- `docs:` - Alterações na documentação
-- `style:` - Formatação, ponto e vírgula, etc
-- `refactor:` - Refatoração de código
-- `test:` - Adição de testes
-- `chore:` - Manutenção
-
-## Reportar Bugs
-
-Abra uma issue com:
-- Descrição clara do problema
-- Passos para reproduzir
-- Comportamento esperado vs atual
-- Screenshots (se aplicável)
-
-## Sugerir Funcionalidades
-
-Abra uma issue descrevendo:
-- O problema que a funcionalidade resolve
-- Como você imagina que funcionaria
-- Exemplos de uso
-
-## Código de Conduta
-
-Seja respeitoso e construtivo em todas as interações.
+All contributors are expected to maintain professional, respectful, and constructive interactions.
 
 ---
 
-Obrigado por contribuir! 🚀
+Built with **Astro**, **React**, and **Tailwind CSS**.
