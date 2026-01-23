@@ -336,7 +336,7 @@ export const PreviewSection: React.FC = () => {
             </div>
             
             <div className={`flex-shrink-0 w-full max-w-2xl mx-auto px-3 sm:px-4 z-20 transition-all duration-1000 ${isWelcomeState ? 'mt-4 sm:mt-12 py-4 sm:py-8' : 'mt-2 sm:mt-4 py-2 sm:py-3'}`}>
-                <div className={`flex gap-2 sm:gap-3 rounded-2xl p-1.5 sm:p-2 border border-white/10 ring-1 ring-white/5 transition-all duration-500 ${isWelcomeState ? 'bg-black/40 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.5)] sm:scale-110' : 'bg-black/60 backdrop-blur-xl shadow-2xl'}`}>
+                <div className={`flex gap-2 sm:gap-3 rounded-2xl p-1.5 sm:p-2 border border-white/10 ring-1 ring-white/5 transition-all duration-500 ${isWelcomeState ? 'bg-black/40 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.5)]' : 'bg-black/60 backdrop-blur-xl shadow-2xl'}`}>
                     <input
                         type="url"
                         placeholder="Cole seu link aqui..."

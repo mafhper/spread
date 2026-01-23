@@ -22,7 +22,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
     isLoading
 }) => {
     return (
-        <section className="relative min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden snap-start">
+        <section className="relative min-h-screen sm:min-h-screen flex flex-col items-center justify-start sm:justify-center pt-24 pb-12 sm:py-0 px-4 sm:px-6 lg:px-8 overflow-hidden snap-start" style={{ minHeight: '100dvh' }}>
             {/* Animated Background - Geometric Mesh */}
             <div className="absolute inset-0">
                 {/* Base gradient */}
@@ -49,22 +49,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
 
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto">
+            <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto w-full">
                 {/* Animated Logo */}
-                <div className="relative mb-8 sm:mb-12">
+                <div className="relative mb-6 sm:mb-12">
                     {/* Glow ring */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-44 h-44 sm:w-52 sm:h-52 bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20 rounded-full blur-2xl animate-pulse" />
+                        <div className="w-36 h-36 sm:w-52 sm:h-52 bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20 rounded-full blur-2xl animate-pulse" />
                     </div>
                     
                     {/* Logo container */}
-                    <div className="relative w-28 h-28 sm:w-36 sm:h-36 transform hover:scale-110 transition-transform duration-500">
+                    <div className="relative w-24 h-24 sm:w-36 sm:h-36 transform hover:scale-110 transition-transform duration-500">
                         <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-3xl rotate-6 opacity-80" />
                         <div className="absolute inset-1 bg-zinc-950 rounded-3xl flex items-center justify-center">
                             <img 
                                 src="/spread/logo.svg" 
                                 alt="Spread" 
-                                className="w-16 h-16 sm:w-20 sm:h-20 opacity-90 drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] animate-color-shift"
+                                className="w-12 h-12 sm:w-20 sm:h-20 opacity-90 drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] animate-color-shift"
                                 style={{ filter: 'brightness(1.3) contrast(1.1)' }}
                             />
                         </div>
@@ -77,20 +77,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
 
                 {/* Headline */}
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-4 sm:mb-6">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 sm:mb-6">
                     <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
                         Spread
                     </span>
                 </h1>
 
                 {/* Tagline */}
-                <p className="text-lg sm:text-xl md:text-2xl text-white/60 font-medium max-w-2xl mb-8 sm:mb-12 leading-relaxed">
+                <p className="text-base sm:text-xl md:text-2xl text-white/60 font-medium max-w-2xl mb-8 sm:mb-12 leading-relaxed px-4">
                     Crie visualizações <span className="text-white/90">elegantes</span> de links para compartilhar nas redes sociais
                 </p>
 
                 {/* URL Input */}
-                <div className="w-full max-w-2xl">
-                    <div className="flex gap-2 sm:gap-3 rounded-2xl p-1.5 sm:p-2 bg-white/5 backdrop-blur-2xl border border-white/10 ring-1 ring-white/5 shadow-[0_32px_64px_rgba(0,0,0,0.4)]">
+                <div className="w-full max-w-2xl px-2">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 rounded-2xl p-1.5 sm:p-2 bg-white/5 backdrop-blur-2xl border border-white/10 ring-1 ring-white/5 shadow-[0_32px_64px_rgba(0,0,0,0.4)]">
                         <input
                             type="url"
                             placeholder="Cole seu link aqui..."
@@ -98,11 +98,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                             onChange={(e) => setInputUrl(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
                             className="flex-1 bg-transparent px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-white placeholder:text-white/30 focus:outline-none min-w-0"
+                            onFocus={(e) => {
+                                // Scroll into view to ensure it's above keyboard
+                                setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+                            }}
                         />
                         <button 
                             onClick={onGenerate}
                             disabled={isLoading}
-                            className="flex-shrink-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-400 hover:to-fuchsia-400 text-white px-6 sm:px-10 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-bold transition-all shadow-xl shadow-violet-500/25 disabled:opacity-50 flex items-center gap-2 sm:gap-3 group min-h-[52px]"
+                            className="flex-shrink-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-400 hover:to-fuchsia-400 text-white px-6 sm:px-10 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-bold transition-all shadow-xl shadow-violet-500/25 disabled:opacity-50 flex items-center justify-center gap-2 sm:gap-3 group min-h-[52px]"
                         >
                             {isLoading ? (
                                 <Loader2 className="animate-spin w-5 h-5" />
