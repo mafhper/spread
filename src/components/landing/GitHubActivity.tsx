@@ -35,6 +35,26 @@ const commits = [
 ]
 
 export const GitHubActivity: React.FC = () => {
+  const [data, setData] = React.useState(commits)
+
+  React.useEffect(() => {
+    fetch('https://api.github.com/repos/mafhper/spread/commits?per_page=4')
+      .then(res => res.json())
+      .then(json => {
+        if (Array.isArray(json)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const formatted = json.map((item: any) => ({
+            message: item.commit.message.split('\n')[0], // Only first line
+            date: new Date(item.commit.author.date).toISOString().split('T')[0],
+            hash: item.sha.substring(0, 7),
+            author: item.commit.author.name,
+          }))
+          setData(formatted)
+        }
+      })
+      .catch(err => console.error('Failed to fetch commits:', err))
+  }, [])
+
   return (
     <section className="relative min-h-screen py-20 sm:py-32 px-4 sm:px-6 lg:px-8 bg-zinc-950 flex items-center overflow-hidden snap-start">
       {/* Harmonious Transition Background */}
@@ -59,7 +79,7 @@ export const GitHubActivity: React.FC = () => {
 
         {/* Commit list */}
         <div className="space-y-4">
-          {commits.map((commit, index) => (
+          {data.map((commit, index) => (
             <div
               key={index}
               className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/15 transition-all duration-300"

@@ -37,7 +37,10 @@ export function useHistory() {
     // For now, we'll keep the image but limit the array size strictly
 
     const newItem: HistoryItem = {
-      id: crypto.randomUUID(),
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now().toString(),
       url: currentState.url as string,
       title: currentState.title as string,
       timestamp: Date.now(),
@@ -50,16 +53,23 @@ export function useHistory() {
     }
 
     setHistory(prev => {
-      // Limit to 10 items to prevent QuotaExceeded
-      const updated = [newItem, ...prev].slice(0, 10)
+      // Limit to 5 items to prevent QuotaExceeded
+      const updated = [newItem, ...prev].slice(0, 5)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+        return updated
       } catch {
-        console.error('Local storage full, clearing old history')
-        // If still full, clear all
-        return [newItem]
+        console.error('Local storage full, attempting to save only latest item')
+        // If full, try saving only the new item
+        const singleItem = [newItem]
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(singleItem))
+          return singleItem
+        } catch (e) {
+          console.error('Critical: Cannot save history item even alone.', e)
+          return prev
+        }
       }
-      return updated
     })
   }
 
