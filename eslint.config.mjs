@@ -8,7 +8,14 @@ import securityPlugin from 'eslint-plugin-security'
 export default [
   // Global ignores
   {
-    ignores: ['dist/', 'node_modules/', '.astro/', '.gemini/', '_dev/'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      '.astro/',
+      '.gemini/',
+      '_dev/',
+      'coverage/',
+    ],
   },
 
   // TypeScript configuration
