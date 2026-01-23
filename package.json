@@ -29,10 +29,20 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "astro": "astro"
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "test:coverage": "vitest run --coverage",
+    "lighthouse:ci": "lhci autorun",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "security:audit": "bun audit",
+    "quality:check": "bun run lint && bun run type-check && bun run format:check && bun run test && bun run security:audit",
+    "astro": "astro",
+    "prepare": "husky"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
+    "@astrojs/sitemap": "^3.7.0",
     "astro": "^5.16.12",
     "clsx": "^2.1.1",
     "colorthief": "^2.6.0",
@@ -44,7 +54,20 @@
     "tailwind-merge": "^3.4.0",
     "zustand": "^5.0.10"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{json,md}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "@lhci/cli": "^0.15.1",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -53,10 +76,18 @@
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "eslint": "^9.39.2",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-astro": "^1.5.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-plugin-security": "^3.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^27.4.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "tailwindcss": "^4.1.18",
     "typescript-eslint": "^8.53.1",
     "vitest": "^4.0.17"

@@ -2,7 +2,7 @@
 
 Spread es una aplicación web de alto rendimiento diseñada para la creación de tarjetas estéticas de visualización de enlaces. La plataforma permite a los usuarios transformar URLs de diversos servicios —incluyendo plataformas de música, redes sociales y portales de noticias— en activos visuales profesionales, optimizados para el intercambio social.
 
-![Banner](docs/assets/banner.png)
+![Banner](public/assets/banner.png)
 
 <div align="center">
 
@@ -40,7 +40,7 @@ graph LR
     E --> G[Editor Visual]
     F --> G
     G --> H[Exportación PNG]
-    
+
     style A fill:#18181b,stroke:#a855f7,color:#fff
     style H fill:#18181b,stroke:#f43f5e,color:#fff
     style G fill:#18181b,stroke:#06b6d4,color:#fff
@@ -50,8 +50,11 @@ graph LR
 
 ## Ejemplos Visuales
 
-![Vistas previas de música y redes sociales](docs/assets/social-preview.png)
-*Nota: Ejemplos de plantillas específicas para contenidos musicales y redes sociales.*
+![Vistas previas de música](public/assets/music-preview.png)
+_Nota: Ejemplos de plantillas específicas para contenidos musicales._
+
+![Vistas previas de redes sociales](public/assets/social-preview.png)
+_Nota: Ejemplos de plantillas específicas para contenidos de redes sociales._
 
 ---
 

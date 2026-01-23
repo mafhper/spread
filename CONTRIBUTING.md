@@ -10,17 +10,20 @@ This project utilizes **Bun** as the primary runtime and package manager.
 
 1. **Fork the Repository**
 2. **Clone the Local Repository**
+
    ```bash
    git clone https://github.com/YOUR-USER/spread.git
    cd spread
    ```
 
 3. **Dependency Installation**
+
    ```bash
    bun install
    ```
 
 4. **Branch Creation**
+
    ```bash
    git checkout -b feature/contribution-name
    ```
@@ -41,6 +44,7 @@ This project utilizes **Bun** as the primary runtime and package manager.
    - `chore:` for developmental maintenance
 
 7. **Synchronization**
+
    ```bash
    git push origin feature/contribution-name
    ```
@@ -50,6 +54,7 @@ This project utilizes **Bun** as the primary runtime and package manager.
 ## Issue Reporting
 
 Technical issues or feature requests should be submitted via GitHub Issues, including:
+
 - Detailed technical descriptions.
 - Procedures for reproduction.
 - Expected behavior versus observed behavior.

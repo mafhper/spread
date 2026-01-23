@@ -1,14 +1,14 @@
-import type { InputHTMLAttributes } from 'react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import type { InputHTMLAttributes } from 'react'
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
 
 function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
+  label?: string
+  error?: string
 }
 
 export function Input({ className, label, error, ...props }: InputProps) {
@@ -27,7 +27,9 @@ export function Input({ className, label, error, ...props }: InputProps) {
         )}
         {...props}
       />
-      {error && <span className="text-xs text-red-400 mt-1 block">{error}</span>}
+      {error && (
+        <span className="text-xs text-red-400 mt-1 block">{error}</span>
+      )}
     </div>
-  );
+  )
 }

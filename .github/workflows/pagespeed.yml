@@ -1,0 +1,45 @@
+name: PageSpeed Monitor
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  pagespeed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: PageSpeed Insights
+        uses: jakepartusch/page-speed-insights-action@v1
+        with:
+          url: https://mafhper.github.io/spread
+          key: ${{ secrets.PAGESPEED_API_KEY }}
+          threshold: 90
+
+      - name: Start preview server
+        run: bun run preview &
+
+      - name: Wait for server
+        run: sleep 10
+
+      - name: Run local PageSpeed test
+        uses: jakepartusch/page-speed-insights-action@v1
+        with:
+          url: http://localhost:4321
+          key: ${{ secrets.PAGESPEED_API_KEY }}
+          threshold: 85

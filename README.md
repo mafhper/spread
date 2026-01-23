@@ -2,7 +2,7 @@
 
 Spread is a high-performance web application designed for the creation of aesthetic link visualization cards. It enables users to transform URLs from various platforms—including music services, social media, and news outlets—into professionally styled visual assets optimized for social sharing.
 
-![Banner](docs/assets/banner.png)
+![Banner](public/assets/banner.png)
 
 <div align="center">
 
@@ -40,7 +40,7 @@ graph LR
     E --> G[Visual Editor]
     F --> G
     G --> H[PNG Export]
-    
+
     style A fill:#18181b,stroke:#a855f7,color:#fff
     style H fill:#18181b,stroke:#f43f5e,color:#fff
     style G fill:#18181b,stroke:#06b6d4,color:#fff
@@ -50,8 +50,11 @@ graph LR
 
 ## Visual Examples
 
-![Music and Social Previews](docs/assets/social-preview.png)
-*Note: Examples of platform-specific templates for music and social media content.*
+![Music Previews](public/assets/music-preview.png)
+_Note: Examples of platform-specific templates for music content._
+
+![Social Previews](public/assets/social-preview.png)
+_Note: Examples of platform-specific templates for social media content._
 
 ---
 

@@ -23,9 +23,14 @@ pnpm-debug.log*
 .idea/
 
 # documentation (internal use only)
-# docs/
+docs/
 /_desenvolvimento
 /_dev
+
+# Lighthouse reports (temporary)
+*lighthouse*.json
+REAL_REPORT.json
+/.lighthouseci
 
 # project specific exclusions
 GEMINI.md

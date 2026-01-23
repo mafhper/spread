@@ -1,0 +1,6 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemaps can be added here once generated
+# Sitemap: https://mafhper.github.io/spread/sitemap-index.xml
