@@ -4,7 +4,7 @@
  * Uses static data for build efficiency as requested by the user.
  */
 
-import React from 'react'
+import React, { memo } from 'react'
 import { GitCommit, ExternalLink, Calendar } from 'lucide-react'
 
 const commits = [
@@ -34,7 +34,7 @@ const commits = [
   },
 ]
 
-export const GitHubActivity: React.FC = () => {
+const GitHubActivityBase: React.FC = () => {
   const [data, setData] = React.useState(commits)
 
   React.useEffect(() => {
@@ -140,3 +140,5 @@ export const GitHubActivity: React.FC = () => {
     </section>
   )
 }
+
+export const GitHubActivity = memo(GitHubActivityBase)

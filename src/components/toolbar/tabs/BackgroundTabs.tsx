@@ -45,11 +45,12 @@ export const BackgroundTabs: React.FC = () => {
             <button
               key={p.value}
               onClick={() => updateField('pattern', p.value)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all min-w-[44px] min-h-[44px] ${
                 pattern === p.value
                   ? 'bg-white text-black'
                   : 'bg-white/10 hover:bg-white/20'
               }`}
+              aria-label={`Selecionar padrão: ${p.label}`}
             >
               {p.label}
             </button>
@@ -71,10 +72,11 @@ export const BackgroundTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateField('patternOpacity', 0.1)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar opacidade do padrão"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -101,10 +103,11 @@ export const BackgroundTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateField('patternScale', 1)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar escala do padrão"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -156,10 +159,11 @@ export const BackgroundTabs: React.FC = () => {
             />
             <button
               onClick={() => updateField('customBgImage', null)}
-              className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Remover imagem"
+              aria-label="Remover imagem de fundo"
             >
-              <Trash2 size={14} />
+              <Trash2 size={16} />
             </button>
           </div>
         )}

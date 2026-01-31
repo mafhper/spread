@@ -99,8 +99,13 @@ export const TypographyTabs: React.FC = () => {
           Fonte e Alinhamento
         </span>
 
-        <div className="relative group" tabIndex={0} role="button">
-          <div className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all cursor-pointer">
+        <div
+          className="relative group"
+          tabIndex={0}
+          role="button"
+          aria-label="Selecionar fonte"
+        >
+          <div className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-left px-4 py-3 rounded-xl flex items-center justify-between transition-all cursor-pointer min-h-[44px]">
             <span
               className="text-lg truncate pr-4"
               style={{ fontFamily: fontFamily }}
@@ -120,6 +125,7 @@ export const TypographyTabs: React.FC = () => {
                     e.currentTarget.parentElement?.parentElement as HTMLElement
                   )?.blur()
                 }}
+                aria-label={`Selecionar fonte ${font}`}
                 className={clsx(
                   'w-full text-left px-4 py-3 text-base border-b border-white/5 last:border-0 hover:bg-white/10 transition-colors',
                   fontFamily === font
@@ -144,11 +150,12 @@ export const TypographyTabs: React.FC = () => {
               key={value}
               onClick={() => updateField('textAlign', value)}
               className={clsx(
-                'py-2.5 rounded-xl flex justify-center border transition-all',
+                'py-3 min-h-[44px] rounded-xl flex justify-center items-center border transition-all',
                 textAlign === value
                   ? 'bg-white text-black border-transparent'
                   : 'bg-white/5 border-white/10 text-white/40 hover:text-white'
               )}
+              aria-label={`Alinhamento ${value}`}
             >
               <Icon size={18} />
             </button>
@@ -205,10 +212,11 @@ export const TypographyTabs: React.FC = () => {
               </span>
               <button
                 onClick={() => updateField('titleSize', 100)}
-                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Resetar Tamanho"
+                aria-label="Resetar tamanho do título"
               >
-                <RotateCcw size={8} />
+                <RotateCcw size={12} />
               </button>
             </div>
           </div>
@@ -237,10 +245,11 @@ export const TypographyTabs: React.FC = () => {
               </span>
               <button
                 onClick={() => updateField('subtitleSize', 100)}
-                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Resetar Tamanho"
+                aria-label="Resetar tamanho do subtítulo"
               >
-                <RotateCcw size={8} />
+                <RotateCcw size={12} />
               </button>
             </div>
           </div>

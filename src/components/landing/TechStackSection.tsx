@@ -4,7 +4,7 @@
  * Shows technology logos/badges with hover effects.
  */
 
-import React from 'react'
+import React, { memo } from 'react'
 
 const technologies = [
   {
@@ -72,7 +72,7 @@ const technologies = [
   },
 ]
 
-export const TechStackSection: React.FC = () => {
+const TechStackSectionBase: React.FC = () => {
   return (
     <section className="relative min-h-screen py-20 sm:py-32 px-4 sm:px-6 lg:px-8 bg-zinc-950 flex items-center overflow-hidden snap-start">
       {/* Gradient Background */}
@@ -123,3 +123,5 @@ export const TechStackSection: React.FC = () => {
     </section>
   )
 }
+
+export const TechStackSection = memo(TechStackSectionBase)

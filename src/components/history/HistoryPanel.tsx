@@ -49,6 +49,7 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/60 hover:text-white"
+            aria-label="Fechar painel de histórico"
           >
             <X size={20} />
           </button>
@@ -68,8 +69,9 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
             history.map(item => (
               <button
                 key={item.id}
-                className="group relative w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all cursor-pointer"
+                className="group relative w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all cursor-pointer min-h-[44px]"
                 onClick={() => handleRestore(item)}
+                aria-label={`Carregar card: ${item.title || 'Sem título'}`}
               >
                 {/* Thumbnail Preview */}
                 {item.previewImage && (
@@ -113,6 +115,7 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
                         }}
                         className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white/70 hover:text-white transition-colors"
                         title="Restaurar"
+                        aria-label={`Restaurar ${item.title}`}
                       >
                         <RotateCcw size={12} />
                       </button>
@@ -120,6 +123,7 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
                         onClick={e => handleDelete(e, item.id)}
                         className="p-1.5 bg-red-500/20 hover:bg-red-500/40 rounded-lg text-red-400 hover:text-red-300 transition-colors"
                         title="Excluir"
+                        aria-label={`Excluir ${item.title}`}
                       >
                         <Trash2 size={12} />
                       </button>

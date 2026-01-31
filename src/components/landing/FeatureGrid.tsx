@@ -5,7 +5,7 @@
  * Uses a subtle glass-morphism card style.
  */
 
-import React from 'react'
+import React, { memo } from 'react'
 import {
   Wand2,
   Palette,
@@ -54,7 +54,7 @@ const features = [
   },
 ]
 
-export const FeatureGrid: React.FC = () => {
+const FeatureGridBase: React.FC = () => {
   return (
     <section className="relative min-h-screen py-20 sm:py-32 px-4 sm:px-6 lg:px-8 bg-zinc-950 flex items-center overflow-hidden snap-start">
       {/* Gradient Background */}
@@ -116,3 +116,5 @@ export const FeatureGrid: React.FC = () => {
     </section>
   )
 }
+
+export const FeatureGrid = memo(FeatureGridBase)

@@ -77,9 +77,11 @@ export const LayoutTabs: React.FC = () => {
               max="1.5"
               step="0.05"
               value={layout.cardScale}
-              onChange={e =>
-                updateLayout('cardScale', parseFloat(e.target.value))
-              }
+              onChange={e => {
+                const val = parseFloat(e.target.value)
+                updateLayout('cardScale', val)
+                if (layout.cardAuto) updateLayout('cardAuto', false)
+              }}
               className="w-full"
             />
           </div>

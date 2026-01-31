@@ -6,13 +6,14 @@
  */
 
 import React from 'react'
-import { Zap, Loader2, Sparkles } from 'lucide-react'
+import { Zap, Loader2, Sparkles, Save } from 'lucide-react'
 
 interface HeroSectionProps {
   inputUrl: string
   setInputUrl: (url: string) => void
   onGenerate: () => void
   isLoading: boolean
+  hasDraft?: boolean
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
@@ -20,6 +21,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   setInputUrl,
   onGenerate,
   isLoading,
+  hasDraft = false,
 }) => {
   return (
     <section
@@ -95,6 +97,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Headline */}
+        {/* Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 sm:mb-6">
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
             Spread
@@ -145,10 +148,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </button>
           </div>
 
-          {/* Hint text */}
-          <p className="text-white/30 text-sm mt-4">
-            YouTube, Spotify, artigos, qualquer link com metadados Open Graph
-          </p>
+          {/* Draft indicator and hint text */}
+          <div className="flex items-center justify-center gap-3 mt-4">
+            {hasDraft && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-medium animate-pulse">
+                <Save size={12} />
+                Rascunho salvo
+              </span>
+            )}
+            <p className="text-white/30 text-sm">
+              YouTube, Spotify, artigos, qualquer link com metadados Open Graph
+            </p>
+          </div>
         </div>
       </div>
 

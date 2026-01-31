@@ -9,6 +9,35 @@ import { defineConfig } from 'astro/config'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
+import { visualizer } from 'rollup-plugin-visualizer'
+
+// Check if analysis mode is enabled
+const isAnalyze = process.env.ANALYZE === 'true'
+
+// Base Vite plugins
+const vitePlugins = [tailwindcss()]
+
+// Add bundle visualizer in analyze mode
+if (isAnalyze) {
+  console.log('[ANALYSIS - INFO] Bundle visualization enabled')
+  vitePlugins.push(
+    visualizer({
+      filename: 'performance-reports/analysis/bundle-visual.html',
+      title: 'Spread - Bundle Analysis',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      template: 'treemap',
+    }),
+    visualizer({
+      filename: 'performance-reports/analysis/bundle-stats.json',
+      open: false,
+      template: 'raw-data',
+      gzipSize: true,
+      brotliSize: true,
+    })
+  )
+}
 
 export default defineConfig({
   // Substitua 'spread' pelo nome do seu repositório
@@ -18,6 +47,47 @@ export default defineConfig({
   integrations: [react(), sitemap()],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: vitePlugins,
+    build: {
+      // Configure manual chunks for better caching and smaller initial load
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react-dom')) {
+                return 'vendor-dom'
+              }
+              if (
+                id.includes('react/') ||
+                id.includes('scheduler') ||
+                id.includes('object-assign')
+              ) {
+                return 'vendor-react'
+              }
+              if (id.includes('lucide')) {
+                return 'vendor-icons'
+              }
+              return 'vendor-base'
+            }
+          },
+        },
+      },
+      // Reduce chunk size warnings
+      chunkSizeWarningLimit: 500,
+    },
+    // Optimize deps for faster dev and smaller bundles
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'zustand',
+        'lucide-react',
+        'clsx',
+        'tailwind-merge',
+      ],
+    },
   },
+
+  // Enable compression for production
+  compressHTML: true,
 })

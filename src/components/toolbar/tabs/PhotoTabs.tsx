@@ -65,10 +65,11 @@ export const PhotoTabs: React.FC = () => {
             </span>
             <button
               onClick={() => updateLayout('imageScale', 1)}
-              className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+              className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Resetar Zoom"
+              aria-label="Resetar zoom da foto"
             >
-              <RotateCcw size={10} />
+              <RotateCcw size={12} />
             </button>
           </div>
         </div>
@@ -100,10 +101,11 @@ export const PhotoTabs: React.FC = () => {
               </span>
               <button
                 onClick={() => updateLayout('imageOffsetX', 0)}
-                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Resetar X"
+                aria-label="Resetar ajuste X da foto"
               >
-                <RotateCcw size={8} />
+                <RotateCcw size={12} />
               </button>
             </div>
           </div>
@@ -134,10 +136,11 @@ export const PhotoTabs: React.FC = () => {
               </span>
               <button
                 onClick={() => updateLayout('imageOffsetY', 0)}
-                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Resetar Y"
+                aria-label="Resetar ajuste Y da foto"
               >
-                <RotateCcw size={8} />
+                <RotateCcw size={12} />
               </button>
             </div>
           </div>

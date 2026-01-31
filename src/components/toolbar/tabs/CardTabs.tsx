@@ -15,6 +15,36 @@ export const CardTabs: React.FC = () => {
         </h4>
 
         {/* Card Scale */}
+        <div className="space-y-2 pt-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-[var(--text-muted)]">
+              Padding Auto
+            </span>
+            <input
+              type="checkbox"
+              checked={layout.paddingAuto}
+              onChange={e => updateLayout('paddingAuto', e.target.checked)}
+              className="w-5 h-3 rounded-full bg-white/20"
+              title="Auto padding entre card e canvas"
+            />
+          </div>
+          {!layout.paddingAuto && (
+            <div>
+              <span className="text-xs mr-2">Padding (px)</span>
+              <input
+                type="range"
+                min={0}
+                max={80}
+                step={1}
+                value={layout.padding}
+                onChange={e =>
+                  updateLayout('padding', parseInt(e.target.value))
+                }
+                className="w-full"
+              />
+            </div>
+          )}
+        </div>
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label
@@ -29,10 +59,11 @@ export const CardTabs: React.FC = () => {
               </span>
               <button
                 onClick={() => updateLayout('cardScale', 1)}
-                className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Resetar Escala"
+                aria-label="Resetar escala do card"
               >
-                <RotateCcw size={10} />
+                <RotateCcw size={12} />
               </button>
             </div>
           </div>
@@ -48,6 +79,34 @@ export const CardTabs: React.FC = () => {
             }
             className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
           />
+        </div>
+
+        {/* Card Auto-Size Mode */}
+        <div className="space-y-2 pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-[var(--text-muted)]">
+              Auto Tamanho do Card
+            </span>
+            <button
+              onClick={() => updateLayout('cardAuto', !layout.cardAuto)}
+              className={`w-12 h-7 rounded-full transition-colors relative flex items-center min-w-[44px] min-h-[28px] ${layout.cardAuto ? 'bg-white' : 'bg-white/10'}`}
+              title={layout.cardAuto ? 'Desativar Auto' : 'Ativar Auto'}
+              aria-label={
+                layout.cardAuto
+                  ? 'Desativar redimensionamento automático'
+                  : 'Ativar redimensionamento automático'
+              }
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 rounded-full transition-all shadow-sm ${layout.cardAuto ? 'left-6 bg-black' : 'left-1 bg-white/40'}`}
+              />
+            </button>
+          </div>
+          <p className="text-[10px] text-white/60">
+            Quando ativo, o card ajusta seu tamanho automaticamente com base no
+            canvas e no padding. Pode ser fine-tuned pela porcentagem acima
+            quando necessário.
+          </p>
         </div>
       </div>
 
@@ -66,10 +125,15 @@ export const CardTabs: React.FC = () => {
           <button
             id="show-header-toggle"
             onClick={() => updateLayout('showHeader', !layout.showHeader)}
-            className={`w-10 h-5 rounded-full transition-colors relative ${layout.showHeader ? 'bg-white' : 'bg-white/10'}`}
+            className={`w-12 h-7 rounded-full transition-colors relative min-w-[44px] min-h-[28px] ${layout.showHeader ? 'bg-white' : 'bg-white/10'}`}
+            aria-label={
+              layout.showHeader
+                ? 'Ocultar logo e título'
+                : 'Exibir logo e título'
+            }
           >
             <div
-              className={`absolute top-1 w-3 h-3 rounded-full transition-all ${layout.showHeader ? 'left-6 bg-black' : 'left-1 bg-white/40'}`}
+              className={`absolute top-1 w-5 h-5 rounded-full transition-all ${layout.showHeader ? 'left-6 bg-black' : 'left-1 bg-white/40'}`}
             />
           </button>
         </div>
@@ -124,10 +188,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('opacity', 1)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar Opacidade"
+                  aria-label="Resetar opacidade do card"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -161,10 +226,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('innerRadius', 24)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar arredondamento"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -195,10 +261,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('padding', 6)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar margem interna"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -256,10 +323,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('shadowOpacity', 0.25)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar opacidade da sombra"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -293,10 +361,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('shadowOffsetX', 0)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar X"
+                  aria-label="Resetar sombra X"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -326,10 +395,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('shadowOffsetY', 25)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar Y"
+                  aria-label="Resetar sombra Y"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>
@@ -362,10 +432,11 @@ export const CardTabs: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateLayout('shadowBlur', 50)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar"
+                  aria-label="Resetar difusão da sombra"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={10} />
                 </button>
               </div>
             </div>

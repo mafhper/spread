@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Maximize,
   Type,
@@ -9,28 +9,86 @@ import {
   Menu,
   X,
   Palette,
+  // Frame, // DISABLED: Feature not working
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCardStore } from '../../store/cardStore'
-import { CardTabs } from './tabs/CardTabs'
-import { MediaTabs } from './tabs/MediaTabs'
-import { CanvasControls } from './tabs/CanvasControls'
-import { TypographyTabs } from './tabs/TypographyTabs'
-import { ColorTabs } from './tabs/ColorTabs'
 
-type TabType = 'card' | 'colors' | 'media' | 'canvas' | 'text'
+// Lazy load tabs for code splitting
+const CardTabs = lazy(() =>
+  import('./tabs/CardTabs').then(m => ({ default: m.CardTabs }))
+)
+const MediaTabs = lazy(() =>
+  import('./tabs/MediaTabs').then(m => ({ default: m.MediaTabs }))
+)
+const CanvasControls = lazy(() =>
+  import('./tabs/CanvasControls').then(m => ({ default: m.CanvasControls }))
+)
+const TypographyTabs = lazy(() =>
+  import('./tabs/TypographyTabs').then(m => ({ default: m.TypographyTabs }))
+)
+const ColorTabs = lazy(() =>
+  import('./tabs/ColorTabs').then(m => ({ default: m.ColorTabs }))
+)
+const FrameTabs = lazy(() =>
+  import('./tabs/FrameTabs').then(m => ({ default: m.FrameTabs }))
+)
+const MessageSuggestions = lazy(() =>
+  import('./tabs/MessageSuggestions').then(m => ({
+    default: m.MessageSuggestions,
+  }))
+)
+
+type TabType =
+  | 'card'
+  | 'colors'
+  | 'media'
+  | 'canvas'
+  | 'text'
+  | 'frame'
+  | 'messages'
 
 const TABS = [
-  { id: 'card' as const, label: 'Card', icon: Layout },
-  { id: 'colors' as const, label: 'Cores', icon: Palette },
-  { id: 'media' as const, label: 'Mídia', icon: ImageIcon },
+  { id: 'canvas' as const, label: 'Formato', icon: Maximize },
+  { id: 'media' as const, label: 'Imagem', icon: ImageIcon },
   { id: 'text' as const, label: 'Texto', icon: Type },
-  { id: 'canvas' as const, label: 'Canvas', icon: Maximize },
+  { id: 'colors' as const, label: 'Cores', icon: Palette },
+  // { id: 'frame' as const, label: 'Frames', icon: Frame }, // DISABLED: Feature not working - to be fixed later
+  { id: 'card' as const, label: 'Ajustes', icon: Layout },
 ]
+
+const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
+  switch (activeTab) {
+    case 'card':
+      return <CardTabs />
+    case 'colors':
+      return <ColorTabs />
+    case 'media':
+      return <MediaTabs />
+    case 'canvas':
+      return <CanvasControls />
+    case 'text':
+      return (
+        <div className="space-y-6">
+          <TypographyTabs />
+          <div className="border-t border-white/10 pt-6">
+            <h4 className="text-sm font-medium text-white/40 mb-4 px-1">
+              Sugestões de Mensagem
+            </h4>
+            <MessageSuggestions />
+          </div>
+        </div>
+      )
+    case 'frame':
+      return <FrameTabs />
+    default:
+      return null
+  }
+}
 
 export const Sidebar: React.FC = () => {
   const { isSidebarOpen, updateField } = useCardStore()
-  const [activeTab, setActiveTab] = useState<TabType>('card')
+  const [activeTab, setActiveTab] = useState<TabType>('canvas')
   const [isMobile, setIsMobile] = useState(false)
 
   // Detect mobile
@@ -52,20 +110,17 @@ export const Sidebar: React.FC = () => {
     }
   }, [isMobile])
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'card':
-        return <CardTabs />
-      case 'colors':
-        return <ColorTabs />
-      case 'media':
-        return <MediaTabs />
-      case 'canvas':
-        return <CanvasControls />
-      case 'text':
-        return <TypographyTabs />
-    }
-  }
+  const renderTabContent = () => (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-32">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <TabContent activeTab={activeTab} />
+    </Suspense>
+  )
 
   // Mobile: Floating toggle button
   if (isMobile && !isOpen) {
@@ -73,6 +128,7 @@ export const Sidebar: React.FC = () => {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 left-4 z-50 w-14 h-14 bg-white text-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
+        aria-label="Abrir menu lateral"
       >
         <Menu size={24} />
       </button>
@@ -103,7 +159,8 @@ export const Sidebar: React.FC = () => {
         {isMobile && (
           <button
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-4 right-4 p-3 hover:bg-white/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            aria-label="Fechar menu lateral"
           >
             <X size={20} />
           </button>
@@ -119,12 +176,15 @@ export const Sidebar: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={clsx(
-                  'flex-1 py-3 rounded-xl flex items-center justify-center transition-all',
+                  'flex-1 py-3 min-h-[44px] rounded-xl flex items-center justify-center transition-all',
                   isActive
                     ? 'bg-white text-black'
                     : 'text-white/50 hover:bg-white/10 hover:text-white'
                 )}
                 title={tab.label}
+                aria-label={tab.label}
+                aria-selected={isActive}
+                role="tab"
               >
                 <Icon size={18} />
               </button>
@@ -153,10 +213,13 @@ export const Sidebar: React.FC = () => {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={clsx(
-            'absolute bottom-4 z-[60] p-2 rounded-r-xl bg-black/80 border border-l-0 border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 shadow-xl',
+            'absolute bottom-4 z-[60] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-r-xl bg-black/80 border border-l-0 border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 shadow-xl',
             isOpen ? 'left-80' : 'left-0'
           )}
           title={isOpen ? 'Recolher menu' : 'Personalizar'}
+          aria-label={
+            isOpen ? 'Recolher menu lateral' : 'Expandir menu lateral'
+          }
         >
           {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>

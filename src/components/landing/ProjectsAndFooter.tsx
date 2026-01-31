@@ -4,7 +4,7 @@
  * Displays other projects grid and the site footer in a single snap-start section.
  */
 
-import React from 'react'
+import React, { memo } from 'react'
 import { ExternalLink, Heart, Github, ArrowUp } from 'lucide-react'
 import { OptimizedImage } from '../OptimizedImage'
 
@@ -27,14 +27,31 @@ const projects = [
   },
 ]
 
-export const ProjectsAndFooter: React.FC = () => {
+const ProjectsAndFooterBase: React.FC = () => {
   const currentYear = new Date().getFullYear()
 
   return (
-    <section className="relative px-4 sm:px-6 lg:px-8 bg-zinc-950 overflow-hidden snap-start flex flex-col">
-      {/* Background elements for continuity */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-950/10 to-zinc-950" />
+    <section className="relative px-4 sm:px-6 lg:px-8 overflow-hidden snap-start flex flex-col">
+      {/* Background matching Hero section */}
+      <div className="absolute inset-0">
+        {/* Base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950" />
+
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
+          }}
+        />
+
+        {/* Gradient orbs */}
+        <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[60%] bg-violet-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[55%] h-[55%] bg-fuchsia-600/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="max-w-5xl mx-auto relative w-full pt-20 pb-12 sm:pt-32 sm:pb-16 flex-grow">
@@ -141,7 +158,8 @@ export const ProjectsAndFooter: React.FC = () => {
               href="https://github.com/mafhper/spread"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/30 hover:text-white transition-colors px-3 py-1 bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              className="text-white/30 hover:text-white transition-colors px-4 py-3 min-h-[44px] flex items-center bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              aria-label="GitHub do projeto"
             >
               GitHub
             </a>
@@ -149,7 +167,8 @@ export const ProjectsAndFooter: React.FC = () => {
               href="https://github.com/mafhper/spread/blob/main/LICENSE"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/30 hover:text-white transition-colors px-3 py-1 bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              className="text-white/30 hover:text-white transition-colors px-4 py-3 min-h-[44px] flex items-center bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              aria-label="Licença do projeto"
             >
               Licença MIT
             </a>
@@ -157,7 +176,8 @@ export const ProjectsAndFooter: React.FC = () => {
               href="https://github.com/mafhper/spread/blob/main/CONTRIBUTING.md"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/30 hover:text-white transition-colors px-3 py-1 bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              className="text-white/30 hover:text-white transition-colors px-4 py-3 min-h-[44px] flex items-center bg-white/5 rounded-full border border-white/5 hover:border-violet-500/30"
+              aria-label="Como contribuir"
             >
               Contribuir
             </a>
@@ -214,3 +234,5 @@ export const ProjectsAndFooter: React.FC = () => {
     </section>
   )
 }
+
+export const ProjectsAndFooter = memo(ProjectsAndFooterBase)

@@ -1,6 +1,7 @@
+import React, { memo } from 'react'
 import { ExternalLink, Heart, Globe } from 'lucide-react'
 
-export const AboutAuthor: React.FC = () => {
+const AboutAuthorBase: React.FC = () => {
   return (
     <section
       id="sobre"
@@ -76,3 +77,5 @@ export const AboutAuthor: React.FC = () => {
     </section>
   )
 }
+
+export const AboutAuthor = memo(AboutAuthorBase)

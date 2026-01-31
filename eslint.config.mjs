@@ -15,6 +15,17 @@ export default [
       '.gemini/',
       '_dev/',
       'coverage/',
+      'quality-core/dashboard/dist/',
+      'quality-core/dashboard/src/',
+      'quality-core/dashboard/*.config.ts',
+      'quality-core/dashboard/*.config.js',
+      'quality-core/dashboard/vite.config.*',
+      'quality-core/dashboard/vitest.config.*',
+      'quality-core/dashboard/tailwind.config.*',
+      'quality-core/dashboard/postcss.config.*',
+      'quality-core/dashboard/eslint.config.*',
+      '**/*.min.js',
+      '**/*-minified.*',
     ],
   },
 
@@ -92,6 +103,28 @@ export default [
         extraFileExtensions: ['.astro'],
         sourceType: 'module',
       },
+    },
+  },
+
+  // CommonJS files override - allow require()
+  {
+    files: ['**/*.cjs', 'quality-core/**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'import/no-commonjs': 'off',
+      // Allow non-literal filenames in internal quality-core tools
+      // where we have intentional dynamic path behavior
+      'security/detect-non-literal-fs-filename': 'off',
     },
   },
 ]

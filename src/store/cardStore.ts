@@ -2,15 +2,18 @@
  * Card Store - Estado Global do Editor Spread
  *
  * Gerencia o estado persistente do card com suporte a:
- * - Persistência seletiva (apenas preferências de design)
+ * - Persistencia seletiva (apenas preferencias de design)
  * - Reset adequado para formato "Auto"
  * - Versionamento para invalidar cache antigo
+ * - Frame Mode: presets visuais para cards personalizados
  *
- * @version 3.0.0
+ * @version 3.2.0 - Sistema SVG unificado
  */
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { FrameState, TemplateId } from '../types/frame'
+import { DEFAULT_FRAME_STATE } from '../types/frame'
 
 export interface CardState {
   // Metadata
@@ -46,6 +49,7 @@ export interface CardState {
     outerRadius: number
     innerRadius: number
     padding: number
+    paddingAuto: boolean
     opacity: number
     shadowOffsetX: number
     shadowOffsetY: number
@@ -55,11 +59,15 @@ export interface CardState {
     shadowOpacity: number
     backdropBlur: number
     cardScale: number
+    // Auto sizing flag for card: when true, the card scales to fit the canvas
+    // or to the current viewport when the canvas is auto.
+    cardAuto: boolean
     imageOffsetX: number
     imageOffsetY: number
     cardAspectRatio: string
     showHeader: boolean
     headerPosition: 'left' | 'right'
+    measuredCardHeight?: number
   }
 
   // Canvas Size
@@ -68,6 +76,11 @@ export interface CardState {
     height: number
     preset: string
     roundness: number
+  }
+  // Viewport available area for the editor (width/height in px)
+  viewport: {
+    width: number
+    height: number
   }
   cardPosition: {
     x: number
@@ -81,9 +94,15 @@ export interface CardState {
   subtitleSize: number
   textAlign: 'left' | 'center' | 'right'
 
-  activeTab: 'card' | 'photo' | 'canvas' | 'text'
+  activeTab: 'card' | 'photo' | 'canvas' | 'text' | 'frame'
   isExporting: boolean
+  exportScale?: number
+  uiScale?: number
+  calculateExportScale?: (preset: string) => number
   isHydrated: boolean
+
+  // Frame Mode
+  frame: FrameState
 
   // Actions
   setHydrated: (state: boolean) => void
@@ -104,13 +123,19 @@ export interface CardState {
   resetBackground: () => void
   resetTypography: () => void
   resetCanvas: () => void
+  updateFrame: (field: string, value: unknown) => void
+  resetFrame: () => void
+  resetToDefaults: () => void
+
+  // Frame template action
+  setTemplate: (templateId: TemplateId) => void
 }
 
 const DEFAULT_STATE = {
   url: '',
-  title: 'Spread - Crie Visualizações de Links que Impressionam',
+  title: 'Spread - Crie Visualizacoes de Links que Impressionam',
   description:
-    'Gere cards lindos para suas redes sociais a partir de qualquer link. Cole a URL e veja a mágica acontecer.',
+    'Gere cards lindos para suas redes sociais a partir de qualquer link. Cole a URL e veja a magica acontecer.',
   author: 'Spread App',
   image:
     'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200',
@@ -140,6 +165,7 @@ const DEFAULT_STATE = {
     outerRadius: 0,
     innerRadius: 12,
     padding: 6,
+    paddingAuto: true,
     opacity: 0.5,
     shadowOffsetX: 0,
     shadowOffsetY: 25,
@@ -149,11 +175,19 @@ const DEFAULT_STATE = {
     shadowOpacity: 0.25,
     backdropBlur: 0,
     cardScale: 1,
+    // When true, card size automatically adapts to the selected canvas size and padding
+    // Override manual Card Scale in the rendering pipeline
+    cardAuto: false,
     imageOffsetX: 0,
     imageOffsetY: 0,
     cardAspectRatio: 'aspect-auto',
     showHeader: true,
     headerPosition: 'right' as const,
+    measuredCardHeight: 360,
+  },
+  viewport: {
+    width: 0,
+    height: 0,
   },
 
   canvasSize: {
@@ -172,14 +206,17 @@ const DEFAULT_STATE = {
   titleSize: 100,
   subtitleSize: 100,
   textAlign: 'left' as const,
-  activeTab: 'card' as const,
+  activeTab: 'canvas' as const,
   isExporting: false,
   isHydrated: false,
+
+  // Frame Mode
+  frame: DEFAULT_FRAME_STATE,
 }
 
 export const useCardStore = create<CardState>()(
   persist(
-    set => ({
+    (set, get) => ({
       ...DEFAULT_STATE,
 
       setHydrated: state => set({ isHydrated: state }),
@@ -187,16 +224,35 @@ export const useCardStore = create<CardState>()(
       updateField: (field, value) =>
         set(state => ({ ...state, [field]: value })),
 
-      updateNestedField: (section, field, value) => {
-        console.log(`[Store] Updating ${section}.${field}:`, value)
-        set(state => ({
-          ...state,
-          [section]: {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ...(state[section as keyof CardState] as any),
-            [field]: value,
-          },
-        }))
+      updateNestedField: <T extends keyof CardState>(
+        section: T,
+        field: string,
+        value: unknown
+      ) => {
+        set(state => {
+          // Safe access to section - validate it exists in state
+          if (!Object.prototype.hasOwnProperty.call(state, section)) {
+            return state
+          }
+          // Safe: section is validated above with hasOwnProperty check
+          // eslint-disable-next-line security/detect-object-injection
+          const sectionData = state[section] as Record<string, unknown>
+
+          // Avoid redundant updates
+          // eslint-disable-next-line security/detect-object-injection
+          if (JSON.stringify(sectionData[field]) === JSON.stringify(value)) {
+            return state
+          }
+
+          console.log(`[Store] Updating ${String(section)}.${field}:`, value)
+          return {
+            ...state,
+            [section]: {
+              ...sectionData,
+              [field]: value,
+            },
+          }
+        })
       },
 
       updateLayout: (field, value) => {
@@ -207,7 +263,29 @@ export const useCardStore = create<CardState>()(
         }))
       },
 
-      setActiveTab: tab => set({ activeTab: tab }),
+      updateFrame: (field: string, value: unknown) => {
+        console.log(`[Store] Updating frame.${field}:`, value)
+        set(state => ({
+          ...state,
+          frame: { ...state.frame, [field]: value },
+        }))
+      },
+
+      /**
+       * HIERARQUIA DE TAMANHOS E ESCALAS (Spread Engine)
+       * ---
+       * 1. Canvas (canvasSize): O container final da imagem.
+       * 2. Card (layout.cardScale): Escala manual do card (usuario).
+       * 3. Viewport (autoScale): Escala automatica para caber na tela (nao persistida).
+       * 4. Export (exportScale): Multiplicador final no momento do download.
+       *
+       * TOTAL_SCALE = cardScale * exportScale (* autoScale se em modo Auto)
+       */
+      calculateExportScale: () => {
+        const es = get().exportScale ?? 1
+        const cs = get().layout.cardScale ?? 1
+        return es * cs
+      },
 
       resetContent: () =>
         set({
@@ -220,9 +298,41 @@ export const useCardStore = create<CardState>()(
           domain: DEFAULT_STATE.domain,
           isWelcomeState: true,
           template: 'default',
-          activeTab: 'card',
+          activeTab: 'canvas',
+          frame: DEFAULT_FRAME_STATE, // Reset frame on new content
         }),
 
+      resetToDefaults: () =>
+        set(state => ({
+          ...state,
+          // Reset card geometry to auto
+          layout: {
+            ...state.layout,
+            cardAuto: true,
+            paddingAuto: true,
+            cardScale: 1,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0,
+            cardAspectRatio: 'aspect-auto',
+            aspectRatio: 'aspect-auto',
+            showHeader: true,
+            headerPosition: 'right',
+          },
+          // Reset canvas to auto
+          canvasSize: {
+            ...state.canvasSize,
+            preset: 'auto',
+          },
+          // Reset frame mode
+          frame: DEFAULT_FRAME_STATE,
+          // Reset typography scales
+          titleSize: 100,
+          subtitleSize: 100,
+          textAlign: 'left',
+        })),
+
+      setActiveTab: tab => set({ activeTab: tab }),
       setFullState: stateUpdate =>
         set(state => ({
           ...state,
@@ -237,14 +347,21 @@ export const useCardStore = create<CardState>()(
         })),
 
       reset: () =>
-        set({
+        set(state => ({
           ...DEFAULT_STATE,
-          colors: {
-            bg1: '#2e1065',
-            bg2: '#be185d',
-            text: '#ffffff',
-          },
-        }),
+          isHydrated: state.isHydrated,
+          activeTab: state.activeTab,
+          isWelcomeState: state.isWelcomeState,
+          isSidebarOpen: state.isSidebarOpen,
+          // Mantem apenas metadados se houver (para nao limpar o link)
+          url: state.url,
+          title: state.title,
+          description: state.description,
+          author: state.author,
+          image: state.image,
+          favicon: state.favicon,
+          domain: state.domain,
+        })),
 
       resetCanvas: () =>
         set(state => ({
@@ -319,11 +436,26 @@ export const useCardStore = create<CardState>()(
             imageOffsetY: DEFAULT_STATE.layout.imageOffsetY,
           },
         })),
+
+      resetFrame: () =>
+        set(state => ({
+          ...state,
+          frame: DEFAULT_FRAME_STATE,
+        })),
+
+      // Frame template action
+      setTemplate: (templateId: TemplateId) => {
+        console.log(`[Store] Setting template: ${templateId}`)
+        set(state => ({
+          ...state,
+          frame: { ...state.frame, templateId },
+        }))
+      },
     }),
     {
-      name: 'spread-preferences-v3', // 🔥 VERSÃO ATUALIZADA - Invalida cache antigo
+      name: 'spread-preferences-v4', // VERSAO ATUALIZADA - Sistema SVG unificado
       partialize: state => ({
-        // Persiste APENAS preferências de design, NÃO conteúdo
+        // Persiste APENAS preferencias de design, NAO conteudo ou modo de frame
         colors: state.colors,
         gradientStyle: state.gradientStyle,
         pattern: state.pattern,
@@ -334,14 +466,24 @@ export const useCardStore = create<CardState>()(
         subtitleSize: state.subtitleSize,
         textAlign: state.textAlign,
         layout: state.layout,
+        viewport: state.viewport,
         canvasSize: state.canvasSize,
         cardPosition: state.cardPosition,
+        exportScale: state.exportScale,
+        uiScale: state.uiScale,
+        // Frame: persist ONLY style preferences, NOT enabled state or templateId
+        frame: {
+          primaryColor: state.frame.primaryColor,
+          secondaryColor: state.frame.secondaryColor,
+          textStyle: state.frame.textStyle,
+          // enabled and templateId are NOT persisted - reset to defaults on page load
+        },
         // isExporting is EXCLUDED from persistence
       }),
       merge: (persistedStateValue: unknown, currentState) => {
         const persistedState = persistedStateValue as Partial<CardState> | null
 
-        // Remove campos de conteúdo do merge
+        // Remove campos de conteudo do merge
         const {
           /* eslint-disable @typescript-eslint/no-unused-vars */
           url,
@@ -358,47 +500,11 @@ export const useCardStore = create<CardState>()(
           ...sanitizedPersistedState
         } = (persistedState || {}) as Record<string, unknown>
 
+        // Merge seguro
         return {
           ...currentState,
           ...sanitizedPersistedState,
-
-          // 🔥 ENFORCE: Sempre inicializa no estado de boas-vindas
-          isWelcomeState: true,
-          activeTab: 'card',
-
-          // 🔥 RELAXED: Não reseta mais obrigatoriamente para permitir que o usuário salve estes estados
-          // pattern: 'none',
-          // customBgImage: null,
-          cardPosition: { x: 0, y: 0 },
-
-          layout: {
-            ...currentState.layout,
-            ...((sanitizedPersistedState?.layout as object) || {}),
-            // 🔥 REMOVED: aspect-auto enforced here was breaking selection
-            imageOffsetX: 0,
-            imageOffsetY: 0,
-          },
-          canvasSize: {
-            ...currentState.canvasSize,
-            ...((sanitizedPersistedState?.canvasSize as object) || {}),
-            // 🔥 RELAXED: Somente força auto se não houver um preset válido já salvo (opcional)
-            // Ou melhor: Mantém o que o usuário tinha, mas garante que o 'auto' funcione.
-            preset:
-              (sanitizedPersistedState?.canvasSize as { preset?: string })
-                ?.preset || 'auto',
-          },
-          colors: {
-            ...currentState.colors,
-            ...((sanitizedPersistedState?.colors as object) || {}),
-          },
-          // Sanitiza gradientStyle inválido
-          gradientStyle:
-            typeof sanitizedPersistedState.gradientStyle !== 'string' ||
-            sanitizedPersistedState.gradientStyle === 'mesh' ||
-            !sanitizedPersistedState.gradientStyle
-              ? '135deg'
-              : sanitizedPersistedState.gradientStyle,
-        } as CardState
+        }
       },
     }
   )

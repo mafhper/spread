@@ -1,5 +1,7 @@
 import React from 'react'
+
 import { useCardStore } from '../../store/cardStore'
+import { computeUnifiedExportScale } from '../../utils/exportScale'
 import { PreviewCard } from './PreviewCard'
 
 export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
@@ -13,6 +15,8 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
     patternScale,
     cardPosition,
     layout,
+    viewport,
+    exportScale,
   } = useCardStore()
 
   // Computed Background Style (Duplicated from PreviewSection for isolation)
@@ -63,7 +67,7 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
   const CANVAS_PRESETS: Record<string, { w: number; h: number }> = {
     'ig-story': { w: 1080, h: 1920 },
     'ig-post': { w: 1080, h: 1080 },
-    twitter: { w: 1200, h: 675 },
+    twitter: { w: 1200, h: 676 },
     linkedin: { w: 1200, h: 627 },
     auto: { w: 1080, h: 1080 },
   }
@@ -76,6 +80,66 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
     canvasSize.height > 0
       ? canvasSize.height
       : CANVAS_PRESETS[canvasSize.preset]?.h || 1080
+
+  const getAutoScale = () => {
+    if (isAutoCanvas) return 1
+
+    const cardW = 640
+    const cardH = layout.measuredCardHeight || 360
+
+    // Use dynamic canvas dimensions
+    const dynamicCanvasWidth =
+      canvasSize.width > 0 ? canvasWidth : (viewport?.width ?? canvasWidth)
+    const dynamicCanvasHeight =
+      canvasSize.height > 0 ? canvasHeight : (viewport?.height ?? canvasHeight)
+
+    const padding = layout?.paddingAuto
+      ? typeof window !== 'undefined'
+        ? window.innerWidth < 640
+          ? 32
+          : 64
+        : 32
+      : (layout?.padding ?? 0)
+
+    const safeW = dynamicCanvasWidth - padding
+    const safeH = dynamicCanvasHeight - padding
+
+    let s = 1
+    if (layout.cardAuto) {
+      const sW = safeW / cardW
+      const sH = safeH / cardH
+      s = Math.min(sW, sH)
+      s = Math.max(0.1, Math.min(s, 3))
+
+      console.log('[Headless] CardAuto scale computed:', {
+        cardW,
+        cardH,
+        safeW,
+        safeH,
+        s,
+      })
+    } else {
+      if (cardW > safeW) s = safeW / cardW
+    }
+
+    return s
+  }
+
+  const autoScale = getAutoScale()
+  // Unified final transform scale (export uses exportScale * cardScale * autoScale)
+  const finalScale = computeUnifiedExportScale({
+    exportScale,
+    cardScale: layout.cardScale,
+    autoScale,
+    preset: canvasSize.preset,
+  })
+  console.log('[SPREAD-DEBUG] FinalTransformScale (export-unified):', {
+    finalTransformScale: finalScale,
+    autoScale,
+    cardScale: layout.cardScale,
+    exportScale: exportScale ?? 1,
+    preset: canvasSize.preset,
+  })
 
   return (
     <div
@@ -93,17 +157,18 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
         ref={ref}
         className={
           isAutoCanvas
-            ? 'artboard-root relative overflow-visible w-fit h-fit'
+            ? 'artboard-root relative overflow-visible'
             : 'artboard-root relative overflow-visible'
         }
         style={{
-          ...(!isAutoCanvas && {
-            width: canvasWidth,
-            height: canvasHeight,
-          }),
+          width: isAutoCanvas
+            ? canvasWidth * finalScale + 160 // scaled width + p-20 (80px on each side)
+            : canvasWidth,
+          height: isAutoCanvas
+            ? canvasHeight * finalScale + 160 // scaled height + p-20
+            : canvasHeight,
           ...backgroundStyle,
           borderRadius: `${canvasSize.roundness ?? 0}px`,
-          minWidth: isAutoCanvas ? 'min-content' : undefined,
         }}
       >
         <div
@@ -121,13 +186,16 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
         >
           <div
             style={{
-              transform: `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${layout.cardScale ?? 1})`,
+              transform: `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${finalScale})`,
               transformOrigin: 'center',
               width: 'fit-content',
               minWidth: '640px',
             }}
           >
-            <PreviewCard />
+            <PreviewCard
+              canvasWidth={canvasWidth}
+              canvasHeight={canvasHeight}
+            />
           </div>
         </div>
       </div>

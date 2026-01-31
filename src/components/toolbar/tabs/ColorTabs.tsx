@@ -140,12 +140,13 @@ export const ColorTabs: React.FC = () => {
             <button
               key={angle.value}
               onClick={() => updateField('gradientStyle', angle.value)}
-              className={`aspect-square rounded-lg text-sm font-bold transition-all ${
+              className={`aspect-square min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
                 gradientStyle === angle.value
                   ? 'bg-white text-black scale-105'
                   : 'bg-white/10 hover:bg-white/20'
               }`}
               title={angle.value}
+              aria-label={`Ângulo do gradiente: ${angle.value}`}
             >
               {angle.label}
             </button>
@@ -166,9 +167,10 @@ export const ColorTabs: React.FC = () => {
                 handleColorChange('bg1', c1)
                 handleColorChange('bg2', c2)
               }}
-              className="aspect-square rounded-full border border-white/20 hover:scale-110 hover:border-white/50 transition-all shadow-lg"
+              className="aspect-square min-w-[44px] min-h-[44px] rounded-full border border-white/20 hover:scale-110 hover:border-white/50 transition-all shadow-lg"
               style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
               title={`${c1} → ${c2}`}
+              aria-label={`Preset de cor ${i + 1}: ${c1} para ${c2}`}
             />
           ))}
         </div>

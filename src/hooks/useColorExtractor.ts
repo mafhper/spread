@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react'
-import ColorThief from 'colorthief'
 
 interface ExtractedColors {
   primary: string
@@ -53,8 +52,14 @@ export function useColorExtractor() {
         const img = new Image()
         img.crossOrigin = 'Anonymous'
 
-        img.onload = () => {
+        img.onload = async () => {
           try {
+            // Dynamic import for bundle optimization
+            const ColorThiefModule = await import('colorthief')
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            const ColorThief = (ColorThiefModule.default ||
+              ColorThiefModule) as any
+            /* eslint-enable @typescript-eslint/no-explicit-any */
             const colorThief = new ColorThief()
             const dominant = colorThief.getColor(img)
             const palette = colorThief.getPalette(img, 5)

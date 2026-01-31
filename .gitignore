@@ -1,41 +1,43 @@
-# build output
+# Build and Generated Files
 dist/
-# generated types
 .astro/
 coverage/
 
-# dependencies
+# Dependencies
 node_modules/
 
-# logs
+# Logs and Debugging
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# environment variables
+# Environment Variables and Secrets
 .env
-.env.production
+.env.*
+!.env.example
 
-# macOS-specific files
+# OS and IDE Files
 .DS_Store
-
-# jetbrains setting folder
+Thumbs.db
 .idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
 
-# documentation (internal use only)
-docs/
-/_desenvolvimento
-/_dev
-
-# Lighthouse reports (temporary)
+# Quality and Performance Reports
+quality-core/
+performance-reports/*
 *lighthouse*.json
+lighthouse-report.json
 REAL_REPORT.json
+*.report.html
 /.lighthouseci
 
-# project specific exclusions
-GEMINI.md
-QWEN.md
-agents/
-/.gemini
-/.gemini-clipboard
+# Internal Development and Documentation
+_dev/
+docs/*
+.gemini
+.gemini-clipboard
+.kilocode

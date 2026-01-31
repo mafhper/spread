@@ -1,24 +1,45 @@
 /**
- * PreviewCard Component - Card de Visualização com Padrão de Razão Construtiva
+ * PreviewCard Component - Card de Visualização com Frame Mode
  *
- * Implementa uma arquitetura de layout resiliente:
- * - Grid com driver invisível para manter proporção mínima
- * - Permite expansão vertical ilimitada do conteúdo (sem h-full)
- * - Evita clipping através de overflow-visible
+ * @version 2.0.0 - Frames como modos de exibição alternativos
  *
- * @pattern Constructive Ratio Pattern
+ * Quando frame.enabled === true:
+ * - O frame renderiza OCUPANDO TODO O CANVAS
+ * - O card padrão NÃO é renderizado
+ * - Não há duplicação de imagem ou texto
+ *
+ * Quando frame.enabled === false:
+ * - Renderiza o card padrão (template default/music/news)
  */
 
 import React, { useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { useCardStore } from '../../store/cardStore'
+import { getServiceIcon } from '../../services/iconLibrary'
+import { FrameOverlay } from './FrameOverlay'
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs))
 }
 
-export const PreviewCard: React.FC = () => {
+interface PreviewCardProps {
+  /** Largura do canvas em pixels (necessário para frames) */
+  canvasWidth?: number
+  /** Altura do canvas em pixels (necessário para frames) */
+  canvasHeight?: number
+  /** Padding resolvido (em pixels) para o card */
+  padding?: number
+  /** Escala do card (para ajustes internos se necessario) */
+  scale?: number
+}
+
+export const PreviewCard: React.FC<PreviewCardProps> = ({
+  canvasWidth = 1200,
+  canvasHeight = 630,
+  padding,
+  // scale is available but not currently used within this component
+}) => {
   const state = useCardStore()
   const {
     title,
@@ -35,13 +56,8 @@ export const PreviewCard: React.FC = () => {
     subtitleSize,
     textAlign,
     isWelcomeState,
+    frame,
   } = state
-
-  console.log('[PreviewCard] State Trace:', {
-    cardAspectRatio: layout.cardAspectRatio,
-    template,
-    image: !!image,
-  })
 
   // Injeção de fonte customizada
   useEffect(() => {
@@ -64,6 +80,92 @@ export const PreviewCard: React.FC = () => {
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
   }
 
+  // ============================================================
+  // FRAME MODE: Frame substitui completamente o card padrão
+  // ============================================================
+  if (frame.enabled && !isWelcomeState) {
+    return (
+      <div
+        className="relative w-full h-full flex items-center justify-center overflow-visible"
+        style={{
+          width: canvasWidth,
+          height: canvasHeight,
+          filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.35))',
+        }}
+      >
+        <FrameOverlay
+          image={image}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
+          templateId={frame.templateId}
+          primaryColor={frame.primaryColor}
+          secondaryColor={frame.secondaryColor}
+        />
+
+        {/* Overlay de Texto Otimizado para Frames */}
+        {frame.showText && (
+          <div
+            className={cn(
+              'absolute z-20 pointer-events-none flex flex-col gap-2 w-full px-8 py-6 transition-all duration-300',
+              frame.textStyle.position === 'overlay'
+                ? 'bottom-0 left-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-12'
+                : 'bottom-0 left-0 bg-zinc-950/90 border-t border-white/10 backdrop-blur-xl'
+            )}
+            style={{
+              color: frame.textStyle.color,
+              textAlign:
+                frame.textStyle.position === 'overlay' ? 'left' : 'center',
+              textShadow:
+                frame.textStyle.position === 'overlay'
+                  ? '0 2px 10px rgba(0,0,0,0.5)'
+                  : 'none',
+            }}
+          >
+            <div
+              className={cn(
+                'flex items-center gap-3',
+                frame.textStyle.position === 'overlay'
+                  ? 'justify-start'
+                  : 'justify-center'
+              )}
+            >
+              {frame.textStyle.showIcon && domain && (
+                <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center p-1.5 border border-white/10 shadow-lg">
+                  {(() => {
+                    const { Icon, color } = getServiceIcon(domain)
+                    return (
+                      <Icon
+                        className="w-full h-full"
+                        style={{ color: color || '#FFFFFF' }}
+                      />
+                    )
+                  })()}
+                </div>
+              )}
+              <div className="flex flex-col min-w-0">
+                <h2
+                  className="font-bold leading-none tracking-tight truncate w-full"
+                  style={{ fontSize: `${frame.textStyle.fontSize}px` }}
+                >
+                  {title}
+                </h2>
+                <p
+                  className="opacity-80 font-medium truncate w-full mt-1"
+                  style={{ fontSize: `${frame.textStyle.fontSize * 0.6}px` }}
+                >
+                  {author || domain}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ============================================================
+  // DEFAULT MODE: Card padrão (template default/music/news)
+  // ============================================================
   return (
     <div
       id="previewCard"
@@ -72,18 +174,13 @@ export const PreviewCard: React.FC = () => {
         fontFamily: `'${fontFamily}', sans-serif`,
       }}
     >
-      {/* 
-                🔥 PADRÃO DE RAZÃO CONSTRUTIVA
-                Grid com dois elementos na mesma célula:
-                1. Driver (invisível) - Define proporção mínima
-                2. Conteúdo real - Pode expandir verticalmente
-            */}
       <div
         id="cardWrapper"
         className="relative grid grid-cols-1 grid-rows-1 overflow-visible w-fit h-fit min-w-[640px]"
         style={{
           borderRadius: `${layout.innerRadius}px`,
-          padding: `${layout.padding / 4}rem`,
+          padding:
+            padding !== undefined ? `${padding}px` : `${layout.padding / 4}rem`,
           gridTemplateRows: '1fr',
         }}
       >
@@ -110,16 +207,15 @@ export const PreviewCard: React.FC = () => {
             }}
           />
         )}
-        {/* CONTEÚDO: Card real que pode expandir além do driver */}
+
+        {/* CONTEÚDO: Card real */}
         <div
           id="innerCard"
-          className="col-start-1 row-start-1 relative flex flex-col gap-6 p-8 border border-white/5 transition-all duration-300 w-full overflow-visible"
+          className="relative flex flex-col gap-6 p-8 border border-white/5 transition-all duration-300 w-full overflow-visible"
           style={{
             borderRadius: `${layout.innerRadius}px`,
             backgroundColor: `rgba(20, 20, 20, ${layout.opacity})`,
             boxShadow: `${layout.shadowOffsetX ?? 0}px ${layout.shadowOffsetY ?? 25}px ${layout.shadowBlur ?? 50}px ${layout.shadowSpread ?? -12}px ${hexToRgba(layout.shadowColor ?? '#000000', layout.shadowOpacity ?? 0.25)}`,
-            gridArea: '1 / 1 / 2 / 2',
-            // Se houver driver, segue altura mínima dele. Senão, auto.
             minHeight:
               layout.cardAspectRatio !== 'aspect-auto' ? '100%' : 'auto',
           }}
@@ -134,20 +230,24 @@ export const PreviewCard: React.FC = () => {
                   : 'justify-start'
               )}
             >
-              <div className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-lg ring-1 ring-white/10 transition-transform hover:scale-105 group/header overflow-hidden">
-                {/* Glass Shine Effect */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover/header:opacity-100 transition-opacity duration-500" />
-
-                <div className="relative w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 shadow-inner">
-                  <img
-                    src="/spread/logo.svg"
-                    alt=""
-                    className="w-full h-full opacity-95 invert brightness-0"
-                  />
+              <div className="relative inline-flex items-center gap-2 group/header overflow-visible">
+                <div className="relative w-6 h-6 flex-shrink-0">
+                  {/* Premium Logo Composition */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
+                  <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
+                    <img
+                      src="/spread/logo.svg"
+                      alt=""
+                      className="w-full h-full p-0.5 opacity-95 invert brightness-0"
+                    />
+                  </div>
                 </div>
-                <span className="relative text-[10px] font-bold tracking-[0.15em] text-white/90">
-                  Spread
-                </span>
+
+                <div className="px-3 py-1.5 rounded-full bg-zinc-950/40 backdrop-blur-md border border-white/10 shadow-lg flex items-center">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">
+                    Spread
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -183,11 +283,9 @@ export const PreviewCard: React.FC = () => {
               <div
                 className={cn(
                   'relative overflow-hidden rounded-xl border border-white/5 shadow-2xl bg-black/20 transition-transform duration-500 ease-out flex-shrink-0',
-                  // Aplica aspect-ratio apenas se não for auto
                   layout.aspectRatio !== 'aspect-auto' && layout.aspectRatio
                 )}
                 style={{
-                  // Se for auto, não aplica proporção fixa
                   ...(layout.aspectRatio === 'aspect-auto' && {
                     width: '100%',
                     aspectRatio: 'auto',
@@ -230,14 +328,26 @@ export const PreviewCard: React.FC = () => {
               {/* Template Padrão */}
               {template === 'default' && (
                 <div className="flex items-start gap-4">
-                  {favicon && (
+                  {domain && (
                     <div className="flex-shrink-0 mt-1 w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 overflow-hidden group/favicon">
-                      <img
-                        src={favicon}
-                        className="w-4/5 h-4/5 object-contain transition-transform group-hover/favicon:scale-110"
-                        alt=""
-                        crossOrigin="anonymous"
-                      />
+                      {(() => {
+                        const { Icon, color, hasIcon } = getServiceIcon(domain)
+                        return hasIcon ? (
+                          <Icon
+                            className="w-4/5 h-4/5 transition-transform group-hover/favicon:scale-110"
+                            color={color || '#FFFFFF'}
+                          />
+                        ) : favicon ? (
+                          <img
+                            src={favicon}
+                            className="w-4/5 h-4/5 object-contain transition-transform group-hover/favicon:scale-110"
+                            alt=""
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <Icon className="w-4/5 h-4/5" style={{ color }} />
+                        )
+                      })()}
                     </div>
                   )}
                   <div className="flex flex-col gap-2 flex-1">
@@ -259,16 +369,31 @@ export const PreviewCard: React.FC = () => {
 
               {/* Template Música */}
               {template === 'music' && (
-                <div className="flex items-center gap-5">
-                  {favicon && (
-                    <div className="flex-shrink-0 relative w-16 h-16 flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 overflow-hidden group/music-icon">
+                <div className="flex items-center gap-4">
+                  {domain && (
+                    <div className="flex-shrink-0 mt-1 w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 overflow-hidden group/music-icon">
                       <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-purple-500/20 to-transparent opacity-0 group-hover/music-icon:opacity-100 transition-opacity" />
-                      <img
-                        src={favicon}
-                        className="relative w-4/5 h-4/5 object-contain transition-all"
-                        alt=""
-                        crossOrigin="anonymous"
-                      />
+                      {(() => {
+                        const { Icon, color, hasIcon } = getServiceIcon(domain)
+                        return hasIcon ? (
+                          <Icon
+                            className="relative w-4/5 h-4/5 transition-all"
+                            color={color || '#FFFFFF'}
+                          />
+                        ) : favicon ? (
+                          <img
+                            src={favicon}
+                            className="relative w-4/5 h-4/5 object-contain transition-all"
+                            alt=""
+                            crossOrigin="anonymous"
+                          />
+                        ) : (
+                          <Icon
+                            className="relative w-4/5 h-4/5"
+                            color={color || '#FFFFFF'}
+                          />
+                        )
+                      })()}
                     </div>
                   )}
                   <div className="flex flex-col gap-1.5 flex-1 min-w-0">
@@ -300,40 +425,48 @@ export const PreviewCard: React.FC = () => {
                   >
                     <h2
                       className="font-bold leading-snug font-serif"
-                      style={{
-                        fontSize: `${2 * (titleSize / 100)}rem`,
-                        fontStyle: fontFamily.includes('Serif')
-                          ? 'italic'
-                          : 'normal',
-                      }}
+                      style={{ fontSize: `${1.8 * (titleSize / 100)}rem` }}
                     >
                       {title}
                     </h2>
-                  </div>
-                  <div
-                    className={cn(
-                      'flex items-center gap-3',
-                      textAlign === 'center' && 'justify-center',
-                      textAlign === 'right' && 'justify-end'
-                    )}
-                  >
-                    {favicon && (
-                      <img
-                        src={favicon}
-                        className="w-5 h-5 opacity-70 grayscale"
-                        alt=""
-                      />
-                    )}
-                    <p className="text-xs font-bold uppercase tracking-widest opacity-60 truncate">
-                      {author ? `Por ${author}` : domain}
+                    <p
+                      className="opacity-80 leading-relaxed"
+                      style={{ fontSize: `${1.0 * (subtitleSize / 100)}rem` }}
+                    >
+                      {description}
                     </p>
                   </div>
-                  <p
-                    className="opacity-70"
-                    style={{ fontSize: `${0.875 * (subtitleSize / 100)}rem` }}
-                  >
-                    {description}
-                  </p>
+                  <div className="flex items-center gap-2.5">
+                    {domain && (
+                      <div className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-md border border-white/10 overflow-hidden">
+                        {(() => {
+                          const { Icon, color, hasIcon } =
+                            getServiceIcon(domain)
+                          return hasIcon ? (
+                            <Icon
+                              className="w-3/4 h-3/4"
+                              color={color || '#FFFFFF'}
+                            />
+                          ) : favicon ? (
+                            <img
+                              src={favicon}
+                              className="w-3/4 h-3/4 object-contain"
+                              alt=""
+                              crossOrigin="anonymous"
+                            />
+                          ) : (
+                            <Icon
+                              className="w-3/4 h-3/4"
+                              color={color || '#FFFFFF'}
+                            />
+                          )
+                        })()}
+                      </div>
+                    )}
+                    <span className="uppercase tracking-widest text-[10px] font-bold opacity-60">
+                      {domain}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>

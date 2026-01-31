@@ -6,6 +6,7 @@ interface LazyIntersectionProps {
   threshold?: number | number[]
   className?: string
   minHeight?: string | number
+  id?: string
 }
 
 /**
@@ -18,6 +19,7 @@ export const LazyIntersection: React.FC<LazyIntersectionProps> = ({
   threshold = 0.01,
   className = '',
   minHeight = '400px',
+  id,
 }) => {
   const [isIntersecting, setIntersecting] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -43,6 +45,7 @@ export const LazyIntersection: React.FC<LazyIntersectionProps> = ({
   return (
     <div
       ref={ref}
+      id={id}
       className={className}
       style={{ minHeight: isIntersecting ? 'auto' : minHeight }}
     >

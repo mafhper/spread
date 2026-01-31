@@ -69,7 +69,8 @@ export const ControlDock: React.FC = () => {
             </h3>
             <button
               onClick={closePanel}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center"
+              aria-label="Fechar painel"
             >
               <X size={16} />
             </button>
@@ -99,6 +100,7 @@ export const ControlDock: React.FC = () => {
                     : 'text-white/50 hover:bg-white/10 hover:text-white'
                 )}
                 title={tab.label}
+                aria-label={tab.label}
               >
                 <Icon size={22} />
 

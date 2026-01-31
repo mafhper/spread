@@ -1,9 +1,18 @@
 import React, { useRef, useState, useEffect } from 'react'
-import { toPng } from 'html-to-image'
-import download from 'downloadjs'
-import { Download, Loader2, Sparkles, Zap } from 'lucide-react'
+// No static imports for heavy libs
+import {
+  Download,
+  Loader2,
+  Sparkles,
+  Zap,
+  Maximize,
+  RotateCcw,
+} from 'lucide-react'
+import { computeUnifiedExportScale } from '../../utils/exportScale'
 import { useCardStore } from '../../store/cardStore'
 import { PreviewCard } from './PreviewCard'
+import { isDevMode } from '../../utils/env'
+import { log } from '../../utils/logger'
 import { WelcomeCard } from './WelcomeCard'
 import { HeadlessArtboard } from './HeadlessArtboard'
 
@@ -11,6 +20,7 @@ import { useHistory } from '../../hooks/useHistory'
 import { fetchMetadata } from '../../services/metadata'
 import { useColorExtractor } from '../../hooks/useColorExtractor'
 import { urlToBase64, getEmbeddedFontCSS } from '../../services/exportUtils'
+import { useAutoScale } from '../../hooks/useAutoScale'
 
 export const PreviewSection: React.FC = () => {
   const {
@@ -23,23 +33,51 @@ export const PreviewSection: React.FC = () => {
     customBgImage,
     patternOpacity,
     patternScale,
+    updateLayout,
     updateField,
     setFullState,
     updateNestedField,
     isWelcomeState,
     layout,
+    frame,
   } = useCardStore()
   const currentState = useCardStore()
+  const { exportScale } = currentState
   const { saveToHistory, history, loadFromHistory } = useHistory()
   const { extractColorsFromImage } = useColorExtractor()
   const [isGenerating, setIsGenerating] = useState(false)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
-  const exportRef = useRef<HTMLDivElement>(null)
   const exportOnlyRef = useRef<HTMLDivElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement>(null)
-  const [viewScale, setViewScale] = useState(1)
-  const [autoScale, setAutoScale] = useState(1)
+  const [diagnosticMode, setDiagnosticMode] = useState(false)
+
+  // helper: dynamic padding value depending on paddingAuto and breakpoint
+  const paddingValue = () => {
+    if (layout?.paddingAuto) {
+      return typeof window !== 'undefined'
+        ? window.innerWidth < 640
+          ? 32
+          : 64
+        : 32
+    }
+    return layout?.padding ?? 0
+  }
+
+  // Hook de escala automatica centralizada
+  const {
+    scale: viewScale,
+    scalePercent,
+    isAuto: isAutoScale,
+    resetToAuto,
+    containerRef,
+    contentRef: exportRef,
+  } = useAutoScale({
+    minScale: 0.2,
+    maxScale: 1.0,
+    padding: paddingValue(),
+    enabled: !isWelcomeState,
+  })
+
   const [inputUrl, setInputUrl] = useState(url)
 
   // Helper & Computed States
@@ -55,7 +93,7 @@ export const PreviewSection: React.FC = () => {
   const CANVAS_PRESETS: Record<string, { w: number; h: number }> = {
     'ig-story': { w: 1080, h: 1920 },
     'ig-post': { w: 1080, h: 1080 },
-    twitter: { w: 1200, h: 675 },
+    twitter: { w: 1200, h: 676 },
     linkedin: { w: 1200, h: 627 },
     auto: { w: 1080, h: 1080 }, // Fallback
   }
@@ -101,6 +139,31 @@ export const PreviewSection: React.FC = () => {
     }
   }, [colors, gradientStyle, customBgImage, isWelcomeState])
 
+  // Debug: log actual on-screen transform applied to the card in the preview
+  useEffect(() => {
+    console.log('[SPREAD-DEBUG] Preview card transform (screen):', {
+      x: cardPosition.x,
+      y: cardPosition.y,
+      scalePreview: viewScale * (layout.cardScale ?? 1),
+      finalCardSize: '640x', // fixed width reference in code
+    })
+  }, [cardPosition.x, cardPosition.y, layout.cardScale, viewScale])
+
+  // Diagnostic toggle (dev only) via Ctrl/Cmd+D
+  useEffect(() => {
+    if (!isDevMode()) return
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+        setDiagnosticMode(d => !d)
+        log('PreviewSection', 'Diagnostics toggled', {
+          enabled: !diagnosticMode,
+        })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [diagnosticMode])
+
   // Dynamic Pattern Style
   const getPatternSize = () => {
     const base =
@@ -135,132 +198,133 @@ export const PreviewSection: React.FC = () => {
     mixBlendMode: 'overlay',
   }
 
-  // stabilize layout before measurement
-  const stabilizeLayout = async () => {
-    // Prevent font loading from blocking render indefinitely (max 500ms wait)
-    const fontReady = document.fonts.ready
-    const timeout = new Promise(resolve => setTimeout(resolve, 500))
-    await Promise.race([fontReady, timeout])
-
-    await new Promise(r => requestAnimationFrame(r))
-    await new Promise(r => setTimeout(r, 0))
-  }
-
-  // Resizing logic for Preview area
+  // Persist viewport size for Auto canvas sizing (useAutoScale gerencia a escala agora)
   useEffect(() => {
-    let cancelled = false
+    if (!containerRef.current) return
 
-    const handleResize = async () => {
-      if (!containerRef.current || !exportRef.current) return
+    const updateViewport = () => {
+      const padding = paddingValue()
+      const availableWidth = containerRef.current!.clientWidth - padding
+      const availableHeight = containerRef.current!.clientHeight - padding
 
-      await stabilizeLayout()
-      if (cancelled) return
+      // Persist viewport available space for Auto canvas sizing
+      updateNestedField('viewport', 'width', availableWidth)
+      updateNestedField('viewport', 'height', availableHeight)
 
-      const padding = window.innerWidth < 640 ? 32 : 64
-      const availableWidth = containerRef.current.clientWidth - padding
-      const availableHeight = containerRef.current.clientHeight - padding
-
-      const artboard = exportRef.current
-      const contentWidth = artboard.offsetWidth
-      const contentHeight = artboard.offsetHeight
-
-      console.log('[Layout] Sizing Trace:', {
-        isAutoCanvas,
-        contentWidth,
-        contentHeight,
+      console.log('[Layout] Viewport atualizado:', {
         availableWidth,
         availableHeight,
+        padding,
       })
+    }
 
-      if (contentWidth <= 0 || contentHeight <= 0) return
+    const observer = new ResizeObserver(updateViewport)
+    observer.observe(containerRef.current)
+    updateViewport()
 
-      // Modo Auto: Não escala o container se ele couber, apenas centraliza.
-      // No entanto, ainda precisamos de um scale base para o preview caber na tela.
-      // Mas para o EXPORT, o scale deve ser 1.
-      const rawScale = Math.min(
-        availableWidth / Math.max(1, contentWidth),
-        availableHeight / Math.max(1, contentHeight),
-        1
-      )
+    return () => {
+      observer.disconnect()
+    }
+  }, [isWelcomeState])
 
-      const finalScale = Math.max(0.01, rawScale)
+  // NEW: Observer specifically for the card to adjust Auto Canvas size dynamically
+  // This ensures that "Auto" Canvas is always perfectly sized to the card's content
+  useEffect(() => {
+    const updateCardDimensions = () => {
+      if (!cardRef.current) return
 
-      if (Math.abs(viewScale - finalScale) > 0.001) {
-        setViewScale(finalScale)
+      const newWidth = Math.ceil(cardRef.current.offsetWidth)
+      const newHeight = Math.ceil(cardRef.current.offsetHeight)
+
+      // Always update measured height for Headless scaling
+      if (Math.abs((layout.measuredCardHeight || 0) - newHeight) > 1) {
+        updateNestedField('layout', 'measuredCardHeight', newHeight)
+      }
+
+      // If Auto Canvas is on, update canvas dimensions
+      if (isAutoCanvas) {
+        if (
+          (Math.abs(canvasSize.width - newWidth) > 1 ||
+            Math.abs(canvasSize.height - newHeight) > 1) &&
+          newWidth > 0 &&
+          newHeight > 0
+        ) {
+          updateNestedField('canvasSize', 'width', newWidth)
+          updateNestedField('canvasSize', 'height', newHeight)
+          console.log('[Layout] Auto Canvas dimensions updated:', {
+            newWidth,
+            newHeight,
+          })
+        }
       }
     }
 
-    const observer = new ResizeObserver(handleResize)
-    if (containerRef.current) observer.observe(containerRef.current)
-
-    handleResize()
-
-    return () => {
-      cancelled = true
-      observer.disconnect()
+    const observer = new ResizeObserver(updateCardDimensions)
+    if (cardRef.current) {
+      observer.observe(cardRef.current)
+      updateCardDimensions()
     }
+
+    return () => observer.disconnect()
   }, [
-    isAutoCanvas,
-    canvasWidth,
-    canvasHeight,
     isWelcomeState,
-    currentState.template,
-    layout.cardScale,
-    layout.cardAspectRatio,
+    isAutoCanvas,
+    canvasSize.width,
+    canvasSize.height,
+    layout.measuredCardHeight,
   ])
 
-  // Auto Scale Card Logic (to fit inside canvas if needed)
+  // Auto Scale Card Logic (to fit inside canvas if needed) - mantido para compatibilidade com export
+  const [autoScale, setAutoScale] = useState(1)
   useEffect(() => {
-    // 🔥 FIX SOLUÇÃO 02: Se for modo AUTO, o scale deve ser sempre 1.
-    // O Canvas envolve o card naturalmente, não há necessidade de "encaixar".
-    if (
-      !cardRef.current ||
-      !exportRef.current ||
-      isWelcomeState ||
-      isAutoCanvas
-    ) {
+    // Reset to safe default if not mounted yet
+    if (!cardRef.current || !exportRef.current || isWelcomeState) {
       if (autoScale !== 1) setAutoScale(1)
       return
     }
 
-    const checkCardFit = () => {
-      // Only scale if we have a fixed canvas size
-      if (cardRef.current && exportRef.current && !isAutoCanvas) {
-        const card = cardRef.current
-        const cardW = 640 // Rigid artboard width
-        const cardH = card.scrollHeight
+    // Apply auto-scale only when Card Auto is active AND Canvas is Fixed
+    // If Canvas is Auto, we should NOT scale the card internally, as the canvas will wrap the card natural size.
+    // The useAutoScale hook will handle the visual zoom to fit the screen.
+    if (layout.cardAuto && !isAutoCanvas) {
+      const availableWidth = canvasWidth > 0 ? canvasWidth : 640
+      const availableHeight = canvasHeight > 0 ? canvasHeight : 360
+      const cardW = 640
+      // Use the measured card height for accurate scaling
+      const cardH =
+        layout.measuredCardHeight || (cardRef.current?.offsetHeight ?? 360)
 
-        const canvasW = canvasWidth
-        const canvasH = canvasHeight
+      const sW = availableWidth > 0 ? availableWidth / cardW : 1
+      const sH = availableHeight > 0 ? availableHeight / cardH : 1
+      let cand = Math.min(sW, sH)
+      cand = Math.max(0.1, Math.min(cand, 5))
 
-        // Subtract padding to keep card away from edges
-        const safeW = Math.max(100, canvasW - 80)
-        const safeH = Math.max(100, canvasH - 80)
-
-        let s = 1
-        if (cardW > safeW || cardH > safeH) {
-          s = Math.min(safeW / cardW, safeH / cardH)
-        }
-
-        const finalS = Number.isFinite(s) && s > 0 ? s : 1
-        if (Math.abs(autoScale - finalS) > 0.001) {
-          console.log('[Layout] Adjusting autoScale:', finalS)
-          setAutoScale(finalS)
-        }
-      } else {
-        if (autoScale !== 1) setAutoScale(1)
+      if (Number.isFinite(cand) && Math.abs(autoScale - cand) > 0.001) {
+        setAutoScale(cand)
+        log('PreviewSection', 'Auto-scale updated (fixed preset)', {
+          cand,
+          isAutoCanvas,
+          availableWidth,
+          availableHeight,
+          cardH,
+        })
       }
+      return
     }
 
-    checkCardFit()
+    // If not Auto Card or if Canvas is Auto, reset scale to 1
+    if (autoScale !== 1) {
+      setAutoScale(1)
+    }
   }, [
     isAutoCanvas,
     canvasWidth,
     canvasHeight,
-    url,
-    colors,
-    currentState,
-    isWelcomeState,
+    layout.cardAuto,
+    layout.measuredCardHeight,
+    layout.paddingAuto,
+    containerRef.current,
+    cardRef.current,
   ])
 
   const autoExtractColors = async (imageUrl: string) => {
@@ -286,7 +350,30 @@ export const PreviewSection: React.FC = () => {
     }
   }
 
+  const resetDefaultsForGeneration = () => {
+    // Clear persisted preferences to ensure generation uses defaults
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('spread-preferences-v4')
+      }
+    } catch {
+      // ignore
+    }
+    // Reset to defaults before generating
+    updateLayout('cardAuto', true)
+    updateField('paddingAuto', true)
+    updateLayout('cardScale', 1)
+    updateField('exportScale', undefined)
+    updateField('uiScale', 1)
+    log('PreviewSection', 'Reset to defaults for generation', {
+      cardAuto: true,
+      paddingAuto: true,
+      cardScale: 1,
+    })
+  }
+
   const handleGenerate = async () => {
+    resetDefaultsForGeneration()
     if (!inputUrl) return
     setIsLoadingMetadata(true)
     try {
@@ -329,47 +416,119 @@ export const PreviewSection: React.FC = () => {
     updateField('isExporting', true)
 
     try {
+      // Dynamic imports for bundle optimization
+      const download = (await import('downloadjs')).default
       // Give a moment for the DOM to update styles (fallback colors)
       await new Promise(r => setTimeout(r, 100))
       await document.fonts.ready
-      const fontCss = await getEmbeddedFontCSS(currentState.fontFamily)
 
-      const options = {
-        cacheBust: true,
-        skipFonts: true,
-        fontEmbedCSS: fontCss,
-        filter: (node: HTMLElement) => {
-          if (
-            node.tagName === 'LINK' &&
-            (node as HTMLLinkElement).href?.includes('fonts.googleapis')
+      let dataUrl: string
+      let thumbnailUrl: string
+
+      // BIFURCATED EXPORT: Use SVG exporter for Frames, html-to-image for standard cards
+      if (frame.enabled) {
+        console.log('[SPREAD-DEBUG] Using SVG Exporter for Frame mode')
+        // Lazy load svg exporter
+        const { exportSvgToPng, getSvgContentFromContainer } =
+          await import('../../services/svgExporter')
+
+        const svgContainer = target.querySelector('.svg-frame-renderer__svg')
+        if (!svgContainer) {
+          throw new Error(
+            'Frame SVG container not found. Frame may not be rendered.'
           )
-            return false
-          if (node.tagName === 'IMG') {
-            const src = (node as HTMLImageElement).src
+        }
+
+        const svgContent = getSvgContentFromContainer(
+          svgContainer as HTMLElement
+        )
+        if (!svgContent) {
+          throw new Error('Failed to extract SVG content from Frame.')
+        }
+
+        // Export High-Res
+        const pngBlob = await exportSvgToPng(svgContent, {
+          width: canvasSize.width,
+          pixelRatio: 2,
+        })
+        dataUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(pngBlob)
+        })
+
+        // Export Low-Res Thumbnail
+        const thumbBlob = await exportSvgToPng(svgContent, {
+          width: canvasSize.width,
+          pixelRatio: 0.15,
+        })
+        thumbnailUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(thumbBlob)
+        })
+      } else {
+        // Standard export path (html-to-image)
+        console.log('[SPREAD-DEBUG] Using html-to-image for standard card')
+        const fontCss = await getEmbeddedFontCSS(currentState.fontFamily)
+        const { toPng } = await import('html-to-image')
+
+        const options = {
+          cacheBust: true,
+          skipFonts: true,
+          fontEmbedCSS: fontCss,
+          filter: (node: HTMLElement) => {
             if (
-              src &&
-              src.startsWith('http') &&
-              !src.includes('localhost') &&
-              src.includes('favicon')
+              node.tagName === 'LINK' &&
+              (node as HTMLLinkElement).href?.includes('fonts.googleapis')
             )
               return false
-          }
-          return true
-        },
+            if (node.tagName === 'IMG') {
+              const src = (node as HTMLImageElement).src
+              if (
+                src &&
+                src.startsWith('http') &&
+                !src.includes('localhost') &&
+                src.includes('favicon')
+              )
+                return false
+            }
+            return true
+          },
+        }
+
+        const unifiedExportScale = computeUnifiedExportScale({
+          exportScale,
+          cardScale: layout.cardScale,
+          autoScale,
+          preset: canvasSize.preset,
+        })
+        console.log(
+          '[SPREAD-DEBUG] Starting export details (unified):',
+          JSON.stringify(
+            {
+              type: 'EXPORT',
+              width: target.offsetWidth,
+              height: target.offsetHeight,
+              preset: canvasSize.preset,
+              autoScale: autoScale,
+              exportScale: unifiedExportScale,
+            },
+            null,
+            2
+          )
+        )
+        dataUrl = await toPng(target as HTMLElement, {
+          ...options,
+          pixelRatio: 2,
+        })
+        console.log('[SPREAD-DEBUG] High-res export completed')
+
+        thumbnailUrl = await toPng(target, {
+          ...options,
+          pixelRatio: 0.15,
+        })
       }
-
-      // 1. Generate High-Res for Download
-      const dataUrl = await toPng(target as HTMLElement, {
-        ...options,
-        pixelRatio: 2,
-      })
-
-      // 2. Generate Low-Res for History (Thumbnail)
-      // We use a small pixel ratio to keep base64 string small
-      const thumbnailUrl = await toPng(target, {
-        ...options,
-        pixelRatio: 0.15, // 🔥 Reduced even more for safety
-      })
 
       saveToHistory({ ...currentState, previewImage: thumbnailUrl })
       download(dataUrl, `spread-${Date.now()}.png`)
@@ -439,11 +598,13 @@ export const PreviewSection: React.FC = () => {
             onChange={e => setInputUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleGenerate()}
             className="flex-1 bg-transparent px-3 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder:text-white/30 focus:outline-none min-w-0"
+            aria-label="URL do link"
           />
           <button
             onClick={handleGenerate}
             disabled={isLoadingMetadata}
-            className="flex-shrink-0 bg-white text-black px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-black hover:bg-gray-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 flex items-center gap-2 group min-h-[44px]"
+            className="flex-shrink-0 bg-white text-black px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-black hover:bg-gray-200 transition-all shadow-xl shadow-white/5 disabled:opacity-50 flex items-center justify-center gap-2 group min-h-[44px]"
+            aria-label="Gerar card"
           >
             {isLoadingMetadata ? (
               <Loader2 className="animate-spin w-5 h-5" />
@@ -461,6 +622,74 @@ export const PreviewSection: React.FC = () => {
       </div>
 
       {/* NEW RENDER/MEASURE ARCHITECTURE */}
+      {isDevMode() && (
+        <button
+          onClick={() => setDiagnosticMode(d => !d)}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            zIndex: 60,
+            background: 'rgba(0,0,0,.6)',
+            color: '#fff',
+            border: '1px solid #fff',
+            padding: '6px 8px',
+            borderRadius: 4,
+          }}
+        >
+          Diagnostics: {diagnosticMode ? 'On' : 'Off'}
+        </button>
+      )}
+      {diagnosticMode && isDevMode() && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 50,
+            padding: '6px 8px',
+            background: 'rgba(0,0,0,.6)',
+            color: '#fff',
+            borderRadius: 6,
+            fontFamily: 'monospace',
+            fontSize: 12,
+          }}
+        >
+          Canvas {canvasWidth}x{canvasHeight} • Card 640x
+          {cardRef.current?.offsetHeight ?? 360} • ViewScale{' '}
+          {viewScale.toFixed(2)} ({scalePercent}%) • CardScale{' '}
+          {layout.cardScale} • Padding {layout.padding}
+          {layout.paddingAuto ? ' (auto)' : ''} • AutoScale:{' '}
+          {isAutoScale ? 'ON' : 'OFF'}
+        </div>
+      )}
+
+      {/* Indicador de escala para usuario */}
+      {!isWelcomeState && (
+        <div
+          className="absolute bottom-4 left-4 z-30 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10"
+          style={{ position: 'absolute' }}
+        >
+          <Maximize size={14} className="text-white/60" />
+          <span className="text-white/80 text-sm font-medium">
+            {scalePercent}%
+          </span>
+          {!isAutoScale && (
+            <button
+              onClick={resetToAuto}
+              className="ml-1 p-1 rounded hover:bg-white/10 transition-colors"
+              title="Resetar para escala automatica"
+            >
+              <RotateCcw size={12} className="text-white/60" />
+            </button>
+          )}
+          {isAutoScale && (
+            <span className="text-[10px] text-white/40 uppercase tracking-wider ml-1">
+              Auto
+            </span>
+          )}
+        </div>
+      )}
       <div
         ref={containerRef}
         className="flex-1 w-full relative overflow-hidden flex items-center justify-center p-4"
@@ -515,12 +744,19 @@ export const PreviewSection: React.FC = () => {
                   ref={cardRef}
                   className="w-fit h-fit overflow-visible"
                   style={{
-                    transform: `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${autoScale * (layout.cardScale ?? 1)})`,
+                    transform:
+                      frame.enabled && !isWelcomeState
+                        ? 'none'
+                        : `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${computeUnifiedExportScale({ exportScale, cardScale: layout.cardScale, autoScale, preset: canvasSize.preset })})`,
                     transformOrigin: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <PreviewCard />
+                  <PreviewCard
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    padding={paddingValue()}
+                  />
                 </div>
               </div>
             </div>
@@ -538,8 +774,9 @@ export const PreviewSection: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => loadFromHistory(item)}
-                className="w-16 h-16 rounded-lg border border-white/10 hover:border-white/40 hover:scale-105 transition-all shadow-lg overflow-hidden bg-black/40 relative group"
+                className="w-16 h-16 rounded-lg border border-white/10 hover:border-white/40 hover:scale-105 transition-all shadow-lg overflow-hidden bg-black/40 relative group min-w-[44px] min-h-[44px]"
                 title={item.title}
+                aria-label={`Carregar histórico: ${item.title || 'Sem título'}`}
               >
                 {item.previewImage ? (
                   <img

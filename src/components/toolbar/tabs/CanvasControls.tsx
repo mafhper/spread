@@ -63,7 +63,7 @@ const CANVAS_PRESETS: CanvasPreset[] = [
     name: 'twitter',
     label: 'Twitter',
     width: 1200,
-    height: 675,
+    height: 676,
     icon: <Monitor size={14} />,
   },
 ]
@@ -147,11 +147,12 @@ export const CanvasControls: React.FC = () => {
               key={preset.name}
               onClick={() => handlePresetSelect(preset)}
               className={clsx(
-                'flex flex-col items-center justify-center gap-1 p-3 rounded-xl border transition-all text-[10px]',
+                'flex flex-col items-center justify-center gap-1 p-3 min-h-[64px] rounded-xl border transition-all text-[10px]',
                 canvasSize.preset === preset.name
                   ? 'bg-white text-black border-transparent shadow-lg scale-105'
                   : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:border-white/30'
               )}
+              aria-label={`Tamanho ${preset.label}`}
             >
               {preset.icon}
               <span className="font-bold">{preset.label}</span>
@@ -169,12 +170,13 @@ export const CanvasControls: React.FC = () => {
           <button
             onClick={handleAutoColors}
             disabled={isExtracting || !image}
-            className="flex items-center gap-1 px-2 py-1 bg-white/5 hover:bg-white/10 rounded-md text-[9px] font-bold transition-all disabled:opacity-30"
+            className="flex items-center gap-1 px-3 py-2 min-h-[32px] bg-white/5 hover:bg-white/10 rounded-md text-[10px] font-bold transition-all disabled:opacity-30"
+            aria-label="Extrair cores automaticamente"
           >
             {isExtracting ? (
-              <Loader2 className="animate-spin" size={12} />
+              <Loader2 className="animate-spin" size={14} />
             ) : (
-              <Wand2 size={12} />
+              <Wand2 size={14} />
             )}
             Auto
           </button>
@@ -217,12 +219,13 @@ export const CanvasControls: React.FC = () => {
               <button
                 key={angle.value}
                 onClick={() => updateField('gradientStyle', angle.value)}
-                className={`aspect-square rounded-md text-[10px] font-bold transition-all ${
+                className={`aspect-square min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md text-[12px] font-bold transition-all ${
                   gradientStyle === angle.value
                     ? 'bg-white text-black scale-110'
                     : 'bg-white/5 hover:bg-white/10 text-white/40'
                 }`}
                 title={angle.value}
+                aria-label={`Ângulo do gradiente: ${angle.value}`}
               >
                 {angle.label}
               </button>
@@ -238,24 +241,27 @@ export const CanvasControls: React.FC = () => {
         </h4>
 
         <div className="grid grid-cols-3 gap-2">
-          {[
-            { value: 'none', label: 'Nenhum' },
-            { value: 'dots', label: 'Pontos' },
-            { value: 'grid', label: 'Grid' },
-            { value: 'noise', label: 'Ruído' },
-            { value: 'lines', label: 'Linhas' },
-            { value: 'diagonal', label: 'Diag.' },
-          ]
+          {(
+            [
+              { value: 'none', label: 'Nenhum' },
+              { value: 'dots', label: 'Pontos' },
+              { value: 'grid', label: 'Grid' },
+              { value: 'noise', label: 'Ruído' },
+              { value: 'lines', label: 'Linhas' },
+              { value: 'diagonal', label: 'Diag.' },
+            ] as const
+          )
             .slice(0, 3)
             .map(p => (
               <button
                 key={p.value}
                 onClick={() => updateField('pattern', p.value)}
-                className={`px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                className={`px-3 py-2 rounded-lg text-[10px] font-medium transition-all min-w-[44px] min-h-[44px] ${
                   pattern === p.value
                     ? 'bg-white text-black'
                     : 'bg-white/5 hover:bg-white/10 text-white/50'
                 }`}
+                aria-label={`Selecionar padrão: ${p.label}`}
               >
                 {p.label}
               </button>
@@ -265,7 +271,8 @@ export const CanvasControls: React.FC = () => {
         {!customBgImage ? (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-3 border border-dashed border-white/20 rounded-xl bg-white/5 text-[10px] text-white/50 hover:border-white/40 hover:text-white transition-all flex items-center justify-center gap-2"
+            className="w-full min-h-[44px] py-3 border border-dashed border-white/20 rounded-xl bg-white/5 text-[10px] text-white/50 hover:border-white/40 hover:text-white transition-all flex items-center justify-center gap-2"
+            aria-label="Fazer upload de imagem customizada para o fundo"
           >
             <Upload size={14} /> Imagem Customizada
             <input
@@ -285,7 +292,8 @@ export const CanvasControls: React.FC = () => {
             />
             <button
               onClick={() => updateField('customBgImage', null)}
-              className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity min-h-[44px]"
+              aria-label="Remover imagem customizada"
             >
               <Trash2 size={16} />
             </button>
@@ -308,10 +316,11 @@ export const CanvasControls: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateNestedField('cardPosition', 'x', 0)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar X"
+                  aria-label="Resetar posição X"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={12} />
                 </button>
               </div>
             </div>
@@ -336,10 +345,11 @@ export const CanvasControls: React.FC = () => {
                 </span>
                 <button
                   onClick={() => updateNestedField('cardPosition', 'y', 0)}
-                  className="p-0.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60"
+                  className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Resetar Y"
+                  aria-label="Resetar posição Y"
                 >
-                  <RotateCcw size={8} />
+                  <RotateCcw size={12} />
                 </button>
               </div>
             </div>
