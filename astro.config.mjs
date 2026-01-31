@@ -54,13 +54,11 @@ export default defineConfig({
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('react-dom')) {
-                return 'vendor-dom'
-              }
               if (
                 id.includes('react/') ||
-                id.includes('scheduler') ||
-                id.includes('object-assign')
+                id.includes('react-dom/') ||
+                id.includes('scheduler/') ||
+                id.includes('object-assign/')
               ) {
                 return 'vendor-react'
               }
