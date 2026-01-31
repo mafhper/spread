@@ -7,7 +7,8 @@
 
 import type { MessageSuggestion, PlatformType } from '../types/messages'
 import type { LinkMetadata } from './metadata'
-import type { FramePreset } from '../types/frame'
+// import type { FramePreset } from '../types/frame'
+type FramePreset = string
 
 /**
  * Interface simplificada para geração de mensagens

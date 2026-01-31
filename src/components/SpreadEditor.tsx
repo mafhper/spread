@@ -1,12 +1,5 @@
-/**
- * Spread Editor - Main Application Component
- *
- * Renders either the LandingPage (welcome state) or the Editor (working state).
- * The landing page is a full promotional experience.
- * The editor is the card generation/customization interface.
- */
-
-import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react'
+import * as React from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { History, RotateCcw } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
 import { PreviewSection } from './preview/PreviewSection'

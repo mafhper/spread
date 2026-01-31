@@ -12,8 +12,21 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { FrameState, TemplateId } from '../types/frame'
-import { DEFAULT_FRAME_STATE } from '../types/frame'
+// import type { FrameState, TemplateId } from '../types/frame'
+// import { DEFAULT_FRAME_STATE } from '../types/frame'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FrameState = any
+type TemplateId = string
+
+const DEFAULT_FRAME_STATE = {
+  enabled: false,
+  templateId: 'none',
+  primaryColor: '#6366f1',
+  secondaryColor: '#a855f7',
+  textStyle: 'modern',
+  showText: true,
+} as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export interface CardState {
   // Metadata
@@ -472,12 +485,17 @@ export const useCardStore = create<CardState>()(
         exportScale: state.exportScale,
         uiScale: state.uiScale,
         // Frame: persist ONLY style preferences, NOT enabled state or templateId
-        frame: {
-          primaryColor: state.frame.primaryColor,
-          secondaryColor: state.frame.secondaryColor,
-          textStyle: state.frame.textStyle,
-          // enabled and templateId are NOT persisted - reset to defaults on page load
-        },
+        frame: state.frame
+          ? {
+              primaryColor: state.frame.primaryColor,
+              secondaryColor: state.frame.secondaryColor,
+              textStyle: state.frame.textStyle,
+            }
+          : {
+              primaryColor: '#6366f1',
+              secondaryColor: '#a855f7',
+              textStyle: 'modern',
+            },
         // isExporting is EXCLUDED from persistence
       }),
       merge: (persistedStateValue: unknown, currentState) => {

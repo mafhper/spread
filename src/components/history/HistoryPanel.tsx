@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { X, Trash2, Clock, RotateCcw, ExternalLink } from 'lucide-react'
 import { useHistory, type HistoryItem } from '../../hooks/useHistory'
 import { useCardStore } from '../../store/cardStore'
@@ -67,10 +67,18 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
             </div>
           ) : (
             history.map(item => (
-              <button
+              <div
                 key={item.id}
                 className="group relative w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl overflow-hidden transition-all cursor-pointer min-h-[44px]"
                 onClick={() => handleRestore(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleRestore(item)
+                  }
+                }}
                 aria-label={`Carregar card: ${item.title || 'Sem título'}`}
               >
                 {/* Thumbnail Preview */}
@@ -130,7 +138,7 @@ export const HistoryPanel: React.FC<{ onClose: () => void }> = ({
                     </div>
                   </div>
                 </div>
-              </button>
+              </div>
             ))
           )}
         </div>

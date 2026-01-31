@@ -5,23 +5,19 @@
  * Substitui react-icons/fa6 (1.8MB) por SVGs especificos (~5KB)
  */
 
-import type { FC, CSSProperties } from 'react'
+import * as React from 'react'
 import {
-  YoutubeIcon,
-  YoutubeMusicIcon,
-  TwitterIcon,
-  InstagramIcon,
-  SpotifyIcon,
-  SoundcloudIcon,
-  BandcampIcon,
-  AppleIcon,
-  GithubIcon,
-  LinkedinIcon,
-  FacebookIcon,
-  TiktokIcon,
-  GlobeIcon,
-  MusicIcon,
-} from '../components/icons'
+  Youtube,
+  Twitter,
+  Instagram,
+  Music,
+  Disc,
+  Github,
+  Linkedin,
+  Facebook,
+  Globe,
+  Share2,
+} from 'lucide-react'
 
 /**
  * Props padrao para componentes de icone
@@ -30,10 +26,11 @@ export interface IconProps {
   className?: string
   size?: number
   color?: string
-  style?: CSSProperties
+  style?: React.CSSProperties
 }
 
-type IconComponent = FC<IconProps>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type IconComponent = React.ComponentType<any>
 
 // Cores oficiais das marcas
 export const SERVICE_COLORS: Record<string, string> = {
@@ -75,72 +72,73 @@ export const SERVICE_COLORS: Record<string, string> = {
 }
 
 // Mapeamento de dominios para icones
-export const SERVICE_ICONS: Record<string, IconComponent> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const SERVICE_ICONS: Record<string, any> = {
   // YouTube
-  youtube: YoutubeIcon,
-  'youtube.com': YoutubeIcon,
-  'youtu.be': YoutubeIcon,
-  'youtube-nocookie.com': YoutubeIcon,
-  'music.youtube.com': YoutubeMusicIcon,
+  youtube: Youtube,
+  'youtube.com': Youtube,
+  'youtu.be': Youtube,
+  'youtube-nocookie.com': Youtube,
+  'music.youtube.com': Youtube,
 
   // Twitter/X
-  twitter: TwitterIcon,
-  'twitter.com': TwitterIcon,
-  'x.com': TwitterIcon,
-  x: TwitterIcon,
-  'y2u.be': YoutubeIcon,
+  twitter: Twitter,
+  'twitter.com': Twitter,
+  'x.com': Twitter,
+  x: Twitter,
+  'y2u.be': Youtube,
 
   // Instagram
-  instagram: InstagramIcon,
-  'instagram.com': InstagramIcon,
+  instagram: Instagram,
+  'instagram.com': Instagram,
 
-  // Spotify
-  spotify: SpotifyIcon,
-  'spotify.com': SpotifyIcon,
-  'open.spotify.com': SpotifyIcon,
+  // Spotify (using Disc/Music as fallback if icon missing)
+  spotify: Music,
+  'spotify.com': Music,
+  'open.spotify.com': Music,
 
   // SoundCloud
-  soundcloud: SoundcloudIcon,
-  'soundcloud.com': SoundcloudIcon,
+  soundcloud: Disc,
+  'soundcloud.com': Disc,
 
   // Bandcamp
-  bandcamp: BandcampIcon,
-  'bandcamp.com': BandcampIcon,
+  bandcamp: Disc,
+  'bandcamp.com': Disc,
 
   // Apple
-  apple: AppleIcon,
-  'apple.com': AppleIcon,
-  'music.apple.com': AppleIcon,
+  apple: Disc, // Apple icon might not be in basic set
+  'apple.com': Disc,
+  'music.apple.com': Music,
 
-  // Deezer (usa Spotify como aproximacao)
-  deezer: SpotifyIcon,
-  'deezer.com': SpotifyIcon,
+  // Deezer
+  deezer: Music,
+  'deezer.com': Music,
 
-  // Tidal (usa Spotify como aproximacao)
-  tidal: SpotifyIcon,
-  'tidal.com': SpotifyIcon,
+  // Tidal
+  tidal: Music,
+  'tidal.com': Music,
 
   // GitHub
-  github: GithubIcon,
-  'github.com': GithubIcon,
-  'github.io': GithubIcon,
+  github: Github,
+  'github.com': Github,
+  'github.io': Github,
 
   // LinkedIn
-  linkedin: LinkedinIcon,
-  'linkedin.com': LinkedinIcon,
+  linkedin: Linkedin,
+  'linkedin.com': Linkedin,
 
   // Facebook
-  facebook: FacebookIcon,
-  'facebook.com': FacebookIcon,
-  'fb.com': FacebookIcon,
+  facebook: Facebook,
+  'facebook.com': Facebook,
+  'fb.com': Facebook,
 
   // TikTok
-  tiktok: TiktokIcon,
-  'tiktok.com': TiktokIcon,
+  tiktok: Share2, // Generic share for tiktok if missing
+  'tiktok.com': Share2,
 }
 
 // Icone padrao para servicos nao mapeados
-export const DEFAULT_ICON = GlobeIcon
+export const DEFAULT_ICON = Globe
 export const DEFAULT_COLOR = '#6B7280'
 
 export interface ServiceIconResult {
@@ -222,7 +220,7 @@ export function getServiceIcon(domain: string): ServiceIconResult {
  */
 export function getMusicIcon(): ServiceIconResult {
   return {
-    Icon: MusicIcon,
+    Icon: Music,
     color: '#1DB954',
     hasIcon: true,
   }

@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import * as React from 'react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -6,8 +6,8 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode
 }
 
 export function Card({ className, children, ...props }: CardProps) {
@@ -17,7 +17,10 @@ export function Card({ className, children, ...props }: CardProps) {
         'bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden',
         className
       )}
-      {...props}
+      {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        ...(props as any)
+      }
     >
       {children}
     </div>

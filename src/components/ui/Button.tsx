@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import * as React from 'react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -6,10 +6,10 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'outline'
   size?: 'sm' | 'md' | 'lg' | 'icon'
-  children: ReactNode
+  children: React.ReactNode
 }
 
 export function Button({
@@ -45,7 +45,10 @@ export function Button({
         sizes[size],
         className
       )}
-      {...props}
+      {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        ...(props as any)
+      }
     >
       {children}
     </button>

@@ -1,4 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react'
+import * as React from 'react'
+import { useRef, useState, useEffect } from 'react'
 // No static imports for heavy libs
 import {
   Download,

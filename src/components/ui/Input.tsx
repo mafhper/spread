@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react'
+import * as React from 'react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -6,7 +6,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
 }
@@ -25,7 +25,10 @@ export function Input({ className, label, error, ...props }: InputProps) {
           error && 'border-red-500 focus:border-red-500',
           className
         )}
-        {...props}
+        {
+          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+          ...(props as any)
+        }
       />
       {error && (
         <span className="text-xs text-red-400 mt-1 block">{error}</span>

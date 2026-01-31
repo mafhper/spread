@@ -27,7 +27,6 @@ Thumbs.db
 *.sublime-workspace
 
 # Quality and Performance Reports
-quality-core/
 performance-reports/*
 *lighthouse*.json
 lighthouse-report.json

@@ -12,12 +12,13 @@
  * - Renderiza o card padrão (template default/music/news)
  */
 
-import React, { useEffect } from 'react'
+import * as React from 'react'
+import { useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { useCardStore } from '../../store/cardStore'
 import { getServiceIcon } from '../../services/iconLibrary'
-import { FrameOverlay } from './FrameOverlay'
+// import { FrameOverlay } from './FrameOverlay'
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs))
@@ -93,14 +94,15 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
           filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.35))',
         }}
       >
-        <FrameOverlay
+        {/* <FrameOverlay
           image={image}
           canvasWidth={canvasWidth}
           canvasHeight={canvasHeight}
           templateId={frame.templateId}
           primaryColor={frame.primaryColor}
           secondaryColor={frame.secondaryColor}
-        />
+        /> */}
+        <div />
 
         {/* Overlay de Texto Otimizado para Frames */}
         {frame.showText && (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import * as React from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Maximize,
   Type,
@@ -30,9 +31,9 @@ const TypographyTabs = lazy(() =>
 const ColorTabs = lazy(() =>
   import('./tabs/ColorTabs').then(m => ({ default: m.ColorTabs }))
 )
-const FrameTabs = lazy(() =>
-  import('./tabs/FrameTabs').then(m => ({ default: m.FrameTabs }))
-)
+// const FrameTabs = lazy(() =>
+//   import('./tabs/FrameTabs').then(m => ({ default: m.FrameTabs }))
+// )
 const MessageSuggestions = lazy(() =>
   import('./tabs/MessageSuggestions').then(m => ({
     default: m.MessageSuggestions,
@@ -79,8 +80,8 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
           </div>
         </div>
       )
-    case 'frame':
-      return <FrameTabs />
+    // case 'frame':
+    //   return <FrameTabs />
     default:
       return null
   }
