@@ -97,11 +97,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Headline */}
-        <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 sm:mb-6">
+        {/* Headline */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight mb-3 sm:mb-6">
           <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
             Spread
           </span>
-        </div>
+        </h1>
 
         {/* Tagline */}
         <p className="text-base sm:text-xl md:text-2xl text-white/60 font-medium max-w-2xl mb-8 sm:mb-12 leading-relaxed px-4">

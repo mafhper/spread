@@ -2,7 +2,7 @@
 
 Spread es una utilidad web de alta fidelidad diseñada para la generación de activos estéticos de visualización de enlaces. Facilita la transformación de URLs de diversas plataformas digitales —incluyendo servicios de streaming, redes sociales y portales de noticias— en componentes visuales profesionales optimizados para su distribución en alta resolución.
 
-![Banner](docs/assets/banner.png)
+![Banner](public/assets/banner.png)
 
 <div align="center">
 
@@ -73,10 +73,10 @@ graph LR
 
 ## Referencia Visual
 
-![Visualización de Música](docs/assets/music-preview.png)
+![Visualización de Música](public/assets/music-preview.png)
 _Figura 1: Configuraciones de diseño especializadas para metadados musicales._
 
-![Activos de Redes Sociales](docs/assets/social-preview.png)
+![Activos de Redes Sociales](public/assets/social-preview.png)
 _Figura 2: Plantillas de nivel profesional para distribución en redes sociales._
 
 ---

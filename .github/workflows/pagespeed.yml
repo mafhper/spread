@@ -24,17 +24,22 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: PageSpeed Insights (Remote)
-        uses: jakepartusch/psi-action@v1.3
+      - name: PageSpeed Insights
+        uses: jakepartusch/page-speed-insights-action@v1
         with:
           url: https://mafhper.github.io/spread
           key: ${{ secrets.PAGESPEED_API_KEY }}
           threshold: 90
 
-      - name: Lighthouse CI (Local)
-        run: |
-          bun run preview &
-          sleep 10
-          npx lhci autorun
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+      - name: Start preview server
+        run: bun run preview &
+
+      - name: Wait for server
+        run: sleep 10
+
+      - name: Run local PageSpeed test
+        uses: jakepartusch/page-speed-insights-action@v1
+        with:
+          url: http://localhost:4321
+          key: ${{ secrets.PAGESPEED_API_KEY }}
+          threshold: 85

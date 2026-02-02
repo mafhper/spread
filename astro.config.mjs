@@ -54,15 +54,13 @@ export default defineConfig({
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('react-dom/')) {
-                return 'vendor-react-dom'
-              }
               if (
                 id.includes('react/') ||
+                id.includes('react-dom/') ||
                 id.includes('scheduler/') ||
                 id.includes('object-assign/')
               ) {
-                return 'vendor-react-core'
+                return 'vendor-react'
               }
               if (id.includes('lucide')) {
                 return 'vendor-icons'
