@@ -98,6 +98,7 @@ Para adicionar uma nova verificação ao Quality Gate:
 ## Notas Técnicas (Performance & Windows)
 
 O sistema de auditoria inclui otimizações específicas para ambientes Windows:
+
 - **Headless Legacy**: Utiliza o modo `--headless` tradicional para maior estabilidade em emulação mobile.
 - **Adaptive Throttling**: Desativa o throttling de CPU via software no Windows para evitar timeouts de protocolo DevTools.
 - **Lazy Rendering**: Componentes de landing page utilizam `LazyIntersection` com consciência de hash, renderizando imediatamente apenas o necessário para navegação por âncoras.

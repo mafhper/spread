@@ -38,8 +38,7 @@ REAL_REPORT.json
 
 # Internal Development and Documentation
 _dev/
-conductor/
-docs/*
+conductor
 .gemini
 .gemini-clipboard
 .kilocode

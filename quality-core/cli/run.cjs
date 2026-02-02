@@ -228,12 +228,14 @@ const TASKS = [
         return { success: true, skipped: true, message: 'No JSON reports' }
 
       try {
-        const report = JSON.parse(
-          fs.readFileSync(path.join(lhDir, files[0]), 'utf8')
-        )
+        const latestReport = files[0]
+        const reportPath = path.join(lhDir, latestReport)
+        const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'))
         const getScore = cat => {
-          const catScore = report.categories?.[cat]?.score // eslint-disable-line security/detect-object-injection
-          const lhrScore = report.lhr?.categories?.[cat]?.score // eslint-disable-line security/detect-object-injection
+          /* eslint-disable security/detect-object-injection */
+          const catScore = report.categories?.[cat]?.score
+          const lhrScore = report.lhr?.categories?.[cat]?.score
+          /* eslint-enable security/detect-object-injection */
           const val = catScore || lhrScore
           return val ? Math.round(val * 100) : 0
         }
@@ -277,6 +279,7 @@ async function main() {
 
   // 2. Execute Tasks
   for (let i = 0; i < TASKS.length; i++) {
+    // eslint-disable-next-line security/detect-object-injection
     const task = TASKS[i]
     const taskStart = Date.now()
 
