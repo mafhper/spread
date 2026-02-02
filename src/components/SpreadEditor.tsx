@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { History, RotateCcw } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
-import { PreviewSection } from './preview/PreviewSection'
 import { useCardStore } from '../store/cardStore'
 import { fetchMetadata } from '../services/metadata'
 import { urlToBase64 } from '../services/exportUtils'
@@ -14,6 +13,9 @@ import {
 import { useColorExtractor } from '../hooks/useColorExtractor'
 
 // Lazy load heavy components for code splitting
+const PreviewSection = lazy(() =>
+  import('./preview/PreviewSection').then(m => ({ default: m.PreviewSection }))
+)
 const LandingPage = lazy(() =>
   import('./landing/LandingPage').then(m => ({ default: m.LandingPage }))
 )
@@ -276,7 +278,9 @@ export const SpreadEditor: React.FC = () => {
 
         {/* Main Preview Area */}
         <main className="flex-1 min-h-0 overflow-hidden">
-          <PreviewSection />
+          <Suspense fallback={<LoadingFallback />}>
+            <PreviewSection />
+          </Suspense>
         </main>
       </div>
 

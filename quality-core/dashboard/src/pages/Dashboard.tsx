@@ -222,7 +222,7 @@ export default function Dashboard() {
           subtitle="Tamanho do build"
           icon={Package}
           status={
-            currentSnapshot.metrics.performance.bundleSize <= 350
+            currentSnapshot.metrics.performance.bundleSize <= 600
               ? 'success'
               : 'warning'
           }

@@ -18,7 +18,7 @@ vi.mock('@/components/ui/LazyIntersection', () => ({
   ),
 }))
 
-// Mock LandingPage but keep it somewhat functional for props
+// Mock components but keep them functional for props
 vi.mock('@/components/landing/LandingPage', () => ({
   LandingPage: ({
     inputUrl,
@@ -37,6 +37,14 @@ vi.mock('@/components/landing/LandingPage', () => ({
         onChange={e => setInputUrl(e.target.value)}
       />
       <button onClick={onGenerate}>Gerar</button>
+    </div>
+  ),
+}))
+
+vi.mock('@/components/preview/PreviewSection', () => ({
+  PreviewSection: () => (
+    <div role="region" aria-label="Preview">
+      Preview Mock
     </div>
   ),
 }))
