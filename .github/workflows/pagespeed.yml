@@ -24,12 +24,12 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: PageSpeed Insights (Remote)
-        uses: jakepartusch/psi-action@v1.3
+      - name: Lighthouse CI (Remote)
+        uses: treosh/lighthouse-ci-action@v12
         with:
-          url: https://mafhper.github.io/spread
-          key: ${{ secrets.PAGESPEED_API_KEY }}
-          threshold: 90
+          urls: 'https://mafhper.github.io/spread'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
 
       - name: Lighthouse CI (Local)
         run: |

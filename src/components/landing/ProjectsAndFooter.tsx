@@ -8,13 +8,15 @@ import React, { memo } from 'react'
 import { ExternalLink, Heart, Github, ArrowUp } from 'lucide-react'
 import { OptimizedImage } from '../OptimizedImage'
 
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+
 const projects = [
   {
     name: 'PersonalNews',
     description: 'Seu feed de notícias pessoal e customizável',
     url: 'https://mafhper.github.io/personalnews',
     githubUrl: 'https://github.com/mafhper/personalnews',
-    image: '/spread/assets/personal-news.png',
+    image: `${base}/assets/personal-news.png`,
     gradient: 'from-blue-500 to-cyan-500',
   },
   {
@@ -22,7 +24,7 @@ const projects = [
     description: 'Wallpapers generativos com estética única',
     url: 'https://mafhper.github.io/aurawall',
     githubUrl: 'https://github.com/mafhper/aurawall',
-    image: '/spread/assets/aurawall.png',
+    image: `${base}/assets/aurawall.png`,
     gradient: 'from-purple-500 to-pink-500',
   },
 ]
@@ -144,7 +146,7 @@ const ProjectsAndFooterBase: React.FC = () => {
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center">
                 <img
-                  src="/spread/logo.svg"
+                  src={`${base}/logo.svg`}
                   alt=""
                   className="w-6 h-6 opacity-90 invert brightness-0"
                 />

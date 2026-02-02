@@ -221,7 +221,7 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
                 <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
                 <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
                   <img
-                    src="/spread/logo.svg"
+                    src={`${base}/logo.svg`}
                     alt="Logo Spread"
                     className="w-5 h-5 sm:w-6 sm:h-6 opacity-90"
                   />

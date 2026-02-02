@@ -90,14 +90,16 @@
     "glob": "^11.0.0",
     "lodash": "^4.17.23",
     "js-yaml": "^4.1.1",
-    "@remix-run/router": "^1.23.1"
+    "@remix-run/router": "^1.23.1",
+    "esbuild": "0.25.0"
   },
   "overrides": {
     "tmp": "0.2.5",
     "glob": "^11.0.0",
     "lodash": "^4.17.23",
     "js-yaml": "^4.1.1",
-    "@remix-run/router": "^1.23.1"
+    "@remix-run/router": "^1.23.1",
+    "esbuild": "0.25.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
