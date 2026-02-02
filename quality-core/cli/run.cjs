@@ -277,6 +277,7 @@ async function main() {
 
   // 2. Execute Tasks
   for (let i = 0; i < TASKS.length; i++) {
+    // eslint-disable-next-line security/detect-object-injection
     const task = TASKS[i]
     const taskStart = Date.now()
 

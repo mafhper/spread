@@ -1,11 +1,10 @@
-/// <reference path="../.astro/types.d.ts" />
-/// <reference types="astro/client" />
-/// <reference types="vite/client" />
+import 'astro/client'
+import 'vite/client'
 
 interface ImportMetaEnv {
-  readonly BASE_URL: string;
+  readonly BASE_URL: string
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv;
+  readonly env: ImportMetaEnv
 }
