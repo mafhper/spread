@@ -101,6 +101,77 @@ async function startServer(port: number) {
       return
     }
 
+    // API: Buscar Arquivos
+    if (url.pathname === '/api/files/search' && req.method === 'GET') {
+      const query = url.searchParams.get('q') || ''
+      if (!query || query.length < 2) {
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(JSON.stringify({ success: true, data: [] }))
+        return
+      }
+      try {
+        const command =
+          process.platform === 'win32'
+            ? `git ls-files | findstr /i "${query}"`
+            : `git ls-files | grep -i "${query}"`
+
+        // eslint-disable-next-line security/detect-child-process
+        exec(command, { cwd: process.cwd() }, (error, stdout) => {
+          const files = (stdout || '').split('\n').filter(Boolean).slice(0, 10)
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+          })
+          res.end(JSON.stringify({ success: true, data: files }))
+        })
+      } catch (err: unknown) {
+        res.writeHead(500, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(
+          JSON.stringify({
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        )
+      }
+      return
+    }
+
+    // API: Conteúdo de Arquivo
+    if (url.pathname === '/api/files/content' && req.method === 'GET') {
+      const filePath = url.searchParams.get('path')
+      if (!filePath) {
+        res.writeHead(400, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(JSON.stringify({ success: false, error: 'Path required' }))
+        return
+      }
+      try {
+        const absolutePath = path.resolve(process.cwd(), filePath)
+        if (!absolutePath.startsWith(process.cwd())) {
+          throw new Error('Access denied')
+        }
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        const content = await fs.readFile(absolutePath, 'utf-8')
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+        res.end(content)
+      } catch (err: unknown) {
+        res.writeHead(500, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(
+          JSON.stringify({
+            success: false,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        )
+      }
+      return
+    }
+
     // API: Conteúdo do Relatório Markdown
     if (url.pathname === '/api/reports/content' && req.method === 'GET') {
       const filename = url.searchParams.get('file')
@@ -185,6 +256,48 @@ async function startServer(port: number) {
           })
         )
       }
+      return
+    }
+
+    // API: Configuração - GET
+    if (url.pathname === '/api/config' && req.method === 'GET') {
+      try {
+        await ensureConfig()
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        const content = await fs.readFile(CONFIG_FILE, 'utf-8')
+        res.writeHead(200, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(content)
+      } catch (err: unknown) {
+        res.writeHead(500, {
+          'Content-Type': 'application/json; charset=utf-8',
+        })
+        res.end(JSON.stringify({ success: false, error: String(err) }))
+      }
+      return
+    }
+
+    // API: Configuração - POST
+    if (url.pathname === '/api/config' && req.method === 'POST') {
+      let body = ''
+      req.on('data', chunk => (body += chunk))
+      req.on('end', async () => {
+        try {
+          const config = JSON.parse(body)
+          // eslint-disable-next-line security/detect-non-literal-fs-filename
+          await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2))
+          res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+          })
+          res.end(JSON.stringify({ success: true }))
+        } catch (err: unknown) {
+          res.writeHead(500, {
+            'Content-Type': 'application/json; charset=utf-8',
+          })
+          res.end(JSON.stringify({ success: false, error: String(err) }))
+        }
+      })
       return
     }
 

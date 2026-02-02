@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeUnifiedExportScale } from '../../../../src/utils/exportScale'
+import { computeUnifiedExportScale } from '@/utils/exportScale'
 
 describe('exportScale - computeUnifiedExportScale', () => {
   it('should return 1 for default parameters', () => {

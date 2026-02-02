@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
+import { type CardState } from '@/store/cardStore'
 import { createMockCardStore } from './useCardStore'
-import { type CardState } from '../../../../src/store/cardStore'
 
 // Mock do hook store
 export const mockUseCardStore = (overrides: Partial<CardState> = {}) => {

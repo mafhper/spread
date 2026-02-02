@@ -57,6 +57,9 @@ const ProjectsAndFooterBase: React.FC = () => {
       <div className="max-w-5xl mx-auto relative w-full pt-20 pb-12 sm:pt-32 sm:pb-16 flex-grow">
         {/* Other projects heading */}
         <div className="text-center mb-10 sm:mb-16">
+          <span className="inline-block px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-white/60 mb-6">
+            Projetos
+          </span>
           <h3 className="text-2xl sm:text-3xl font-black text-white mb-3">
             Conheça outros projetos
           </h3>

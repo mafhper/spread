@@ -10,6 +10,9 @@ import {
   Trash2,
   ExternalLink,
   AlertTriangle,
+  FileText,
+  Zap,
+  FlaskConical as LucideFlaskConical,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +33,8 @@ import {
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
+import { useNavigate } from 'react-router-dom'
+
 interface DashboardHeaderProps {
   projectName?: string
 }
@@ -37,6 +42,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({
   projectName = 'Spread',
 }: DashboardHeaderProps) {
+  const navigate = useNavigate()
   const {
     currentSnapshot,
     runAction,
@@ -46,6 +52,9 @@ export function DashboardHeader({
     clearNotifications,
     searchQuery,
     setSearchQuery,
+    searchResults,
+    openReport,
+    openFile,
   } = useQualityData()
 
   const now = new Date()
@@ -122,17 +131,21 @@ export function DashboardHeader({
       <div className="h-full flex items-center justify-between px-6">
         {/* Left: Project info */}
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border shadow-inner">
-            <img
-              src="/logo.svg"
-              alt="Spread"
-              className="w-7 h-7 object-contain"
-              onError={e => {
-                // Fallback directly to github if /logo.svg fails or is wrong
-                ;(e.target as HTMLImageElement).src =
-                  'https://raw.githubusercontent.com/mafhper/Spread/main/public/assets/proposta-novo-logo.svg'
-              }}
-            />
+          <div className="relative w-10 h-10 sm:w-11 sm:h-11 group">
+            <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
+            <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
+              <img
+                src="/logo.svg"
+                alt="Logo Spread"
+                className="w-5 h-5 sm:w-6 sm:h-6 opacity-90 animate-color-shift"
+                style={{ filter: 'brightness(1.5) contrast(1.1)' }}
+                onError={e => {
+                  // Fallback directly to github if /logo.svg fails or is wrong
+                  ;(e.target as HTMLImageElement).src =
+                    'https://raw.githubusercontent.com/mafhper/spread/main/public/logo.svg'
+                }}
+              />
+            </div>
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -213,14 +226,85 @@ export function DashboardHeader({
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-20"
               >
                 <XCircle className="h-3.5 w-3.5" />
               </button>
             )}
+
             <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
               ⌘K
             </kbd>
+
+            {/* Global Search Results Dropdown */}
+            {searchQuery && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 min-w-[320px]">
+                <div className="p-2 border-b border-border bg-muted/30 flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-2">
+                    {searchResults.length > 0
+                      ? 'Resultados da Busca'
+                      : 'Nenhum resultado'}
+                  </span>
+                  {searchResults.length > 0 && (
+                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                      {searchResults.length}
+                    </span>
+                  )}
+                </div>
+                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                  {searchResults.length > 0 ? (
+                    searchResults.map(result => (
+                      <button
+                        key={result.id}
+                        onClick={() => {
+                          if (result.type === 'report' && result.payload) {
+                            openReport(result.payload)
+                          } else if (result.type === 'test') {
+                            navigate('/tests')
+                          } else if (result.type === 'file' && result.payload) {
+                            openFile(result.payload)
+                          }
+                          setSearchQuery('')
+                        }}
+                        className="w-full text-left p-3 hover:bg-muted/50 flex items-center gap-3 transition-colors border-b border-border/50 last:border-0 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                          {result.type === 'test' ? (
+                            <LucideFlaskConical className="h-4 w-4" />
+                          ) : result.type === 'report' ? (
+                            <FileText className="h-4 w-4" />
+                          ) : result.type === 'file' ? (
+                            <FileText className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <Zap className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                            {result.title}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {result.subtitle}
+                          </p>
+                        </div>
+                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all" />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center">
+                      <Search className="h-8 w-8 text-muted-foreground/20 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Não encontramos nada para "{searchQuery}"
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-1">
+                        Tente buscar por nomes de arquivos, hashes de commit ou
+                        títulos de testes.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

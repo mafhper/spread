@@ -285,4 +285,18 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
+
+  /* Premium Logo Animations */
+  @keyframes color-shift {
+    0% {
+      filter: hue-rotate(0deg);
+    }
+    100% {
+      filter: hue-rotate(360deg);
+    }
+  }
+
+  .animate-color-shift {
+    animation: color-shift 5s linear infinite;
+  }
 }

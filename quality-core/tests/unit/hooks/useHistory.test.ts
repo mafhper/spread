@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useHistory } from '../../../../src/hooks/useHistory'
-import { useCardStore } from '../../../../src/store/cardStore'
+import { useHistory } from '@/hooks/useHistory'
+import { useCardStore } from '@/store/cardStore'
 
 // Mock the card store
-vi.mock('../../../../src/store/cardStore', () => ({
+vi.mock('@/store/cardStore', () => ({
   useCardStore: vi.fn(),
 }))
 

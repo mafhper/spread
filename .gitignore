@@ -28,14 +28,17 @@ Thumbs.db
 
 # Quality and Performance Reports
 performance-reports/*
-*lighthouse*.json
+lighthouse*.json
 lighthouse-report.json
+test-lighthouse.json
+audit-root.json
 REAL_REPORT.json
-*.report.html
-/.lighthouseci
+.report.html
+.lighthouseci
 
 # Internal Development and Documentation
 _dev/
+conductor/
 docs/*
 .gemini
 .gemini-clipboard

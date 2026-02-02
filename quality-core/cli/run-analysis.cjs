@@ -5,6 +5,51 @@
 const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
+const UI = require('./ui-helpers.cjs')
+
+// Flags support
+const _args = process.argv.slice(2)
+const isQuiet = _args.includes('--quiet') || _args.includes('-q')
+const isSilent = _args.includes('--silent') || _args.includes('-s')
+
+// Rastreamento de execução em silent mode
+const executionLog = {
+  startTime: Date.now(),
+  errors: [],
+  warnings: [],
+  reports: [],
+}
+
+const _rawLog = console.log.bind(console)
+const _rawError = console.error.bind(console)
+
+if (!isSilent && !isQuiet) {
+  // Modo normal
+} else if (isSilent) {
+  // Silent mode - registra erros e warnings
+  const originalLog = console.log
+  const originalError = console.error
+  console.log = (msg, ...rest) => {
+    if (typeof msg === 'string' && msg.includes('ERROR')) {
+      executionLog.errors.push(msg)
+      originalLog(`❌ ${msg}`, ...rest)
+    } else if (typeof msg === 'string' && msg.includes('INFO')) {
+      // Silencia info
+    } else {
+      originalLog(msg, ...rest)
+    }
+  }
+  console.error = (msg, ...rest) => {
+    executionLog.errors.push(msg)
+    originalError(`❌ ${msg}`, ...rest)
+  }
+} else if (isQuiet && !isSilent) {
+  // Modo quiet - suprime apenas infos
+  console.log = (msg, ...rest) => {
+    if (typeof msg === 'string' && msg.startsWith('[ANALYSIS - INFO]')) return
+    _rawLog(msg, ...rest)
+  }
+}
 
 const BundleAnalysisAudit = require('../packages/audits/bundle-analysis.cjs')
 
@@ -168,15 +213,10 @@ async function runAnalysis() {
   // 1. Bundle Analysis
   console.log('[ANALYSIS - INFO] Running bundle analysis...')
   try {
+    const DEFAULT_THRESHOLDS = require('../packages/core/thresholds.cjs')
     const bundleResult = await BundleAnalysisAudit.run({
       distDir: DIST_DIR,
-      thresholds: {
-        build: {
-          bundle_total_kb: 500,
-          largest_chunk_kb: 200,
-          css_total_kb: 100,
-        },
-      },
+      thresholds: DEFAULT_THRESHOLDS,
     })
     results.bundle = bundleResult
     console.log(
@@ -221,13 +261,50 @@ async function runAnalysis() {
   console.log('[ANALYSIS - INFO] Analysis complete!')
   console.log(`[ANALYSIS - INFO] Reports saved to: ${ANALYSIS_DIR}`)
 
+  if (isSilent) {
+    const metrics = []
+    if (results.bundle && !results.bundle.error) {
+      metrics.push(
+        `✅ Bundle: ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB`
+      )
+    } else if (results.bundle && results.bundle.error) {
+      metrics.push(`❌ Bundle Analysis: ${results.bundle.error}`)
+    }
+
+    if (results.dependencies) {
+      metrics.push(`✅ Dependências: ${results.dependencies.total} encontradas`)
+    }
+
+    const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+
+    UI.printSummary({
+      title: 'ANÁLISE',
+      metrics,
+      errors: executionLog.errors,
+      warnings: executionLog.warnings,
+      duration,
+      reportDir: ANALYSIS_DIR,
+    })
+  }
+
   return results
 }
 
 // Run if called directly
 if (require.main === module) {
   runAnalysis().catch(err => {
-    console.error('[ANALYSIS - ERROR] Analysis failed:', err)
+    _rawError('[ANALYSIS - ERROR] Analysis failed:', err)
+    if (isSilent) {
+      executionLog.errors.push(err.message)
+      const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+      UI.printSummary({
+        title: 'ANÁLISE',
+        status: 'fail',
+        errors: executionLog.errors,
+        duration,
+        reportDir: ANALYSIS_DIR,
+      })
+    }
     process.exit(1)
   })
 }

@@ -117,6 +117,8 @@ export const CanvasControls: React.FC = () => {
         updateNestedField('colors', 'bg1', extracted.primary)
         updateNestedField('colors', 'bg2', extracted.secondary)
       }
+    } catch (error) {
+      console.error('[CanvasControls] Erro ao extrair cores:', error)
     } finally {
       setIsExtracting(false)
     }

@@ -13,11 +13,7 @@ interface SystemStatusProps {
 export function SystemStatus({ stability, className }: SystemStatusProps) {
   const { realLatency } = useQualityData()
   const { githubUrl } = useSettings()
-  console.log('[status-debug] SystemStatus:', {
-    status: stability.status,
-    uptime: stability.uptime,
-    realLatency,
-  })
+
   const statusColor = {
     online: 'text-success',
     degraded: 'text-warning',
@@ -39,102 +35,113 @@ export function SystemStatus({ stability, className }: SystemStatusProps) {
   return (
     <div
       className={cn(
-        'rounded-xl border border-border bg-card p-5 group relative',
+        'rounded-xl border border-border bg-card p-6 shadow-sm group relative overflow-hidden flex flex-col',
         className
       )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Status do Sistema
+      <div className="flex items-center justify-between mb-6 relative z-10">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-success pulse-live" />
+          Live Status
         </h3>
         <Link
           to="/settings"
-          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-2 rounded-lg hover:bg-muted"
-          title="Ir para configurações"
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1.5 rounded-lg hover:bg-muted bg-muted/20 border border-border/50"
+          title="Configurações"
         >
-          <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+          <Settings className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
         </Link>
       </div>
 
-      <div className="space-y-4">
-        {/* Site Information */}
-        <div className="bg-muted/20 rounded-lg p-3 border border-muted/50">
-          <p className="text-xs text-muted-foreground mb-1">Site Configurado</p>
-          <p className="text-sm font-medium text-foreground font-mono truncate">
+      <div className="space-y-5 flex-1 relative z-10">
+        {/* Site Badge */}
+        <div className="bg-muted/30 rounded-xl p-3 border border-border/50 flex flex-col gap-1">
+          <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+            Target Endpoint
+          </span>
+          <p className="text-xs font-mono font-bold text-foreground truncate">
             {githubUrl || 'Não configurado'}
           </p>
         </div>
 
-        {/* Connection status */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {stability.status === 'offline' ? (
-              <WifiOff className="h-4 w-4 text-error" />
-            ) : (
-              <Wifi className={cn('h-4 w-4', statusColor[stability.status])} />
-            )}
-            <span className="text-sm text-card-foreground">Conexão</span>
+        <div className="grid grid-cols-1 gap-4">
+          {/* Connection & Latency */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-border/30">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={cn(
+                  'p-1.5 rounded-lg bg-background/50',
+                  statusColor[stability.status]
+                )}
+              >
+                {stability.status === 'offline' ? (
+                  <WifiOff size={14} />
+                ) : (
+                  <Wifi size={14} />
+                )}
+              </div>
+              <span className="text-xs font-bold text-card-foreground">
+                Latency
+              </span>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-mono font-black tracking-tighter">
+                {realLatency > 0 ? `${realLatency}ms` : '---'}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                'w-2 h-2 rounded-full pulse-live',
-                statusBg[stability.status]
-              )}
-            />
-            <span
-              className={cn(
-                'text-sm font-medium',
-                statusColor[stability.status]
-              )}
-            >
-              {statusLabel[stability.status]}
-            </span>
-          </div>
-        </div>
 
-        {/* Latency */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-card-foreground">Latência Média</span>
+          {/* Uptime Visual */}
+          <div className="p-3 rounded-xl bg-muted/20 border border-border/30">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-background/50 text-primary">
+                  <Activity size={14} />
+                </div>
+                <span className="text-xs font-bold text-card-foreground">
+                  Uptime
+                </span>
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-mono font-black',
+                  stability.uptime >= 99
+                    ? 'text-success'
+                    : stability.uptime >= 95
+                      ? 'text-warning'
+                      : 'text-error'
+                )}
+              >
+                {stability.uptime}%
+              </span>
+            </div>
+            <div className="w-full h-1 bg-background/50 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'h-full transition-all duration-1000',
+                  stability.uptime >= 99
+                    ? 'bg-success'
+                    : stability.uptime >= 95
+                      ? 'bg-warning'
+                      : 'bg-error'
+                )}
+                style={{ width: `${stability.uptime}%` }}
+              />
+            </div>
           </div>
-          <span className="text-sm font-mono font-medium text-card-foreground">
-            {realLatency > 0 ? `${realLatency}ms` : 'Medindo...'}
-          </span>
         </div>
+      </div>
 
-        {/* Uptime */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-card-foreground">Uptime</span>
-          </div>
-          <span
-            className={cn(
-              'text-sm font-mono font-medium',
-              stability.uptime >= 99
-                ? 'text-success'
-                : stability.uptime >= 95
-                  ? 'text-warning'
-                  : 'text-error'
-            )}
-          >
-            {stability.uptime}%
-          </span>
-        </div>
-
-        {/* Last check */}
-        <div className="pt-3 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Última verificação:{' '}
-            {new Date(stability.lastCheck).toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })}
-          </p>
-        </div>
+      <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between opacity-60">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+          Verified
+        </span>
+        <span className="text-[10px] font-mono text-foreground font-bold">
+          {new Date(stability.lastCheck).toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
       </div>
     </div>
   )

@@ -3,7 +3,7 @@ import {
   blobToBase64,
   urlToBase64,
   getEmbeddedFontCSS,
-} from '../../../../src/services/exportUtils'
+} from '@/services/exportUtils'
 
 describe('exportUtils', () => {
   beforeEach(() => {

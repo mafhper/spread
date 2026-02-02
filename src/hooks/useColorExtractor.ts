@@ -89,14 +89,16 @@ export function useColorExtractor() {
           }
         }
 
+        let retried = false
         img.onerror = () => {
           console.error(
             '[useColorExtractor] Image failed to load:',
             imageUrl.substring(0, 50)
           )
-          // Try with CORS proxy if direct fails
-          if (!isDataUrl && !isLocalUrl && !imageUrl.includes(CORS_PROXY)) {
+          // Try with CORS proxy if direct fails, but only once
+          if (!isDataUrl && !isLocalUrl && !retried) {
             console.log('[useColorExtractor] Retrying with CORS proxy...')
+            retried = true
             img.src = CORS_PROXY + encodeURIComponent(imageUrl)
           } else {
             setError('Failed to load image')

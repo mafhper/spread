@@ -12,6 +12,7 @@ const {
   withPreviewServer,
   hasValidDist,
 } = require('../packages/adapters/preview-server.cjs')
+const UI = require('./ui-helpers.cjs')
 
 /**
  * Safe fs helper with path validation
@@ -48,28 +49,48 @@ const AVAILABLE_AUDITS = {
  */
 async function runBuildIfNeeded(projectRoot) {
   if (hasValidDist(projectRoot)) {
-    console.log(`[QUALITY-CORE - INFO] Dist existe, pulando build`)
+    console.log(
+      `${UI.section('Build Status')}${UI.success('Dist existe, pulando build')}`
+    )
     return
   }
 
-  console.log(`[QUALITY-CORE - INFO] Dist nao encontrado, executando build...`)
+  console.log(`${UI.section('Build Status')}`)
+  UI.startSpinner('Executando build...')
 
   return new Promise((resolve, reject) => {
     const buildProcess = spawn('bun', ['run', 'build'], {
-      stdio: 'inherit',
+      stdio: 'pipe',
       shell: process.platform === 'win32',
       cwd: projectRoot,
     })
 
+    let output = ''
+    if (buildProcess.stdout) {
+      buildProcess.stdout.on('data', data => {
+        output += data.toString()
+      })
+    }
+    if (buildProcess.stderr) {
+      buildProcess.stderr.on('data', data => {
+        output += data.toString()
+      })
+    }
+
     buildProcess.on('error', err => {
+      UI.stopSpinner('Build falhou', false)
       reject(new Error(`Falha ao executar build: ${err.message}`))
     })
 
     buildProcess.on('exit', code => {
       if (code === 0) {
-        console.log(`[QUALITY-CORE - INFO] Build concluido com sucesso`)
+        UI.stopSpinner('Build concluído com sucesso', true)
         resolve()
       } else {
+        UI.stopSpinner('Build falhou', false)
+        if (output) {
+          console.error('\n' + output)
+        }
         reject(new Error(`Build falhou com codigo ${code}`))
       }
     })
@@ -132,9 +153,53 @@ async function main() {
   const isFailOnError = args.includes('--fail-on-error')
   const skipPreviewStart = args.includes('--skip-preview')
   const skipBuild = args.includes('--skip-build')
+  const isQuiet = args.includes('--quiet')
+  const isSilent = args.includes('--silent')
 
-  console.log(`[QUALITY-CORE - INFO] Quality Core CLI v1.0.0`)
-  console.log(`[QUALITY-CORE - INFO] Preset: ${presetName}`)
+  // Rastreamento em silent mode
+  const executionLog = {
+    startTime: Date.now(),
+    errors: [],
+    warnings: [],
+    results: [],
+  }
+
+  const log = (msg, level = 'info') => {
+    if (isSilent) {
+      if (level === 'error') {
+        executionLog.errors.push(msg)
+        console.log(UI.error(`❌ ${msg}`))
+      } else if (level === 'warn') {
+        executionLog.warnings.push(msg)
+        console.log(UI.warn(`⚠️  ${msg}`))
+      }
+      return
+    }
+    if (isQuiet && level === 'info') return
+
+    const prefix = `[QUALITY-CORE - ${level.toUpperCase()}]`
+    switch (level) {
+      case 'success':
+        console.log(UI.success(`${prefix} ${msg}`))
+        break
+      case 'error':
+        console.log(UI.error(`${prefix} ${msg}`))
+        break
+      case 'warn':
+        console.log(UI.warning(`${prefix} ${msg}`))
+        break
+      default:
+        console.log(UI.info(`${prefix} ${msg}`))
+    }
+  }
+
+  if (!isSilent) {
+    console.log(`\n${UI.title('Quality Core CLI v1.0.0', 'cyan')}\n`)
+    log(`Preset: ${presetName}`)
+    if (isQuick) {
+      log(`Modo rápido: Build será pulado`, 'warn')
+    }
+  }
 
   // URL configuration
   let url =
@@ -181,8 +246,34 @@ async function main() {
 
   // Exit with appropriate code
   if (result.status === 'fail') {
+    if (isSilent) {
+      const violations = result.violations || []
+      const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+
+      UI.printSummary({
+        title: 'QUALITY CORE',
+        status: 'fail',
+        warnings: violations,
+        errors: executionLog.errors,
+        duration,
+        reportDir: path.join(process.cwd(), 'performance-reports', 'quality'),
+      })
+    }
     process.exit(isFailOnError ? 1 : 0)
   } else {
+    if (isSilent) {
+      const violations = result.violations || []
+      const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+
+      UI.printSummary({
+        title: 'QUALITY CORE',
+        status: 'pass',
+        warnings: violations,
+        errors: executionLog.errors,
+        duration,
+        reportDir: path.join(process.cwd(), 'performance-reports', 'quality'),
+      })
+    }
     // Explicit exit to ensure clean shutdown even with orphan handles
     process.exit(0)
   }

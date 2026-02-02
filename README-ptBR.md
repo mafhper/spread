@@ -1,6 +1,6 @@
 # Spread
 
-Spread é uma aplicação web de alta performance voltada para a criação de cards estéticos de visualização de links. A plataforma permite que usuários transformem URLs de diversos serviços — incluindo plataformas de música, redes sociais e portais de notícias — em ativos visuais profissionais, otimizados para compartilhamento social.
+Spread é um utilitário web de alta fidelidade projetado para a geração de ativos estéticos de visualização de links. A plataforma facilita a transformação de URLs de diversas fontes digitais — incluindo serviços de streaming, redes sociais e portais de notícias — em componentes visuais profissionais otimizados para distribuição em alta resolução.
 
 ![Banner](public/assets/banner.png)
 
@@ -8,27 +8,50 @@ Spread é uma aplicação web de alta performance voltada para a criação de ca
 
 [English](README.md) • [Português](README-ptBR.md) • [Español](README-es.md)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-EB5757?style=for-the-badge&logo=rocket&logoColor=white)](https://mafhper.github.io/spread)
-[![Licença: MIT](https://img.shields.io/badge/License-MIT-56CCF2?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Feito com Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
+[![Live Demo](https://img.shields.io/badge/implanta%C3%A7%C3%A3o-live-EB5757?style=for-the-badge&logo=rocket&logoColor=white)](https://mafhper.github.io/spread)
+[![Licença: MIT](https://img.shields.io/badge/Licen%C3%A7a-MIT-56CCF2?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Runtime: Bun](https://img.shields.io/badge/Runtime-Bun-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
 
 </div>
 
 ---
 
-## Funcionalidades Técnicas
+## Visão Geral Técnica
 
-- **Extração Automatizada de Metadados**: Utiliza protocolos Open Graph para recuperar títulos, descrições e imagens de alta qualidade a partir de URLs fornecidas.
-- **Análise Inteligente de Cores**: Implementa um motor dedicado para extração de paletas cromáticas dominantes de imagens de origem, gerando automaticamente gradientes de fundo harmoniosos.
-- **Templates Especializados**: Possui configurações de layout adaptativas e otimizadas para conteúdos musicais, fotografias e artigos jornalísticos.
-- **Configuração Visual Avançada**: Oferece um editor de nível profissional com suporte a glassmorphism, gradientes neon e controles abrangentes de tipografia.
-- **Exportação em Alta Resolução**: Utiliza os frameworks Astro 5 e React 19 para entregar uma interface responsiva e exportações em formato PNG com proporção de pixels de 2x.
+- **Orquestração de Metadados**: Implementa a extração automatizada via protocolos Open Graph para recuperação de títulos canônicos, descrições e iconografia de alta qualidade.
+- **Motor de Cores Heurístico**: Utiliza um módulo de análise especializado para derivar paletas de cores dominantes da mídia de origem, gerando gradientes cromáticos equilibrados.
+- **Templates de Layout Adaptativos**: Apresenta um conjunto de configurações especializadas otimizadas para diversos tipos de conteúdo, incluindo música, fotografia e jornalismo.
+- **Renderização de Alta Resolução**: Desenvolvido sobre Astro 5 e React 19, entregando uma interface de baixa latência com suporte para exportação de ativos PNG em proporção de pixels de 2x.
+
+---
+
+## Avaliação Online
+
+A implantação de produção está disponível para testes e avaliação em tempo real.
+
+**Ponto de Acesso:** [mafhper.github.io/spread](https://mafhper.github.io/spread)
+
+1.  **Implantação**: Acessível através de qualquer navegador web moderno padrão.
+2.  **Uso**: Insira URLs válidas de plataformas suportadas (Spotify, YouTube, Portais de Notícias).
+3.  **Governança**: Feedbacks e relatórios de bugs devem ser submetidos via [GitHub Issues](https://github.com/mafhper/spread/issues).
+
+---
+
+## Garantia de Qualidade e Governança
+
+O Spread integra o **Quality Core**, um sistema de governança modular projetado para impor padrões rigorosos de engenharia de software através de auditoria automatizada.
+
+- **Quality Gate**: Orquestrador pre-commit que impõe protocolos de integridade, internacionalização (i18n), segurança e performance.
+- **Dashboard de Telemetria**: Interface analítica em estilo Bento para monitoramento em tempo real da saúde do projeto, tendências históricas e snapshots de auditoria.
+- **Segurança e Performance**: Integração nativa com métricas Lighthouse e scanners especializados de dependências e segredos.
+
+A documentação técnica está disponível no [Módulo Quality Core](quality-core/README.md).
 
 ---
 
 ## Fluxo Arquitetural
 
-A aplicação opera integralmente no lado do cliente (client-side), garantindo a privacidade dos dados e agilidade na execução.
+A aplicação é executada exclusivamente no lado do cliente (client-side) para garantir a máxima privacidade dos dados e eficiência computacional.
 
 ```mermaid
 graph LR
@@ -48,59 +71,58 @@ graph LR
 
 ---
 
-## Exemplos Visuais
+## Referência Visual
 
-![Previews de Música](public/assets/music-preview.png)
-_Nota: Exemplos de templates específicos para conteúdos musicais._
+![Visualização de Música](public/assets/music-preview.png)
+_Figura 1: Configurações de layout especializadas para metadados musicais._
 
-![Previews de Redes Sociais](public/assets/social-preview.png)
-_Nota: Exemplos de templates específicos para conteúdos de redes sociais._
+![Ativos de Redes Sociais](public/assets/social-preview.png)
+_Figura 2: Templates de nível profissional para distribuição em redes sociais._
 
 ---
 
-## Ambiente de Desenvolvimento
+## Desenvolvimento e Implantação
 
 O ciclo de vida do projeto é gerenciado através do runtime **Bun**.
 
 ### Pré-requisitos
 
-Certifique-se de que o runtime [Bun](https://bun.sh) esteja devidamente instalado no sistema.
+- [Bun Runtime](https://bun.sh) (Ambiente recomendado)
 
-### Instalação e Execução
+### Execução Local
 
 ```bash
-# Instalação das dependências do projeto
+# Sincronização de dependências
 bun install
 
-# Execução do servidor de desenvolvimento
+# Inicialização do servidor de desenvolvimento
 bun dev
 
-# Geração da versão de produção
+# Geração do build de produção
 bun run build
 ```
 
 ---
 
-## Estrutura de Diretórios
+## Estrutura do Repositório
 
 ```text
 spread/
 ├── src/
-│   ├── components/      # Componentes modulares de interface em React
-│   ├── store/           # Gerenciamento de estado global via Zustand
-│   ├── services/        # Integração de APIs e lógica de utilitários
-│   └── styles/          # CSS global e configurações do Tailwind 4
-├── docs/
-│   └── assets/          # Mídias e ativos da documentação
-├── public/              # Ativos estáticos e recursos de marca
-└── Astro.config.mjs     # Configuração do framework
+│   ├── components/      # Arquitetura de interface React
+│   ├── store/           # Sincronização de estado via Zustand
+│   ├── services/        # Utilitários de lógica e abstração de API
+│   └── styles/          # Configuração PostCSS e Tailwind 4
+├── quality-core/        # Sistema de garantia de qualidade e governança
+├── public/              # Ativos estáticos e recursos de distribuição
+└── Astro.config.mjs     # Orquestração do framework
 ```
 
 ---
 
 ## Licença
 
-Este software é distribuído sob a Licença MIT. Consulte o arquivo `LICENSE` para informações jurídicas detalhadas.
+Este projeto está licenciado sob a Licença MIT. Termos legais detalhados estão disponíveis no arquivo [LICENSE](LICENSE).
 
 ---
 

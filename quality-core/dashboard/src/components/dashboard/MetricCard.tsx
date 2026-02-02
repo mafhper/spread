@@ -67,51 +67,84 @@ export function MetricCard({
 
   const currentStyle = statusStyles[status]
 
+  const isZero =
+    value === 0 ||
+    value === '0' ||
+    value === '0.0%' ||
+    value === '0%' ||
+    value === 'N/A' ||
+    !value
+
   return (
     <div
       className={cn(
-        'rounded-lg border border-border transition-all hover:shadow-md group relative',
-        currentStyle.border,
+        'rounded-xl border border-border transition-all duration-300 group relative overflow-hidden',
         currentStyle.bg,
-        currentStyle.hover,
+        'hover:shadow-xl hover:-translate-y-1',
         className
       )}
     >
-      <div className="p-4">
+      {/* Accent bar */}
+      <div
+        className={cn(
+          'absolute left-0 top-0 bottom-0 w-1.5',
+          currentStyle.textColor.replace('text-', 'bg-')
+        )}
+      />
+
+      <div className="p-5">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
               {title}
             </p>
-            <p
-              className={cn(
-                'text-2xl font-bold font-mono mt-1',
-                currentStyle.textColor
+            <div className="flex items-baseline gap-2">
+              {isZero ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground border border-border mt-2 uppercase tracking-tighter">
+                  Dados Indisponíveis
+                </span>
+              ) : (
+                <p
+                  className={cn(
+                    'text-3xl font-black font-mono tracking-tighter',
+                    currentStyle.textColor
+                  )}
+                >
+                  {value}
+                </p>
               )}
-            >
-              {value}
-            </p>
+            </div>
             {subtitle && (
-              <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+              <p className="text-[11px] text-muted-foreground font-medium mt-0.5 opacity-80">
+                {subtitle}
+              </p>
             )}
-            {trend && (
-              <div className="flex items-center gap-1 mt-2">
+            {!isZero && trend && (
+              <div className="flex items-center gap-1.5 mt-3 bg-background/50 w-fit px-2 py-0.5 rounded-full border border-border/50">
                 <span
                   className={cn(
-                    'text-xs font-medium',
+                    'text-[10px] font-bold flex items-center gap-0.5',
                     trend.isPositive ? 'text-success' : 'text-error'
                   )}
                 >
-                  {trend.isPositive ? '+' : ''}
-                  {trend.value}%
+                  {trend.isPositive ? '↑' : '↓'}
+                  {Math.abs(trend.value)}
+                  {typeof trend.value === 'number' && title !== 'Bundle Size'
+                    ? '%'
+                    : ''}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-tighter">
                   vs anterior
                 </span>
               </div>
             )}
           </div>
-          <div className={cn('p-2 rounded-lg', iconBgStyles[status])}>
+          <div
+            className={cn(
+              'p-2.5 rounded-xl shadow-inner group-hover:scale-110 transition-transform duration-300',
+              iconBgStyles[status]
+            )}
+          >
             <Icon className="h-5 w-5" />
           </div>
         </div>

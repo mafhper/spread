@@ -6,6 +6,11 @@ import { PreviewSection } from './preview/PreviewSection'
 import { useCardStore } from '../store/cardStore'
 import { fetchMetadata } from '../services/metadata'
 import { urlToBase64 } from '../services/exportUtils'
+import {
+  getPendingUrl,
+  setPendingUrl,
+  removePendingUrl,
+} from '../utils/persistence'
 import { useColorExtractor } from '../hooks/useColorExtractor'
 
 // Lazy load heavy components for code splitting
@@ -22,8 +27,6 @@ const LoadingFallback = () => (
     <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
   </div>
 )
-
-const LOCALSTORAGE_KEY = 'spread_pending_url'
 
 export const SpreadEditor: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false)
@@ -74,7 +77,7 @@ export const SpreadEditor: React.FC = () => {
   // Restore saved URL from localStorage on mount
   useEffect(() => {
     try {
-      const savedUrl = localStorage.getItem(LOCALSTORAGE_KEY)
+      const savedUrl = getPendingUrl()
       if (savedUrl) {
         setInputUrl(savedUrl)
         setHasDraft(true)
@@ -89,10 +92,10 @@ export const SpreadEditor: React.FC = () => {
   const persistUrl = useCallback((url: string) => {
     try {
       if (url) {
-        localStorage.setItem(LOCALSTORAGE_KEY, url)
+        setPendingUrl(url)
         setHasDraft(true)
       } else {
-        localStorage.removeItem(LOCALSTORAGE_KEY)
+        removePendingUrl()
         setHasDraft(false)
       }
     } catch (error) {
@@ -139,7 +142,7 @@ export const SpreadEditor: React.FC = () => {
         })
 
         // Clear saved URL after successful generation
-        localStorage.removeItem(LOCALSTORAGE_KEY)
+        removePendingUrl()
         setHasDraft(false)
         console.log('[SpreadEditor - INFO] URL salva removida apos geracao')
 

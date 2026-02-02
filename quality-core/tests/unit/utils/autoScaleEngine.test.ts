@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeCardAutoScale } from '../../../../src/utils/autoScaleEngine'
+import { computeCardAutoScale } from '@/utils/autoScaleEngine'
 
 describe('autoScaleEngine - computeCardAutoScale', () => {
   it('should return 1 when available space equals card size', () => {

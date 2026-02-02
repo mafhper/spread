@@ -1,6 +1,6 @@
 # Spread
 
-Spread is a high-performance web application designed for the creation of aesthetic link visualization cards. It enables users to transform URLs from various platforms—including music services, social media, and news outlets—into professionally styled visual assets optimized for social sharing.
+Spread is a high-fidelity web utility engineered for the generation of aesthetic link visualization assets. It facilitates the transformation of URLs from diverse digital platforms—including streaming services, social media, and news outlets—into professionally styled visual components optimized for high-resolution distribution.
 
 ![Banner](public/assets/banner.png)
 
@@ -8,27 +8,51 @@ Spread is a high-performance web application designed for the creation of aesthe
 
 [English](README.md) • [Português](README-ptBR.md) • [Español](README-es.md)
 
-[![Live Demo](https://img.shields.io/badge/demo-live-EB5757?style=for-the-badge&logo=rocket&logoColor=white)](https://mafhper.github.io/spread)
+[![Live Demo](https://img.shields.io/badge/deployment-live-EB5757?style=for-the-badge&logo=rocket&logoColor=white)](https://mafhper.github.io/spread)
 [![License: MIT](https://img.shields.io/badge/License-MIT-56CCF2?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Built with Bun](https://img.shields.io/badge/Bun-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
+[![Runtime: Bun](https://img.shields.io/badge/Runtime-Bun-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh)
 
 </div>
 
 ---
 
-## Technical Features
+## Technical Overview
 
-- **Automated Metadata Extraction**: Utilizes Open Graph protocols to retrieve titles, descriptions, and high-quality imagery from provided URLs.
-- **Intelligent Color Analysis**: Implements a dedicated engine to extract dominant color palettes from source images, automatically generating harmonious background gradients.
-- **Specialized Templates**: Features adaptive layout configurations optimized for music content, photography, and journalistic articles.
-- **Advanced Visual Configuration**: Provides a professional-grade editor with support for glassmorphism, neon gradients, and comprehensive typography controls.
-- **High-Resolution Export**: Leverages the Astro 5 and React 19 frameworks to deliver a responsive interface and 2x pixel ratio PNG exports.
+- **Metadata Orchestration**: Implements automated Open Graph protocol extraction to retrieve canonical titles, descriptions, and high-quality iconography.
+- **Heuristic Color Engine**: Leverages a specialized analysis module to derive dominant color palettes from source media, generating balanced chromatic gradients.
+- **Adaptive Layout Templates**: Features a suite of specialized configurations optimized for varying content types, including music, photography, and journalism.
+- **Layout Stability & UX**: Implements skeleton-based progressive loading and anchor-aware navigation to eliminate Cumulative Layout Shift (CLS) during content hydration.
+- **High-Resolution Rendering**: Built on Astro 5 and React 19, delivering a low-latency interface with support for 2x pixel-ratio PNG asset exports.
+
+---
+
+## Live Evaluation
+
+The production deployment is available for live testing and evaluation.
+
+**Access Point:** [mafhper.github.io/spread](https://mafhper.github.io/spread)
+
+1.  **Deployment**: Accessible via any standard modern web browser.
+2.  **Usage**: Input valid URLs from supported platforms (Spotify, YouTube, News portals).
+3.  **Governance**: Feedback and bug reports should be submitted via [GitHub Issues](https://github.com/mafhper/spread/issues).
+
+---
+
+## Quality Assurance & Governance
+
+Spread integrates **Quality Core**, a modular governance system designed to enforce rigorous software engineering standards through automated auditing.
+
+- **Quality Gate**: Pre-commit orchestrator enforcing integrity, internationalization (i18n), security, and performance protocols.
+- **Telemetry Dashboard**: A Bento-grid analytical interface for real-time monitoring of project health, historical trends, and audit snapshots.
+- **Security & Performance**: Native integration with Lighthouse metrics and specialized dependency/secret scanners.
+
+Technical documentation is available in the [Quality Core Module](quality-core/README.md).
 
 ---
 
 ## Architectural Workflow
 
-The application operates entirely on the client side to ensure data privacy and optimal execution speed.
+The application executes exclusively client-side to ensure maximum data privacy and computational efficiency.
 
 ```mermaid
 graph LR
@@ -48,59 +72,58 @@ graph LR
 
 ---
 
-## Visual Examples
+## Visual Reference
 
-![Music Previews](public/assets/music-preview.png)
-_Note: Examples of platform-specific templates for music content._
+![Music Visualization](public/assets/music-preview.png)
+_Figure 1: Specialized layout configurations for music-centric metadata._
 
-![Social Previews](public/assets/social-preview.png)
-_Note: Examples of platform-specific templates for social media content._
+![Social Media Assets](public/assets/social-preview.png)
+_Figure 2: Professional-grade templates for social media distribution._
 
 ---
 
-## Development Environment
+## Development & Deployment
 
 The project lifecycle is managed via the **Bun** runtime.
 
 ### Prerequisites
 
-Ensure the [Bun](https://bun.sh) runtime is installed on your system.
+- [Bun Runtime](https://bun.sh) (Recommended environment)
 
-### Installation and Execution
+### Local Execution
 
 ```bash
-# Install project dependencies
+# Dependency synchronization
 bun install
 
-# Execute the development server
+# Development server initialization
 bun dev
 
-# Generate a production build
+# Production build generation
 bun run build
 ```
 
 ---
 
-## Directory Structure
+## Repository Structure
 
 ```text
 spread/
 ├── src/
-│   ├── components/      # Modular React interface components
-│   ├── store/           # Global state management via Zustand
-│   ├── services/        # API integration and utility logic
-│   └── styles/          # Global CSS and Tailwind 4 configuration
-├── docs/
-│   └── assets/          # Documentation media and assets
-├── public/              # Static assets and brand resources
-└── Astro.config.mjs     # Framework configuration
+│   ├── components/      # React interface architecture
+│   ├── store/           # State synchronization via Zustand
+│   ├── services/        # Logic utilities and API abstraction
+│   └── styles/          # PostCSS and Tailwind 4 configuration
+├── quality-core/        # Quality assurance and governance system
+├── public/              # Static assets and distribution resources
+└── Astro.config.mjs     # Framework orchestration
 ```
 
 ---
 
 ## License
 
-This software is distributed under the MIT License. Refer to the `LICENSE` file for detailed legal information.
+This project is licensed under the MIT License. Detailed legal terms are available in the [LICENSE](LICENSE) file.
 
 ---
 

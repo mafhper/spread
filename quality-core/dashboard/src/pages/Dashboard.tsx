@@ -13,7 +13,6 @@ import { HealthScoreCard } from '@/components/dashboard/HealthScoreCard'
 import { MetricCard } from '@/components/dashboard/MetricCard'
 import { ScoreBreakdown } from '@/components/dashboard/ScoreBreakdown'
 import { LighthouseCard } from '@/components/dashboard/LighthouseCard'
-import { TestSuiteList } from '@/components/dashboard/TestSuiteList'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { CommitTimeline } from '@/components/dashboard/CommitTimeline'
 import { SystemStatus } from '@/components/dashboard/SystemStatus'
@@ -120,37 +119,23 @@ export default function Dashboard() {
       prevSnapshot.performance
     : null
 
-  // Search logic
-  const query = searchQuery?.toLowerCase() || ''
-
-  // Filter test suites
-  const filteredSuites = query
-    ? currentSnapshot.metrics.tests.suites.filter(s =>
-        s.name.toLowerCase().includes(query)
-      )
-    : currentSnapshot.metrics.tests.suites
-
-  // Show/Hide metrics based on search
-  const showTests =
-    !query ||
-    'testes tests'.includes(query) ||
-    `${currentSnapshot.metrics.tests.passed}/${currentSnapshot.metrics.tests.total}`.includes(
-      query
-    )
-  const showPerformance =
-    !query || 'performance lighthouse score'.includes(query)
-  const showCoverage = !query || 'cobertura coverage lines'.includes(query)
-  const showBundle = !query || 'bundle size build tamanho'.includes(query)
+  // Show/Hide metrics based on search - ALWAYS SHOW in dashboard, use global search for filtering
+  const showTests = true
+  const showPerformance = true
+  const showCoverage = true
+  const showBundle = true
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Page Title */}
+      {/* Page Title & Global Action */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Visão Geral</h2>
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">
+            Visão Geral
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">
             Centro de comando do Quality Core • Commit:{' '}
-            <code className="text-primary">
+            <code className="text-primary font-mono bg-primary/5 px-1.5 py-0.5 rounded">
               {currentSnapshot.commitHash.substring(0, 7)}
             </code>
           </p>
@@ -158,7 +143,7 @@ export default function Dashboard() {
         {currentSnapshot.reportFile && (
           <Button
             variant="outline"
-            className="gap-2 self-start sm:self-center"
+            className="gap-2 self-start sm:self-center shadow-sm"
             onClick={() =>
               currentSnapshot.reportFile &&
               openReport(currentSnapshot.reportFile)
@@ -170,252 +155,223 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Main Grid */}
+      {/* Row 1: Symmetrical KPI Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Testes"
+          value={`${currentSnapshot.metrics.tests.passed}/${currentSnapshot.metrics.tests.total}`}
+          subtitle={`${currentSnapshot.metrics.tests.failed} falhas`}
+          icon={FlaskConical}
+          status={
+            currentSnapshot.metrics.tests.failed === 0 ? 'success' : 'error'
+          }
+          trend={
+            testTrend !== null
+              ? { value: testTrend, isPositive: testTrend >= 0 }
+              : undefined
+          }
+          reportFile={currentSnapshot.reportFile}
+          onOpenReport={openReport}
+        />
+        <MetricCard
+          title="Performance"
+          value={Math.round(
+            currentSnapshot.metrics.performance.lighthouse.performance
+          )}
+          subtitle="Lighthouse Score"
+          icon={Gauge}
+          status={
+            currentSnapshot.metrics.performance.lighthouse.performance >= 90
+              ? 'success'
+              : 'warning'
+          }
+          trend={
+            performanceTrend !== null
+              ? { value: performanceTrend, isPositive: performanceTrend >= 0 }
+              : undefined
+          }
+          reportFile={currentSnapshot.reportFile}
+          onOpenReport={openReport}
+        />
+        <MetricCard
+          title="Cobertura"
+          value={`${currentSnapshot.metrics.coverage.lines.toFixed(1)}%`}
+          subtitle="Linhas cobertas"
+          icon={FileCode}
+          status={
+            currentSnapshot.metrics.coverage.lines >= 80 ? 'success' : 'warning'
+          }
+          trend={
+            coverageTrend !== null
+              ? {
+                  value: parseFloat(coverageTrend.toFixed(1)),
+                  isPositive: coverageTrend >= 0,
+                }
+              : undefined
+          }
+          reportFile={currentSnapshot.reportFile}
+          onOpenReport={openReport}
+        />
+        <MetricCard
+          title="Bundle Size"
+          value={
+            currentSnapshot.metrics.performance.bundleSize > 0
+              ? `${currentSnapshot.metrics.performance.bundleSize.toFixed(1)}KB`
+              : 'N/A'
+          }
+          subtitle="Tamanho do build"
+          icon={Package}
+          status={
+            currentSnapshot.metrics.performance.bundleSize <= 350
+              ? 'success'
+              : 'warning'
+          }
+          trend={
+            bundleTrend !== null
+              ? { value: bundleTrend, isPositive: bundleTrend <= 0 }
+              : undefined
+          }
+          reportFile={currentSnapshot.reportFile}
+          onOpenReport={openReport}
+        />
+      </div>
+
+      {/* Row 2: Health Anchor & Trends */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Left Column - Health Score & Breakdown */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
+        <div className="col-span-12 lg:col-span-4">
           <HealthScoreCard
             score={currentSnapshot.healthScore}
             previousScore={previousScore}
             confidenceLevel={currentSnapshot.confidenceLevel}
             status={scoreStatus}
+            className="h-full"
           />
-          <ScoreBreakdown {...categoryScores} />
         </div>
-
-        {/* Center Column - Quick Metrics & Trend */}
-        <div className="col-span-12 lg:col-span-5 space-y-6">
-          {/* Quick Metrics Grid */}
-          <div className="grid grid-cols-2 gap-4 stagger-children">
-            {showTests && (
-              <MetricCard
-                title="Testes"
-                value={`${currentSnapshot.metrics.tests.passed}/${currentSnapshot.metrics.tests.total}`}
-                subtitle={`${currentSnapshot.metrics.tests.failed} falhas`}
-                icon={FlaskConical}
-                status={
-                  currentSnapshot.metrics.tests.failed === 0
-                    ? 'success'
-                    : 'error'
-                }
-                trend={
-                  testTrend !== null
-                    ? { value: testTrend, isPositive: testTrend >= 0 }
-                    : undefined
-                }
-                reportFile={currentSnapshot.reportFile}
-                onOpenReport={openReport}
-              />
-            )}
-            {showPerformance && (
-              <MetricCard
-                title="Performance"
-                value={Math.round(
-                  currentSnapshot.metrics.performance.lighthouse.performance
-                )}
-                subtitle="Lighthouse Score"
-                icon={Gauge}
-                status={
-                  currentSnapshot.metrics.performance.lighthouse.performance >=
-                  90
-                    ? 'success'
-                    : 'warning'
-                }
-                trend={
-                  performanceTrend !== null
-                    ? {
-                        value: performanceTrend,
-                        isPositive: performanceTrend >= 0,
-                      }
-                    : undefined
-                }
-                reportFile={currentSnapshot.reportFile}
-                onOpenReport={openReport}
-              />
-            )}
-            {showCoverage && (
-              <MetricCard
-                title="Cobertura"
-                value={`${currentSnapshot.metrics.coverage.lines.toFixed(1)}%`}
-                subtitle="Linhas cobertas"
-                icon={FileCode}
-                status={
-                  currentSnapshot.metrics.coverage.lines >= 80
-                    ? 'success'
-                    : 'warning'
-                }
-                trend={
-                  coverageTrend !== null
-                    ? {
-                        value: parseFloat(coverageTrend.toFixed(1)),
-                        isPositive: coverageTrend >= 0,
-                      }
-                    : undefined
-                }
-                reportFile={currentSnapshot.reportFile}
-                onOpenReport={openReport}
-              />
-            )}
-            {showBundle && (
-              <MetricCard
-                title="Bundle Size"
-                value={
-                  currentSnapshot.metrics.performance.bundleSize > 0
-                    ? `${currentSnapshot.metrics.performance.bundleSize.toFixed(1)}KB`
-                    : 'N/A'
-                }
-                subtitle="Tamanho do build"
-                icon={Package}
-                status={
-                  currentSnapshot.metrics.performance.bundleSize <= 350
-                    ? 'success'
-                    : 'warning'
-                }
-                trend={
-                  bundleTrend !== null
-                    ? { value: bundleTrend, isPositive: bundleTrend <= 0 }
-                    : undefined
-                }
-                reportFile={currentSnapshot.reportFile}
-                onOpenReport={openReport}
-              />
-            )}
-          </div>
-
-          {/* Trend Chart */}
+        <div className="col-span-12 lg:col-span-8">
           <TrendChart
             data={historicalData}
             metrics={['healthScore', 'performance', 'coverage']}
+            className="h-full min-h-[350px]"
           />
-
-          {/* Lighthouse Scores */}
-          <LighthouseCard
-            scores={currentSnapshot.metrics.performance.lighthouse}
-          />
-        </div>
-
-        {/* Right Column - Timeline & Status */}
-        <div className="col-span-12 lg:col-span-3 space-y-6">
-          <SystemStatus stability={currentSnapshot.metrics.stability} />
-          <CommitTimeline commits={recentCommits} />
         </div>
       </div>
 
-      {/* Bottom Section - Test Suites */}
+      {/* Row 3: Detail Composition */}
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-12 lg:col-span-8">
-          <TestSuiteList
-            suites={filteredSuites}
-            totalDuration={currentSnapshot.metrics.tests.duration}
-          />
-        </div>
-        <div className="col-span-12 lg:col-span-4">
-          {/* Core Web Vitals */}
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
-              Core Web Vitals
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    LCP
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Largest Contentful Paint
-                  </p>
+        {/* Left Section (Deep Dive) */}
+        <div className="col-span-12 lg:col-span-9 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-4">
+              <ScoreBreakdown {...categoryScores} className="h-full" />
+            </div>
+            <div className="lg:col-span-8">
+              <LighthouseCard
+                scores={currentSnapshot.metrics.performance.lighthouse}
+                className="h-full"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-8">
+              <div className="rounded-xl border border-border bg-card p-6 h-full shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Gauge size={80} />
                 </div>
-                <div className="text-right">
-                  <div className="text-lg font-mono font-bold text-success">
-                    {currentSnapshot.metrics.performance.webVitals.lcp.toFixed(
-                      0
-                    )}
-                    ms
-                  </div>
-                  {lcpTrend !== null && (
+
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                  Core Web Vitals
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    {
+                      label: 'LCP',
+                      full: 'Largest Contentful Paint',
+                      value:
+                        currentSnapshot.metrics.performance.webVitals.lcp.toFixed(
+                          0
+                        ) + 'ms',
+                      trend: lcpTrend,
+                    },
+                    {
+                      label: 'CLS',
+                      full: 'Cumulative Layout Shift',
+                      value:
+                        currentSnapshot.metrics.performance.webVitals.cls.toFixed(
+                          3
+                        ),
+                      trend: clsTrend,
+                    },
+                    {
+                      label: 'TBT',
+                      full: 'Total Blocking Time',
+                      value:
+                        Math.round(
+                          currentSnapshot.metrics.performance.webVitals.tbt
+                        ) + 'ms',
+                      trend: tbtTrend,
+                    },
+                  ].map(vital => (
                     <div
-                      className={cn(
-                        'text-[10px] flex items-center justify-end gap-0.5',
-                        lcpTrend > 0 ? 'text-error' : 'text-success'
-                      )}
+                      key={vital.label}
+                      className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-all"
                     >
-                      {lcpTrend > 0 ? (
-                        <TrendingUp size={10} />
-                      ) : (
-                        <TrendingDown size={10} />
-                      )}
-                      {Math.abs(lcpTrend).toFixed(0)}ms
+                      <p className="text-xs font-bold text-card-foreground mb-1">
+                        {vital.label}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-tighter mb-2 leading-none">
+                        {vital.full}
+                      </p>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xl font-mono font-black text-success tracking-tighter">
+                          {vital.value}
+                        </span>
+                        {vital.trend !== null && (
+                          <div
+                            className={cn(
+                              'text-[10px] font-bold flex items-center gap-0.5',
+                              vital.trend > 0
+                                ? vital.label === 'CLS' ||
+                                  vital.label === 'LCP' ||
+                                  vital.label === 'TBT'
+                                  ? 'text-error'
+                                  : 'text-success'
+                                : 'text-success'
+                            )}
+                          >
+                            {vital.trend > 0 ? (
+                              <TrendingUp size={10} />
+                            ) : (
+                              <TrendingDown size={10} />
+                            )}
+                            {Math.abs(vital.trend).toFixed(
+                              vital.label === 'CLS' ? 3 : 0
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    CLS
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Cumulative Layout Shift
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-mono font-bold text-success">
-                    {currentSnapshot.metrics.performance.webVitals.cls.toFixed(
-                      3
-                    )}
-                  </div>
-                  {clsTrend !== null && (
-                    <div
-                      className={cn(
-                        'text-[10px] flex items-center justify-end gap-0.5',
-                        clsTrend > 0 ? 'text-error' : 'text-success'
-                      )}
-                    >
-                      {clsTrend > 0 ? (
-                        <TrendingUp size={10} />
-                      ) : (
-                        <TrendingDown size={10} />
-                      )}
-                      {Math.abs(clsTrend).toFixed(3)}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-card-foreground">
-                    TBT
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total Blocking Time
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-mono font-bold text-success">
-                    {Math.round(
-                      currentSnapshot.metrics.performance.webVitals.tbt
-                    )}
-                    ms
-                  </div>
-                  {tbtTrend !== null && (
-                    <div
-                      className={cn(
-                        'text-[10px] flex items-center justify-end gap-0.5',
-                        tbtTrend > 0 ? 'text-error' : 'text-success'
-                      )}
-                    >
-                      {tbtTrend > 0 ? (
-                        <TrendingUp size={10} />
-                      ) : (
-                        <TrendingDown size={10} />
-                      )}
-                      {Math.round(Math.abs(tbtTrend))}ms
-                    </div>
-                  )}
+                  ))}
                 </div>
               </div>
             </div>
+            <div className="lg:col-span-4">
+              <SystemStatus
+                stability={currentSnapshot.metrics.stability}
+                className="h-full"
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Right Section (Timeline) */}
+        <div className="col-span-12 lg:col-span-3">
+          <CommitTimeline
+            commits={recentCommits}
+            className="h-full max-h-[850px] overflow-y-auto custom-scrollbar"
+          />
         </div>
       </div>
     </div>

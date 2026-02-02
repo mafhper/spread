@@ -1,0 +1,188 @@
+import '@testing-library/jest-dom'
+import { cleanup } from '@testing-library/react'
+
+// This file is imported by tests that need setup
+// It should be imported at the top of test files
+
+// Get vitest functions from global scope when running in vitest
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const globalThis: any
+
+// Setup cleanup after each test
+// This will be called after vitest is loaded
+if (typeof globalThis.afterEach === 'function') {
+  globalThis.afterEach(() => {
+    cleanup()
+  })
+}
+
+// Mock ResizeObserver if not already mocked
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = class ResizeObserver {
+    callback: ResizeObserverCallback
+
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback
+    }
+
+    observe = (element: Element) => {
+      if (element) {
+        this.callback(
+          [
+            {
+              target: element,
+              contentRect: {
+                width: 800,
+                height: 600,
+                top: 0,
+                left: 0,
+                bottom: 600,
+                right: 800,
+                x: 0,
+                y: 0,
+                toJSON: () => '',
+              },
+              borderBoxSize: [
+                {
+                  blockSize: 600,
+                  inlineSize: 800,
+                },
+              ],
+              contentBoxSize: [
+                {
+                  blockSize: 600,
+                  inlineSize: 800,
+                },
+              ],
+              devicePixelContentBoxSize: [
+                {
+                  blockSize: 600,
+                  inlineSize: 800,
+                },
+              ],
+            } as ResizeObserverEntry,
+          ],
+          this
+        )
+      }
+    }
+
+    unobserve = () => {}
+    disconnect = () => {}
+  }
+}
+
+// Mock document.fonts
+if (!document.fonts) {
+  Object.defineProperty(document, 'fonts', {
+    value: {
+      ready: Promise.resolve(),
+      check: () => true,
+      load: () => Promise.resolve({}),
+    },
+    writable: true,
+  })
+}
+
+// Mock matchMedia
+if (!window.matchMedia) {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }),
+  })
+}
+
+// Mock IntersectionObserver if not already mocked
+if (!globalThis.IntersectionObserver) {
+  globalThis.IntersectionObserver = class IntersectionObserver {
+    callback: IntersectionObserverCallback
+    root: Element | Document | null = null
+    rootMargin: string = '0px'
+    thresholds: ReadonlyArray<number> = [0]
+
+    constructor(callback: IntersectionObserverCallback) {
+      this.callback = callback
+    }
+
+    observe = (target: Element) => {
+      this.callback(
+        [
+          {
+            target,
+            isIntersecting: true,
+            intersectionRatio: 1,
+            intersectionRect: {
+              top: 0,
+              left: 0,
+              bottom: 600,
+              right: 800,
+              width: 800,
+              height: 600,
+              x: 0,
+              y: 0,
+              toJSON: () => '',
+            },
+            boundingClientRect: {
+              top: 0,
+              left: 0,
+              bottom: 600,
+              right: 800,
+              width: 800,
+              height: 600,
+              x: 0,
+              y: 0,
+              toJSON: () => '',
+            },
+            rootBounds: null,
+            time: Date.now(),
+          } as IntersectionObserverEntry,
+        ],
+        this
+      )
+    }
+
+    unobserve = () => {}
+    disconnect = () => {}
+    takeRecords = () => []
+  }
+}
+
+// Mock crypto.randomUUID for tests
+if (!globalThis.crypto?.randomUUID) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: {
+      randomUUID: () => 'test-uuid-123',
+      getRandomValues: (arr: Uint8Array) => {
+        for (let i = 0; i < arr.length; i++) {
+          arr[i] = Math.floor(Math.random() * 256)
+        }
+        return arr
+      },
+    },
+    writable: true,
+  })
+}
+
+// Mock URL.createObjectURL and URL.revokeObjectURL
+if (!globalThis.URL.createObjectURL) {
+  Object.defineProperty(globalThis.URL, 'createObjectURL', {
+    value: () => 'blob:mock-url',
+    writable: true,
+  })
+}
+
+if (!globalThis.URL.revokeObjectURL) {
+  Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
+    value: () => {},
+    writable: true,
+  })
+}

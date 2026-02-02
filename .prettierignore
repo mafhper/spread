@@ -6,3 +6,5 @@ _dev
 *.log
 coverage
 .lighthouseci
+performance-reports
+temp-vitest-report.json

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // quality-core/vitest.collector.ts
 import { execSync } from 'child_process'
 import fs from 'fs/promises'
@@ -44,13 +45,30 @@ export class VitestCollector {
       const reportContent = await fs.readFile(this.REPORT_PATH, 'utf-8')
       const report = JSON.parse(reportContent)
 
+      const suites = (report.testResults || []).map((s: any) => {
+        const tests = s.assertionResults?.length || 0
+        const failed =
+          s.assertionResults?.filter((a: any) => a.status === 'failed')
+            .length || 0
+        const passed = tests - failed
+
+        return {
+          name: path.basename(s.name),
+          tests,
+          passed,
+          failed,
+          duration: (s.endTime || 0) - (s.startTime || 0),
+          status: failed > 0 ? 'failed' : 'passed',
+        }
+      })
+
       const tests: TestMetrics = {
         total: report.numTotalTests || 0,
         passed: report.numPassedTests || 0,
         failed: report.numFailedTests || 0,
         skipped: report.numPendingTests || 0,
         duration: Date.now() - (report.startTime || Date.now()),
-        suites: [], // Podem ser mapeadas de report.testResults se necessário
+        suites,
       }
 
       // 2. Parse Coverage Results

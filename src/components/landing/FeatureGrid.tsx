@@ -67,7 +67,7 @@ const FeatureGridBase: React.FC = () => {
         {/* Section header */}
         <div className="text-center mb-16 sm:mb-20">
           <span className="inline-block px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-white/60 mb-6">
-            Recursos
+            Funções
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">
             Tudo que você precisa

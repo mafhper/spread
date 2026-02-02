@@ -3,6 +3,7 @@ import { execSync } from 'child_process'
 import { VitestCollector } from './vitest.collector'
 import { calculateHealthScore } from './health-score'
 import { SnapshotStore } from './snapshots.store'
+import { PerformanceCollector } from './performance.collector'
 import type { QualitySnapshot } from './quality-schema'
 
 /**
@@ -26,21 +27,8 @@ async function generateSnapshot() {
     const { tests, coverage } = await VitestCollector.collect()
 
     // 3. Métricas de Performance
-    const performance = {
-      lighthouse: {
-        performance: 0,
-        accessibility: 0,
-        bestPractices: 0,
-        seo: 0,
-      },
-      webVitals: {
-        lcp: 0,
-        cls: 0,
-        tbt: 0,
-      },
-      bundleSize: 0,
-      regressions: [], // Fixed: included property
-    }
+    console.log('📊 / Collecting Performance & Bundle Metrics...')
+    const performance = await PerformanceCollector.collect()
 
     // 4. Métricas de Estabilidade
     const stability = {

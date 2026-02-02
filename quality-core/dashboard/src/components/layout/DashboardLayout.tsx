@@ -3,6 +3,7 @@ import { DashboardSidebar } from './DashboardSidebar'
 import { DashboardHeader } from './DashboardHeader'
 import { ConsoleModal } from '../dashboard/ConsoleModal'
 import { ReportModal } from '../dashboard/ReportModal'
+import { FileViewerModal } from '../dashboard/FileViewerModal'
 import { QuickActionsModal } from '../dashboard/QuickActionsModal'
 import { useQualityData } from '@/contexts/QualityDataContext'
 
@@ -12,6 +13,8 @@ export function DashboardLayout() {
     setConsoleOpen,
     reportModalState,
     setReportModalOpen,
+    fileViewerState,
+    setFileViewerOpen,
     quickActionsOpen,
     setQuickActionsOpen,
   } = useQualityData()
@@ -30,6 +33,12 @@ export function DashboardLayout() {
         isOpen={reportModalState.isOpen}
         onOpenChange={setReportModalOpen}
         reportFile={reportModalState.reportFile}
+      />
+      <FileViewerModal
+        isOpen={fileViewerState.isOpen}
+        onOpenChange={setFileViewerOpen}
+        filePath={fileViewerState.filePath}
+        content={fileViewerState.content}
       />
       <QuickActionsModal
         isOpen={quickActionsOpen}

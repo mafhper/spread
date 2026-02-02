@@ -15,6 +15,7 @@ import { Menu, X, Clock, History } from 'lucide-react'
 
 interface HeaderLandingProps {
   onHistoryClick: () => void
+  noSpacer?: boolean
 }
 
 interface NavItem {
@@ -23,30 +24,56 @@ interface NavItem {
   id: string
 }
 
+const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+
 const navItems: NavItem[] = [
-  { label: 'Início', href: '#home', id: 'home' },
-  { label: 'Recursos', href: '#recursos', id: 'recursos' },
-  { label: 'Tecnologia', href: '#tecnologia', id: 'tecnologia' },
-  { label: 'Open Source', href: '#opensource', id: 'opensource' },
-  { label: 'Sobre', href: '#sobre', id: 'sobre' },
-  { label: 'Outros Projetos', href: '#projetos', id: 'projetos' },
+  { label: 'Início', href: `${base}/`, id: 'home' },
+  { label: 'Funções', href: `${base}/info#recursos`, id: 'recursos' },
+  { label: 'Tecnologia', href: `${base}/info#tecnologia`, id: 'tecnologia' },
+  {
+    label: 'Desenvolvimento',
+    href: `${base}/info#opensource`,
+    id: 'opensource',
+  },
+  { label: 'Autor', href: `${base}/info#sobre`, id: 'sobre' },
+  { label: 'Projetos', href: `${base}/info#projetos`, id: 'projetos' },
 ]
 
 export const HeaderLanding: React.FC<HeaderLandingProps> = ({
   onHistoryClick,
+  noSpacer = false,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
   const [isScrolled, setIsScrolled] = useState(false)
 
+  // Initial active section from hash
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '')
+    if (hash) {
+      const exists = navItems.find(item => item.id === hash)
+      if (exists) setActiveSection(hash)
+    } else if (
+      window.location.pathname === base ||
+      window.location.pathname === `${base}/`
+    ) {
+      setActiveSection('home')
+    }
+  }, [])
+
   // Handle scroll spy
   useEffect(() => {
-    const container = document.getElementById('landing-scroll-container')
-    if (!container) return
+    // Only spy on scroll if we are not on the home page (where these sections don't exist anymore)
+    // Or check if the elements exist
+    const container =
+      document.getElementById('landing-scroll-container') || window
 
     const handleScroll = () => {
+      const scrollTop =
+        'scrollTop' in container ? container.scrollTop : window.scrollY
+
       // Update scroll state for header background
-      setIsScrolled(container.scrollTop > 50)
+      setIsScrolled(scrollTop > 50)
 
       // Find active section
       const sections = navItems.map(item => {
@@ -57,19 +84,46 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
         }
       })
 
-      // Use container's scrollTop and height for calculation
-      const scrollPosition = container.scrollTop + container.clientHeight / 3
+      // Use window height or container height
+      const height =
+        'clientHeight' in container
+          ? container.clientHeight
+          : window.innerHeight
+      const scrollPosition = scrollTop + height / 3
 
-      for (let i = sections.length - 1; i >= 0; i--) {
-        // eslint-disable-next-line security/detect-object-injection
-        const section = sections[i]
-        if (section.element) {
-          // get offsetRelative to the container
-          const offsetTop = section.element.offsetTop
-          if (scrollPosition >= offsetTop) {
-            setActiveSection(section.id)
-            break
+      // Check if we are at the top
+      if (
+        scrollTop < 100 &&
+        (window.location.pathname === base ||
+          window.location.pathname === `${base}/`)
+      ) {
+        setActiveSection('home')
+        return
+      }
+
+      // Check if we are at the bottom of the page
+      const scrollHeight =
+        'scrollHeight' in container
+          ? (container as HTMLElement).scrollHeight
+          : document.documentElement.scrollHeight
+      const isAtBottom = scrollTop + height >= scrollHeight - 150
+
+      if (isAtBottom) {
+        // Encontrar a ultima seção valida disponível no DOM
+        const reversedSections = [...sections].reverse()
+        for (const s of reversedSections) {
+          if (s.element) {
+            setActiveSection(s.id)
+            return
           }
+        }
+      }
+
+      const reversedSections = [...sections].reverse()
+      for (const s of reversedSections) {
+        if (s.element && scrollPosition >= s.element.offsetTop) {
+          setActiveSection(s.id)
+          break
         }
       }
     }
@@ -80,20 +134,47 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
     return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Smooth scroll to section
   const handleNavClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-      e.preventDefault()
-      const targetId = href.replace('#', '')
-      const element = document.getElementById(targetId)
-      const container = document.getElementById('landing-scroll-container')
+      const isAnchor = href.includes('#')
+      const targetId = isAnchor ? href.split('#')[1] : ''
+      const element = targetId ? document.getElementById(targetId) : null
+      const isHomeLink =
+        href === '/' || href === `${base}/` || href === `${base}`
 
-      if (element && container) {
-        const offsetTop = element.offsetTop - 80 // Account for header height
-        container.scrollTo({
-          top: offsetTop,
-          behavior: 'smooth',
-        })
+      const currentPath = window.location.pathname
+      const isAtHome =
+        currentPath === base ||
+        currentPath === `${base}/` ||
+        currentPath === '/'
+
+      if (element || (isHomeLink && isAtHome)) {
+        e.preventDefault()
+        const container = document.getElementById('landing-scroll-container')
+
+        if (isHomeLink) {
+          if (container) container.scrollTo({ top: 0, behavior: 'smooth' })
+          else window.scrollTo({ top: 0, behavior: 'smooth' })
+          setActiveSection('home')
+        } else if (element) {
+          const offsetTop = element.offsetTop - 80
+
+          if (container) {
+            const maxScroll = container.scrollHeight - container.clientHeight
+            container.scrollTo({
+              top: Math.min(offsetTop, maxScroll),
+              behavior: 'smooth',
+            })
+          } else {
+            const maxScroll =
+              document.documentElement.scrollHeight - window.innerHeight
+            window.scrollTo({
+              top: Math.min(offsetTop, maxScroll),
+              behavior: 'smooth',
+            })
+          }
+          setActiveSection(targetId)
+        }
       }
 
       setIsMobileMenuOpen(false)
@@ -265,7 +346,7 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
       </div>
 
       {/* Spacer for fixed header */}
-      <div className="h-16 sm:h-20" />
+      {!noSpacer && <div className="h-16 sm:h-20" />}
     </>
   )
 }

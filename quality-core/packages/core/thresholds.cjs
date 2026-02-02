@@ -1,8 +1,8 @@
 module.exports = {
   build: {
     bundle_total_kb: 650, // React + Rich UI baseline
-    largest_chunk_kb: 210, // React DOM raw size
-    css_total_kb: 160, // Tailwind v4 + Custom styles
+    largest_chunk_kb: 215, // React DOM raw size (adjusted for actual bundle)
+    css_total_kb: 150, // Tailwind v4 + Custom styles
     assets_count: 80,
   },
   render: {

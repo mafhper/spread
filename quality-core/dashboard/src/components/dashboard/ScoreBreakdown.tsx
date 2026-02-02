@@ -48,40 +48,55 @@ export function ScoreBreakdown({
 
   return (
     <div
-      className={cn('rounded-xl border border-border bg-card p-5', className)}
+      className={cn(
+        'rounded-xl border border-border bg-card p-6 shadow-sm',
+        className
+      )}
     >
-      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
-        Breakdown do Score
-      </h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+          Breakdown do Score
+        </h3>
+        <span className="text-[10px] text-muted-foreground font-mono bg-muted px-2 py-0.5 rounded border border-border">
+          WEIGHTED TOTAL
+        </span>
+      </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {categories.map(({ key, label, icon: Icon }) => {
           const category = data[key]
           return (
-            <div key={key} className="space-y-2">
+            <div key={key} className="space-y-2 group">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-card-foreground">
-                    {label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    ({category.weight}%)
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded bg-muted/50 text-muted-foreground group-hover:text-primary transition-colors">
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[13px] font-semibold text-card-foreground leading-none">
+                      {label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                      Peso: {category.weight}%
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={cn(
+                      'text-sm font-black font-mono tracking-tighter',
+                      getTextColor(category.score)
+                    )}
+                  >
+                    {category.score}
                   </span>
                 </div>
-                <span
-                  className={cn(
-                    'text-sm font-bold font-mono',
-                    getTextColor(category.score)
-                  )}
-                >
-                  {category.score}
-                </span>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden shadow-inner">
                 <div
                   className={cn(
-                    'h-full rounded-full transition-all duration-700',
+                    'h-full rounded-full transition-all duration-1000 ease-out',
                     getScoreColor(category.score)
                   )}
                   style={{ width: `${category.score}%` }}
@@ -93,10 +108,13 @@ export function ScoreBreakdown({
       </div>
 
       {/* Weighted calculation explanation */}
-      <div className="mt-5 pt-4 border-t border-border">
-        <p className="text-xs text-muted-foreground">
+      <div className="mt-6 pt-4 border-t border-border/50">
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70 italic bg-muted/20 p-2 rounded-lg border border-border/30">
+          <div className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center text-[8px] font-bold text-primary not-italic">
+            ?
+          </div>
           Score final = Σ (categoria × peso) / 100
-        </p>
+        </div>
       </div>
     </div>
   )

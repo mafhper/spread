@@ -195,7 +195,13 @@ export function getServiceIcon(domain: string): ServiceIconResult {
 
   // Tenta encontrar match parcial (ex: subdominios)
   for (const [key, Icon] of Object.entries(SERVICE_ICONS)) {
-    if (normalizedDomain.includes(key) || key.includes(normalizedDomain)) {
+    // Verifica se o dominio termina com a chave (ex: music.apple.com termina com apple.com ou music.apple.com)
+    // Ou se a chave eh uma parte do dominio (ex: youtube em youtube.com)
+    if (
+      normalizedDomain === key ||
+      normalizedDomain.endsWith('.' + key) ||
+      (key.length > 3 && normalizedDomain.includes(key))
+    ) {
       // eslint-disable-next-line security/detect-object-injection
       const color = SERVICE_COLORS[key] || DEFAULT_COLOR
       return {

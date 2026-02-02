@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useAutoScale } from '../../../../src/hooks/useAutoScale'
+import { useAutoScale } from '@/hooks/useAutoScale'
 
 describe('useAutoScale hook', () => {
   // ResizeObserver callback tracking (for testing purposes)
@@ -219,5 +219,108 @@ describe('useAutoScale hook', () => {
     })
 
     expect(result.current.isAuto).toBe(true)
+  })
+
+  it('should handle zero dimensions gracefully', () => {
+    const { result } = renderHook(() => useAutoScale())
+
+    // Test calculateOptimalScale with zero dimensions
+    act(() => {
+      result.current.recalculate()
+    })
+
+    expect(result.current.scale).toBeDefined()
+  })
+
+  it('should maintain precision of 3 decimal places', () => {
+    const { result } = renderHook(() => useAutoScale())
+
+    act(() => {
+      result.current.setManualScale(0.12345)
+    })
+
+    // Scale should be clamped to maxScale of 1.0, but since minScale is 0.2, it should be 0.2
+    expect(result.current.scale).toBe(0.2)
+  })
+
+  it('should properly clamp manual scale to min and max', () => {
+    const minScale = 0.25
+    const maxScale = 0.95
+    const { result } = renderHook(() => useAutoScale({ minScale, maxScale }))
+
+    act(() => {
+      result.current.setManualScale(0.1)
+    })
+    expect(result.current.scale).toBe(minScale)
+
+    act(() => {
+      result.current.setManualScale(2.0)
+    })
+    expect(result.current.scale).toBe(maxScale)
+
+    act(() => {
+      result.current.setManualScale(0.5)
+    })
+    expect(result.current.scale).toBe(0.5)
+  })
+
+  it('should recalculate when refs are attached', () => {
+    const { result } = renderHook(() => useAutoScale({ enabled: true }))
+
+    act(() => {
+      result.current.recalculate()
+    })
+
+    expect(result.current.recalculate).toBeDefined()
+  })
+
+  it('should handle custom padding', () => {
+    const customPadding = 64
+    const { result } = renderHook(() =>
+      useAutoScale({ padding: customPadding })
+    )
+
+    expect(result.current.scale).toBeDefined()
+  })
+
+  it('should convert scale to percentage correctly', () => {
+    const { result } = renderHook(() => useAutoScale())
+
+    act(() => {
+      result.current.setManualScale(0.5)
+    })
+
+    expect(result.current.scalePercent).toBe(50)
+
+    act(() => {
+      result.current.setManualScale(1.0)
+    })
+
+    expect(result.current.scalePercent).toBe(100)
+
+    act(() => {
+      result.current.setManualScale(0.234)
+    })
+
+    expect(result.current.scalePercent).toBe(23)
+  })
+
+  it('should not recalculate when disabled and recalculate is called', () => {
+    const { result } = renderHook(() => useAutoScale({ enabled: false }))
+
+    act(() => {
+      result.current.recalculate()
+    })
+
+    expect(result.current.scale).toBe(1)
+  })
+
+  it('should return containerRef and contentRef', () => {
+    const { result } = renderHook(() => useAutoScale())
+
+    expect(result.current.containerRef).toBeDefined()
+    expect(result.current.contentRef).toBeDefined()
+    expect(result.current.containerRef.current).toBeNull()
+    expect(result.current.contentRef.current).toBeNull()
   })
 })

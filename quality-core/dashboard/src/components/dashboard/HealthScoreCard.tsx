@@ -48,9 +48,18 @@ export function HealthScoreCard({
   }, [score])
 
   const confidenceBadge = {
-    high: { label: 'Alta Confiança', color: 'bg-success/20 text-success' },
-    medium: { label: 'Média Confiança', color: 'bg-warning/20 text-warning' },
-    low: { label: 'Baixa Confiança', color: 'bg-error/20 text-error' },
+    high: {
+      label: 'Alta Confiança',
+      color: 'bg-success/15 text-success border-success/30',
+    },
+    medium: {
+      label: 'Média Confiança',
+      color: 'bg-warning/15 text-warning border-warning/30',
+    },
+    low: {
+      label: 'Baixa Confiança',
+      color: 'bg-error/15 text-error border-error/30',
+    },
   }
 
   // SVG circle properties
@@ -61,32 +70,40 @@ export function HealthScoreCard({
   return (
     <div
       className={cn(
-        'relative rounded-xl border border-border bg-card p-6',
+        'relative rounded-2xl border border-border bg-card p-8 transition-all duration-500 overflow-hidden',
         glowClass,
         className
       )}
     >
+      {/* Background Decorative Pattern */}
+      <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
+        <TrendingUp size={120} />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-8 relative z-10">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">
             Health Score
           </h3>
           <Tooltip>
             <TooltipTrigger>
-              <HelpCircle className="h-4 w-4 text-muted-foreground/50" />
+              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
             </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-xs">
-              <p className="text-sm">
-                Score calculado com base em: Testes (40%), Performance (30%),
-                Cobertura (20%), Estabilidade (10%)
+            <TooltipContent side="right" className="max-w-xs p-3">
+              <p className="text-xs leading-relaxed">
+                Indicador global de saúde do projeto calculado a partir de:
+                <span className="block mt-1 font-mono text-[10px]">
+                  • Testes (40%) • Performance (30%)
+                  <br />• Cobertura (20%) • Estabilidade (10%)
+                </span>
               </p>
             </TooltipContent>
           </Tooltip>
         </div>
         <span
           className={cn(
-            'text-xs font-medium px-2 py-1 rounded-full',
+            'text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border shadow-sm transition-colors',
             confidenceBadge[confidenceLevel].color
           )}
         >
@@ -95,17 +112,32 @@ export function HealthScoreCard({
       </div>
 
       {/* Score Circle */}
-      <div className="flex items-center justify-center py-4">
-        <div className="relative">
-          <svg className="w-36 h-36 -rotate-90" viewBox="0 0 100 100">
+      <div className="flex items-center justify-center py-6 relative z-10">
+        <div className="relative group">
+          {/* Outer Ring Glow */}
+          <div
+            className={cn(
+              'absolute inset-[-10px] rounded-full blur-2xl opacity-20 transition-opacity duration-1000 group-hover:opacity-40',
+              score >= 75
+                ? 'bg-success'
+                : score >= 50
+                  ? 'bg-warning'
+                  : 'bg-error'
+            )}
+          />
+
+          <svg
+            className="w-40 h-40 -rotate-90 relative z-10"
+            viewBox="0 0 100 100"
+          >
             {/* Background circle */}
             <circle
               cx="50"
               cy="50"
               r={radius}
               fill="none"
-              strokeWidth="8"
-              className="stroke-muted"
+              strokeWidth="6"
+              className="stroke-muted/20"
             />
             {/* Progress circle */}
             <circle
@@ -116,7 +148,7 @@ export function HealthScoreCard({
               strokeWidth="8"
               strokeLinecap="round"
               className={cn(
-                'score-ring transition-all duration-1000',
+                'score-ring transition-all duration-1000 ease-in-out',
                 ringColorClass
               )}
               style={{
@@ -126,40 +158,48 @@ export function HealthScoreCard({
             />
           </svg>
           {/* Score text */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             <span
-              className={cn('text-4xl font-bold font-mono', scoreColorClass)}
+              className={cn(
+                'text-5xl font-black font-mono tracking-tighter mb-1',
+                scoreColorClass
+              )}
             >
               {score}
             </span>
-            <span className="text-xs text-muted-foreground mt-1">{status}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.1em] opacity-60">
+              {status}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Delta indicator */}
-      <div className="flex items-center justify-center gap-2 mt-2">
+      <div className="flex items-center justify-center gap-3 mt-4 px-4 py-2 rounded-xl bg-muted/30 border border-border/50 relative z-10">
         {delta > 0 ? (
           <>
-            <TrendingUp className="h-4 w-4 text-success" />
-            <span className="text-sm font-medium text-success">
-              +{delta} pts
-            </span>
+            <div className="p-1 rounded-full bg-success/20 text-success">
+              <TrendingUp className="h-3 w-3" />
+            </div>
+            <span className="text-xs font-bold text-success">+{delta} pts</span>
           </>
         ) : delta < 0 ? (
           <>
-            <TrendingDown className="h-4 w-4 text-error" />
-            <span className="text-sm font-medium text-error">{delta} pts</span>
+            <div className="p-1 rounded-full bg-error/20 text-error">
+              <TrendingDown className="h-3 w-3" />
+            </div>
+            <span className="text-xs font-bold text-error">{delta} pts</span>
           </>
         ) : (
           <>
-            <Minus className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">
-              Sem alteração
+            <Minus className="h-3 w-3 text-muted-foreground/40" />
+            <span className="text-xs font-bold text-muted-foreground/60">
+              Estável
             </span>
           </>
         )}
-        <span className="text-xs text-muted-foreground">
+        <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
           vs commit anterior
         </span>
       </div>

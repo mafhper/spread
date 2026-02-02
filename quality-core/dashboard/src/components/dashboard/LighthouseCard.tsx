@@ -34,33 +34,60 @@ const metrics = [
 export function LighthouseCard({ scores, className }: LighthouseCardProps) {
   return (
     <div
-      className={cn('rounded-xl border border-border bg-card p-5', className)}
+      className={cn(
+        'rounded-xl border border-border bg-card p-6 shadow-sm overflow-hidden relative',
+        className
+      )}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Lighthouse
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/60" />
+          Lighthouse Audits
         </h3>
-        <span className="text-xs text-muted-foreground">
-          Última execução: agora
+        <span className="text-[10px] font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
+          REAL-TIME DATA
         </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metrics.map(({ key, label }) => {
           const score = scores[key]
           return (
             <div
               key={key}
               className={cn(
-                'flex flex-col items-center p-3 rounded-lg border-2',
-                getScoreColor(score),
-                getScoreBg(score)
+                'flex flex-col items-center p-4 rounded-xl border transition-all duration-300 group hover:shadow-lg hover:-translate-y-0.5',
+                getScoreColor(score)
+                  .replace('text-', 'border-')
+                  .replace('border-', 'border-'), // Ensuring it's a border color
+                getScoreBg(score),
+                'border-opacity-20'
               )}
             >
-              <span className="text-2xl font-bold font-mono">{score}</span>
-              <span className="text-xs text-center mt-1 text-muted-foreground">
+              <div className="relative mb-2">
+                <span
+                  className={cn(
+                    'text-3xl font-black font-mono tracking-tighter',
+                    getScoreColor(score).split(' ')[0]
+                  )}
+                >
+                  {score}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-center uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
                 {label}
               </span>
+
+              {/* Progress visual indicator */}
+              <div className="w-full h-1 bg-muted rounded-full mt-3 overflow-hidden opacity-40">
+                <div
+                  className={cn(
+                    'h-full transition-all duration-1000',
+                    getScoreColor(score).split(' ')[0].replace('text-', 'bg-')
+                  )}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
             </div>
           )
         })}

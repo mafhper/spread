@@ -25,6 +25,13 @@ export const LazyIntersection: React.FC<LazyIntersectionProps> = ({
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Check if we should render immediately due to hash anchor
+    const hash = window.location.hash.replace('#', '')
+    if (id && hash === id) {
+      setIntersecting(true)
+      return
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

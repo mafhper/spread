@@ -503,6 +503,13 @@ export class SnapshotStore {
         performance: Math.round(
           (json.categories.performance?.score || 0) * 100
         ),
+        accessibility: Math.round(
+          (json.categories.accessibility?.score || 0) * 100
+        ),
+        bestPractices: Math.round(
+          (json.categories['best-practices']?.score || 0) * 100
+        ),
+        seo: Math.round((json.categories.seo?.score || 0) * 100),
         lcp: json.audits['largest-contentful-paint']?.numericValue || 0,
         cls: json.audits['cumulative-layout-shift']?.numericValue || 0,
         tbt: json.audits['total-blocking-time']?.numericValue || 0,

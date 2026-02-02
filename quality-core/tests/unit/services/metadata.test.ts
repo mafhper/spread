@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchMetadata } from '../../../../src/services/metadata'
+import { fetchMetadata } from '@/services/metadata'
 
 describe('metadata service', () => {
   beforeEach(() => {

@@ -18,7 +18,7 @@ const AboutAuthorBase: React.FC = () => {
         {/* Section header */}
         <div className="text-center mb-12 sm:mb-16">
           <span className="inline-block px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-medium text-white/60 mb-6">
-            Sobre
+            Autor
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 leading-tight">
             Web aberta e acessível

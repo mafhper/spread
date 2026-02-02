@@ -121,8 +121,14 @@ interface QualityDataContextType {
     isOpen: boolean
     reportFile: string | undefined
   }
+  fileViewerState: {
+    isOpen: boolean
+    filePath: string
+    content: string
+  }
   openReport: (file: string) => void
   setReportModalOpen: (open: boolean) => void
+  setFileViewerOpen: (open: boolean) => void
   quickActionsOpen: boolean
   setQuickActionsOpen: (open: boolean) => void
   notificationHistory: {
@@ -132,6 +138,14 @@ interface QualityDataContextType {
     status: 'running' | 'success' | 'error'
   }[]
   clearNotifications: () => void
+  searchResults: {
+    type: 'test' | 'report' | 'commit' | 'file'
+    title: string
+    subtitle: string
+    id: string
+    payload?: any
+  }[]
+  openFile: (path: string) => Promise<void>
 }
 
 const QualityDataContext = createContext<QualityDataContextType | undefined>(
@@ -181,8 +195,28 @@ export const QualityDataProvider: React.FC<{ children: React.ReactNode }> = ({
     reportFile: undefined,
   })
 
+  const [fileViewerState, setFileViewerState] = useState<
+    QualityDataContextType['fileViewerState']
+  >({
+    isOpen: false,
+    filePath: '',
+    content: '',
+  })
+
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
+  const [fileSearchResults, setFileSearchResults] = useState<
+    QualityDataContextType['searchResults']
+  >([])
+
   const setConsoleOpen = (open: boolean) =>
     setConsoleState(prev => ({ ...prev, isOpen: open }))
+
+  const setFileViewerOpen = (open: boolean) =>
+    setFileViewerState(prev => ({ ...prev, isOpen: open }))
+
+  const setReportModalOpen = (open: boolean) => {
+    setReportModalState(prev => ({ ...prev, isOpen: open }))
+  }
 
   const openReport = (file: string) => {
     console.log(`[report-debug] Opening global report: ${file}`)
@@ -192,11 +226,31 @@ export const QualityDataProvider: React.FC<{ children: React.ReactNode }> = ({
     })
   }
 
-  const setReportModalOpen = (open: boolean) => {
-    setReportModalState(prev => ({ ...prev, isOpen: open }))
-  }
+  const openFile = async (filePath: string) => {
+    try {
+      setFileViewerState({
+        isOpen: true,
+        filePath,
+        content: 'Carregando...',
+      })
 
-  const [quickActionsOpen, setQuickActionsOpen] = useState(false)
+      const res = await fetch(
+        `/api/files/content?path=${encodeURIComponent(filePath)}`
+      )
+      if (!res.ok) throw new Error('Failed to fetch file content')
+      const content = await res.text()
+
+      setFileViewerState({
+        isOpen: true,
+        filePath,
+        content,
+      })
+    } catch (err) {
+      toast.error('Erro ao abrir arquivo')
+      setFileViewerState(prev => ({ ...prev, isOpen: false }))
+      console.error(err)
+    }
+  }
 
   const clearNotifications = () => setNotificationHistory([])
 
@@ -525,6 +579,101 @@ export const QualityDataProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchData()
   }, [fetchData])
 
+  // Global Search Logic
+  const query = searchQuery.toLowerCase().trim()
+  useEffect(() => {
+    if (!query || query.length < 2) {
+      setFileSearchResults([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/files/search?q=${encodeURIComponent(query)}`
+        )
+        const json = await res.json()
+        if (json.success) {
+          const results = json.data.map((f: string) => ({
+            type: 'file',
+            title: f.split('/').pop() || f,
+            subtitle: f,
+            id: `file-${f}`,
+            payload: f,
+          }))
+          setFileSearchResults(results)
+        }
+      } catch (err) {
+        console.error('File search error:', err)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [query])
+
+  const searchResults = React.useMemo(() => {
+    if (!query) return []
+
+    console.log('[search-context] Running search for:', query)
+    const results: QualityDataContextType['searchResults'] = []
+
+    // 1. Search in Test Suites
+    if (currentSnapshot) {
+      currentSnapshot.metrics.tests.suites.forEach(s => {
+        if (s.name.toLowerCase().includes(query)) {
+          results.push({
+            type: 'test',
+            title: s.name,
+            subtitle: `${s.passed}/${s.tests} passados • ${s.duration}ms`,
+            id: `test-${s.name}-${Math.random()}`,
+          })
+        }
+      })
+    }
+
+    // 2. Search in Reports & Commits
+    recentCommits.forEach(c => {
+      // Search by report filename
+      if (c.reportFile && c.reportFile.toLowerCase().includes(query)) {
+        results.push({
+          type: 'report',
+          title: c.reportFile,
+          subtitle: `Snapshot: ${c.hash.substring(0, 7)} • ${c.date}`,
+          id: `report-${c.hash}-${Math.random()}`,
+          payload: c.reportFile,
+        })
+      }
+
+      // Search by commit message or hash
+      if (
+        c.message.toLowerCase().includes(query) ||
+        c.hash.toLowerCase().includes(query)
+      ) {
+        results.push({
+          type: 'commit',
+          title: c.message,
+          subtitle: `Hash: ${c.hash.substring(0, 7)} • Score: ${c.healthScore}% • ${c.date}`,
+          id: `commit-${c.hash}-${Math.random()}`,
+        })
+      }
+    })
+
+    // 3. Add file results
+    results.push(...fileSearchResults)
+
+    console.log(`[search-context] Found ${results.length} results`)
+    return results
+      .sort((a, b) => {
+        // Prioritize exact matches
+        const aExact = a.title.toLowerCase() === query
+        const bExact = b.title.toLowerCase() === query
+        if (aExact && !bExact) return -1
+        if (!aExact && bExact) return 1
+        return 0
+      })
+      .slice(0, 10)
+  }, [query, currentSnapshot, recentCommits, fileSearchResults])
+
   return (
     <QualityDataContext.Provider
       value={{
@@ -549,6 +698,10 @@ export const QualityDataProvider: React.FC<{ children: React.ReactNode }> = ({
         setQuickActionsOpen,
         notificationHistory,
         clearNotifications,
+        searchResults,
+        openFile,
+        fileViewerState,
+        setFileViewerOpen,
       }}
     >
       {children}

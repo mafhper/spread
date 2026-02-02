@@ -1,0 +1,6 @@
+#!/bin/sh
+echo "🔐 Running security audit (high & critical only)..."
+bun run security:audit || {
+  echo '❌ Security audit failed. Fix vulnerabilities before pushing.'
+  exit 1
+}

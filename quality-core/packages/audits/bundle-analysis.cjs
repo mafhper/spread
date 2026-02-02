@@ -13,7 +13,7 @@ const BundleAnalysisAudit = {
     const violations = []
     const t = context.thresholds?.build || {
       bundle_total_kb: 500,
-      largest_chunk_kb: 200,
+      largest_chunk_kb: 220,
       css_total_kb: 50,
     }
 

@@ -28,12 +28,14 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': [
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            'lucide-react',
             '@radix-ui/react-dialog',
             '@radix-ui/react-popover',
             '@radix-ui/react-scroll-area',
-            'lucide-react',
           ],
           'vendor-charts': ['recharts'],
           'vendor-markdown': ['react-markdown', 'remark-gfm'],

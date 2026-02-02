@@ -1,246 +1,109 @@
 # Quality Core
 
-**Quality Core** is a modular, extensible quality auditing system designed for web projects. It provides automated checks for performance, accessibility, UX, SEO, and build health, generating actionable reports.
+**Quality Core** é um sistema de auditoria de qualidade modular e extensível projetado para o ecossistema Spread. Ele fornece verificações automatizadas de performance, acessibilidade, segurança, linting e integridade, gerando relatórios detalhados e alimentando um dashboard interativo.
 
-## Features
+## Funcionalidades
 
-- **Pluggable Audits** - Easy to add, remove, or customize individual audits
-- **Preset Configurations** - Pre-configured settings for common deployment targets (e.g., GitHub Pages)
-- **Multiple Reporters** - Generate reports in JSON or Markdown formats
-- **Dashboard Integration** - Visual dashboard for monitoring quality metrics
-- **CLI Interface** - Simple command-line interface for CI/CD integration
+- **Quality Gate (Pre-Commit)** - Orquestrador principal que garante que apenas código de alta qualidade seja commitado.
+- **Auditorias Plugáveis** - Fácil inclusão de novos scripts de validação (Segurança, i18n, Performance).
+- **Lighthouse CI-Safe** - Coleta otimizada para Windows/CI, resolvendo timeouts de protocolo e estabilizando emulação mobile.
+- **Relatórios Multi-formato** - Gera saídas em JSON para o sistema e Markdown para leitura humana.
+- **Dashboard Bento-Grid** - Interface visual moderna para monitoramento de métricas em tempo real.
+- **CLI Resiliente** - Interface de linha de comando com suporte a modos rápido (`--quick`) e silencioso (`--silent`).
 
 ---
 
-## Directory Structure
+## Estrutura de Diretórios
 
 ```
 quality-core/
 ├── cli/
-│   └── quality.cjs           # CLI entry point
-├── dashboard/                 # Integrated dashboard (self-contained)
-│   ├── public/
-│   │   └── index.html        # Dashboard UI
-│   ├── server.cjs            # Express-compatible HTTP server
-│   └── template.html         # HTML template
-├── packages/
-│   ├── core/
-│   │   ├── result.contract.json  # JSON Schema for audit results
-│   │   ├── runner.cjs            # Audit orchestrator
-│   │   └── thresholds.cjs        # Default threshold values
-│   ├── audits/
-│   │   ├── build.cjs         # Bundle size & asset checks
-│   │   ├── render.cjs        # First Paint, CLS, TBT metrics
-│   │   ├── ux.cjs            # Tap target size checks
-│   │   ├── a11y.cjs          # Accessibility (buttons, labels, alt text)
-│   │   └── seo.cjs           # Meta tags, headings, canonical
-│   ├── adapters/
-│   │   ├── playwright.cjs    # Browser automation adapter
-│   │   └── utils.cjs         # Shared utilities
-│   └── reporters/
-│       ├── json.cjs          # JSON reporter
-│       └── markdown.cjs      # Markdown reporter
-└── presets/
-    └── github-pages.json     # GitHub Pages deployment preset
+│   ├── run.cjs               # Orquestrador principal (Quality Gate)
+│   ├── quality.cjs           # Auditoria técnica detalhada
+│   ├── run-lighthouse.cjs    # Coletor de métricas Lighthouse
+│   └── config.cjs            # Configurações centralizadas de caminhos
+├── scripts/                  # Scripts utilitários de validação
+│   ├── security-scan.cjs     # Scan de secrets expostos
+│   ├── i18n-audit.cjs        # Auditoria de internacionalização
+│   └── check-audit.js        # Validador de npm/bun audit
+├── dashboard/                # Dashboard React (Vite + Tailwind)
+│   ├── src/                  # Código fonte da interface
+│   └── dist/                 # Build de produção do dashboard
+├── packages/                 # Núcleo de auditoria (Legacy/Core)
+│   ├── core/                 # Runner e thresholds
+│   ├── audits/               # Implementação das auditorias individuais
+│   └── reporters/            # Geradores de relatórios (JSON/MD)
+└── snapshots.store.ts        # Gerenciamento de snapshots de qualidade
 ```
 
 ---
 
-## Technologies & Architecture
+## Comandos Principais
 
-| Component          | Technology            | Purpose                         |
-| ------------------ | --------------------- | ------------------------------- |
-| Runtime            | Node.js (CommonJS)    | Cross-platform execution        |
-| Browser Automation | Playwright            | Rendering audits (FP, CLS, TBT) |
-| CLI                | Native `process.argv` | Zero-dependency CLI parsing     |
-| Reporters          | Native `fs`           | JSON and Markdown output        |
-| Dashboard          | Vanilla HTML/JS       | No build step required          |
-
-### Architecture Overview
-
-```
-┌──────────────┐     ┌───────────────┐     ┌──────────────┐
-│   CLI        │────▶│    Runner     │────▶│   Audits     │
-│ quality.cjs  │     │  runner.cjs   │     │ build/render │
-└──────────────┘     └───────────────┘     └──────────────┘
-                            │
-                            ▼
-                     ┌──────────────┐
-                     │  Reporters   │
-                     │ json/markdown│
-                     └──────────────┘
-                            │
-                            ▼
-                     ┌──────────────┐
-                     │  Dashboard   │
-                     │ server.cjs   │
-                     └──────────────┘
-```
-
----
-
-## Usage
-
-### Running Quality Audits
+### Quality Gate (Recomendado antes de Commits)
 
 ```bash
-# Run all audits against a local preview server
-npm run quality -- --url=http://localhost:4173/
+# Executa todas as verificações (incluindo build)
+node quality-core/cli/run.cjs
 
-# Run specific audits
-npm run quality -- --url=http://localhost:4173/ --audits=build,seo
+# Modo rápido (pula o build, ideal para dev local)
+node quality-core/cli/run.cjs --quick
 
-# Use a preset
-npm run quality -- --url=http://localhost:4173/ --preset=github-pages
+# Modo silencioso (ideal para CI)
+node quality-core/cli/run.cjs --silent
 ```
 
-### Starting the Dashboard
+### Auditorias Específicas
 
 ```bash
-npm run dashboard
-# Opens at http://localhost:3333
+# Auditoria técnica completa (Performance, SEO, A11y)
+npm run quality:core
+
+# Coleta de métricas Lighthouse
+npm run quality:lighthouse
+
+# Scan de segurança (secrets e dependências)
+npm run security:audit
 ```
 
----
-
-## Adapting Quality Core for Another Project
-
-### Step 1: Copy the `quality-core` folder
-
-Copy the entire `quality-core/` directory to your new project:
+### Dashboard de Qualidade
 
 ```bash
-cp -r quality-core/ /path/to/new-project/quality-core/
-```
-
-### Step 2: Install Dependencies
-
-Quality Core requires Playwright for browser-based audits:
-
-```bash
-npm install -D playwright
-```
-
-### Step 3: Add npm Scripts
-
-Add to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "quality": "node quality-core/cli/quality.cjs",
-    "quality:quick": "node quality-core/cli/quality.cjs --audits=build,seo",
-    "dashboard": "node quality-core/dashboard/server.cjs"
-  }
-}
-```
-
-### Step 4: Configure Paths (Optional)
-
-Edit `quality-core/dashboard/server.cjs` to update report directories:
-
-```javascript
-const CONFIG = {
-  reportsDir: path.join(process.cwd(), 'performance-reports'),
-  qualityDir: path.join(process.cwd(), 'performance-reports', 'quality'),
-  // ... other paths
-}
-```
-
-### Step 5: Create Custom Presets (Optional)
-
-Create a new preset in `quality-core/presets/`:
-
-```json
-{
-  "name": "my-project",
-  "target": "production",
-  "baseUrl": "https://example.com"
-}
-```
-
-### Step 6: Customize Thresholds
-
-Edit `quality-core/packages/core/thresholds.cjs`:
-
-```javascript
-const DEFAULT_THRESHOLDS = {
-  build: {
-    bundle_total_kb: 500, // Adjust for your project
-    largest_chunk_kb: 200,
-    // ...
-  },
-  // ...
-}
+# Inicia o servidor do dashboard
+npm run quality:dashboard
+# Acesse em http://localhost:3333
 ```
 
 ---
 
-## Extending with Custom Audits
+## Arquitetura de Fluxo
 
-Create a new audit in `quality-core/packages/audits/`:
-
-```javascript
-// my-audit.cjs
-module.exports = {
-  name: 'my-audit',
-  async run(context) {
-    const violations = []
-
-    // Your audit logic here
-
-    return {
-      name: 'my-audit',
-      status: violations.length === 0 ? 'passed' : 'failed',
-      score: 100 - violations.length * 10,
-      violations,
-    }
-  },
-}
-```
-
-Register in `quality-core/cli/quality.cjs`:
-
-```javascript
-const audits = {
-  build: require('../packages/audits/build.cjs'),
-  render: require('../packages/audits/render.cjs'),
-  // Add your audit:
-  'my-audit': require('../packages/audits/my-audit.cjs'),
-}
-```
+1. **Trigger**: O desenvolvedor ou o CI executa o `quality-core/cli/run.cjs`.
+2. **Execution**: O orquestrador chama sequencialmente os validadores de integridade, i18n, segurança, lint, build e performance.
+3. **Consolidation**: Os resultados são salvos em `performance-reports/quality/`.
+4. **Visualization**: O Dashboard consome os JSONs gerados para exibir o histórico e o status atual do projeto.
 
 ---
 
-## Report Formats
+## Contribuindo
 
-### JSON Report
+Para adicionar uma nova verificação ao Quality Gate:
 
-```json
-{
-  "meta": {
-    "timestamp": "2024-12-17T18:00:00Z",
-    "preset": "github-pages",
-    "url": "http://localhost:4173/"
-  },
-  "status": "failed",
-  "audits": [
-    {
-      "name": "build",
-      "status": "failed",
-      "score": 70,
-      "violations": [...]
-    }
-  ]
-}
-```
-
-### Markdown Report
-
-Generated in `performance-reports/quality/quality-{timestamp}.md` with human-readable summaries.
+1. Adicione o script de validação em `quality-core/scripts/`.
+2. Integre a chamada no orquestrador `quality-core/cli/run.cjs`.
+3. Garanta que o script retorne exit code `0` para sucesso e `1` para falha.
 
 ---
 
-## License
+## Notas Técnicas (Performance & Windows)
 
-MIT - Part of the Personal News project.
+O sistema de auditoria inclui otimizações específicas para ambientes Windows:
+- **Headless Legacy**: Utiliza o modo `--headless` tradicional para maior estabilidade em emulação mobile.
+- **Adaptive Throttling**: Desativa o throttling de CPU via software no Windows para evitar timeouts de protocolo DevTools.
+- **Lazy Rendering**: Componentes de landing page utilizam `LazyIntersection` com consciência de hash, renderizando imediatamente apenas o necessário para navegação por âncoras.
+
+---
+
+## Licença
+
+MIT - Parte do ecossistema Spread.
