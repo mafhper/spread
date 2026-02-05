@@ -84,23 +84,41 @@ _Figure 2: Professional-grade templates for social media distribution._
 
 ## Development & Deployment
 
-The project lifecycle is managed via the **Bun** runtime.
+The project supports a **cross-platform workflow** (Windows, macOS, Linux) and can be run with **Bun** (recommended) or **Node/npm**. Scripts are written to avoid shell-specific commands.
 
 ### Prerequisites
 
-- [Bun Runtime](https://bun.sh) (Recommended environment)
+- [Node.js](https://nodejs.org) >= 20 (required)
+- [npm](https://www.npmjs.com) >= 10 (required for dashboard audits/updates)
+- [Bun Runtime](https://bun.sh) >= 1.1 (recommended; used by Quality Core TS utilities)
 
-### Local Execution
+### Universal Flow (Bun or Node)
 
 ```bash
-# Dependency synchronization
+# Dependency synchronization (choose one)
 bun install
+# or
+npm install
 
-# Development server initialization
+# Development server
 bun dev
+# or
+npm run dev
 
-# Production build generation
+# Production build
 bun run build
+# or
+npm run build
+```
+
+### Quality & Reports
+
+```bash
+# Full quality gate (cross-platform)
+bun run quality:full
+
+# Reports (Lighthouse + snapshots; requires Bun for TS scripts)
+bun run quality:reports:all
 ```
 
 ---

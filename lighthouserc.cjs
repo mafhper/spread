@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const net = require('net')
+const net = require('node:net')
 
 /**
  * Finds a free port to run the preview server.

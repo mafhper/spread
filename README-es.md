@@ -83,23 +83,41 @@ _Figura 2: Plantillas de nivel profesional para distribución en redes sociales.
 
 ## Desarrollo y Despliegue
 
-El ciclo de vida del proyecto se gestiona a través del runtime **Bun**.
+El proyecto soporta un **flujo cross-platform** (Windows, macOS, Linux) y puede ejecutarse con **Bun** (recomendado) o **Node/npm**. Los scripts evitan comandos dependientes del shell.
 
 ### Requisitos Previos
 
-- [Bun Runtime](https://bun.sh) (Entorno recomendado)
+- [Node.js](https://nodejs.org) >= 20 (obligatorio)
+- [npm](https://www.npmjs.com) >= 10 (obligatorio para auditorías/updates del dashboard)
+- [Bun Runtime](https://bun.sh) >= 1.1 (recomendado; usado por utilidades TS de Quality Core)
 
-### Ejecución Local
+### Flujo Universal (Bun o Node)
 
 ```bash
-# Sincronización de dependencias
+# Sincronización de dependencias (elige uno)
 bun install
+# o
+npm install
 
-# Inicialización del servidor de desarrollo
+# Servidor de desarrollo
 bun dev
+# o
+npm run dev
 
-# Generación del build de producción
+# Build de producción
 bun run build
+# o
+npm run build
+```
+
+### Calidad y Reportes
+
+```bash
+# Quality gate completo (cross-platform)
+bun run quality:full
+
+# Reportes (Lighthouse + snapshots; requiere Bun para scripts TS)
+bun run quality:reports:all
 ```
 
 ---

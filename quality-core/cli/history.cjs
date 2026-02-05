@@ -34,29 +34,40 @@ function loadHistory() {
   }
 }
 
+function buildKey(scriptName, mode) {
+  const safeMode = mode ? String(mode).trim() : ''
+  if (!safeMode) return String(scriptName)
+  return `${scriptName}:${safeMode}`
+}
+
 /**
  * Save execution stats
  * @param {string} scriptName
  * @param {number} durationMs
+ * @param {string} [mode]
  */
-function saveExecutionTime(scriptName, durationMs) {
+function saveExecutionTime(scriptName, durationMs, mode) {
   ensureDir()
   const history = loadHistory()
+  const keys = new Set([String(scriptName), buildKey(scriptName, mode)])
 
-  if (!history[String(scriptName)]) {
+  keys.forEach(key => {
     // eslint-disable-next-line security/detect-object-injection
-    history[scriptName] = []
-  }
+    if (!history[key]) {
+      // eslint-disable-next-line security/detect-object-injection
+      history[key] = []
+    }
 
-  // eslint-disable-next-line security/detect-object-injection
-  history[scriptName].push(durationMs)
-
-  // Trim history
-  // eslint-disable-next-line security/detect-object-injection
-  if (history[scriptName].length > MAX_HISTORY_ENTRIES) {
     // eslint-disable-next-line security/detect-object-injection
-    history[scriptName] = history[scriptName].slice(-MAX_HISTORY_ENTRIES)
-  }
+    history[key].push(durationMs)
+
+    // Trim history
+    // eslint-disable-next-line security/detect-object-injection
+    if (history[key].length > MAX_HISTORY_ENTRIES) {
+      // eslint-disable-next-line security/detect-object-injection
+      history[key] = history[key].slice(-MAX_HISTORY_ENTRIES)
+    }
+  })
 
   try {
     fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2))
@@ -68,12 +79,14 @@ function saveExecutionTime(scriptName, durationMs) {
 /**
  * Get average duration for a script
  * @param {string} scriptName
+ * @param {string} [mode]
  * @returns {string|null} Formatted average time or null if no history
  */
-function getAverageDuration(scriptName) {
+function getAverageDuration(scriptName, mode) {
   const history = loadHistory()
+  const key = buildKey(scriptName, mode)
   // eslint-disable-next-line security/detect-object-injection
-  const times = history[scriptName]
+  const times = history[key] || history[scriptName]
 
   if (!times || times.length === 0) {
     return null
@@ -86,4 +99,5 @@ function getAverageDuration(scriptName) {
 module.exports = {
   saveExecutionTime,
   getAverageDuration,
+  buildKey,
 }

@@ -16,6 +16,12 @@ const args = process.argv.slice(2)
 const isQuiet = args.includes('--quiet') || args.includes('-q')
 const isSilent = args.includes('--silent') || args.includes('-s')
 const isQuick = args.includes('--quick')
+const isLocal = args.includes('--local')
+const skipLint = args.includes('--no-lint')
+const modeLabel = [
+  isQuick ? 'quick' : isLocal ? 'local' : 'full',
+  isSilent ? 'silent' : isQuiet ? 'quiet' : 'default',
+].join('-')
 
 // Constants
 const c = UI.colors
@@ -124,22 +130,28 @@ const TASKS = [
     name: 'i18n',
     id: 'i18n',
     run: async () => {
-      if (
-        !fs.existsSync(
-          path.join(config.paths.root, 'quality-core/scripts/i18n-audit.cjs')
-        )
-      )
+      const scriptPath = path.join(config.paths.scripts, 'i18n-audit.cjs')
+      if (!fs.existsSync(scriptPath))
         return { success: true, skipped: true, message: 'Script missing' }
 
       const res = await runCommand('node', [
-        'quality-core/scripts/i18n-audit.cjs',
+        path.relative(config.paths.root, scriptPath),
       ])
-      const count =
-        (res.output.match(/Total de problemas: (\d+)/) || [])[1] || 0
+      const totalMatch = res.output.match(/Total de problemas: (\d+)/)
+      const criticalMatch = res.output.match(/Problemas críticos: (\d+)/)
+      const totalCount = totalMatch ? parseInt(totalMatch[1], 10) : 0
+      const criticalCount = criticalMatch
+        ? parseInt(criticalMatch[1], 10)
+        : totalCount
       return {
         success: true,
-        warning: count > 0,
-        message: count > 0 ? `${count} warnings` : 'OK',
+        warning: criticalCount > 0,
+        message:
+          criticalCount > 0
+            ? `${criticalCount} críticos (total ${totalCount})`
+            : totalCount > 0
+              ? `OK (info: ${totalCount})`
+              : 'OK',
         output: res.output,
       }
     },
@@ -162,15 +174,12 @@ const TASKS = [
     name: 'Secrets Scan',
     id: 'secrets',
     run: async () => {
-      if (
-        !fs.existsSync(
-          path.join(config.paths.root, 'quality-core/scripts/security-scan.cjs')
-        )
-      )
+      const scriptPath = path.join(config.paths.scripts, 'security-scan.cjs')
+      if (!fs.existsSync(scriptPath))
         return { success: true, skipped: true, message: 'Script missing' }
 
       const res = await runCommand('node', [
-        'quality-core/scripts/security-scan.cjs',
+        path.relative(config.paths.root, scriptPath),
       ])
       const crit = res.output.includes('CRITICAL') && res.exitCode !== 0
       const high = res.output.includes('HIGH')
@@ -186,6 +195,9 @@ const TASKS = [
     name: 'Linting',
     id: 'lint',
     run: async () => {
+      if (skipLint) {
+        return { success: true, skipped: true, message: 'Skipped (--no-lint)' }
+      }
       const res = await runCommand('bun', ['run', 'lint'])
       // Simple error check based on exit code or common error strings
       const hasError = res.exitCode !== 0
@@ -200,8 +212,12 @@ const TASKS = [
     name: 'Build',
     id: 'build',
     run: async () => {
-      if (isQuick)
-        return { success: true, skipped: true, message: 'Skipped (--quick)' }
+      if (isQuick || isLocal)
+        return {
+          success: true,
+          skipped: true,
+          message: isLocal ? 'Skipped (--local)' : 'Skipped (--quick)',
+        }
       const res = await runCommand('bun', ['run', 'build'])
       return {
         success: res.success,
@@ -214,6 +230,12 @@ const TASKS = [
     name: 'Performance',
     id: 'performance',
     run: async () => {
+      if (isQuick || isLocal)
+        return {
+          success: true,
+          skipped: true,
+          message: isLocal ? 'Skipped (--local)' : 'Skipped (--quick)',
+        }
       // Simplified check logic to read latest lighthouse report
       const lhDir = config.paths.lighthouse
       if (!fs.existsSync(lhDir))
@@ -228,8 +250,22 @@ const TASKS = [
         return { success: true, skipped: true, message: 'No JSON reports' }
 
       try {
+        const preferredPrefixes = [
+          'lighthouse_desktop_',
+          'lighthouse_mobile_',
+          'lighthouse_',
+        ]
+        let selected = files[0]
+        for (const prefix of preferredPrefixes) {
+          const match = files.find(f => f.startsWith(prefix))
+          if (match) {
+            selected = match
+            break
+          }
+        }
+
         const report = JSON.parse(
-          fs.readFileSync(path.join(lhDir, files[0]), 'utf8')
+          fs.readFileSync(path.join(lhDir, selected), 'utf8')
         )
         const getScore = cat => {
           const catScore = report.categories?.[cat]?.score // eslint-disable-line security/detect-object-injection
@@ -245,7 +281,7 @@ const TASKS = [
           success: perf >= 70,
           warning: perf > 0 && perf < 70,
           message: `Perf: ${perf} | A11y: ${a11y}`,
-          report: files[0],
+          report: selected,
         }
       } catch (e) {
         return {
@@ -263,16 +299,35 @@ const TASKS = [
  */
 async function main() {
   // 1. Setup UI
-  if (!isSilent && !isQuiet) {
-    console.clear()
-    console.log(`${c.cyan}${c.bold}
-╔═════════════════════════════════════════════╗
-║           QUALITY GATE                      ║
-║   Sistema de Verificacao Pre-Commit         ║
-╚═════════════════════════════════════════════╝${c.reset}`)
+  let stopTimer = null
+  if (!isSilent) {
+    if (!isQuiet) {
+      console.clear()
+    }
+    UI.printHeader({
+      title: 'QUALITY GATE',
+      modes: ['--quick', '--local', '--no-lint', '--silent', '--quiet'],
+      active: [
+        isQuick ? 'quick' : null,
+        isLocal ? 'local' : null,
+        isSilent ? 'silent' : null,
+        isQuiet ? 'quiet' : null,
+      ].filter(Boolean),
+    })
+    const avgHeader = History.getAverageDuration('quality-gate', modeLabel)
+    stopTimer = UI.printTimingHeader({
+      avgLabel: avgHeader,
+      modeLabel,
+      live: UI.shouldLiveTimer() && !isQuiet,
+    })
 
-    // Print Execution Plan
-    UI.printPlan(TASKS)
+    if (!isQuiet) {
+      const planTasks = TASKS.map(task => ({
+        name: task.name,
+        avg: History.getAverageDuration(task.id, modeLabel),
+      }))
+      UI.printPlan(planTasks)
+    }
   }
 
   // 2. Execute Tasks
@@ -284,6 +339,8 @@ async function main() {
     // Show Start
     if (!isSilent && !isQuiet) {
       UI.printScriptStart(task.name, i + 1, TASKS.length)
+    } else if (isQuiet) {
+      UI.printQuietStepStart(task.name, i + 1, TASKS.length)
     }
 
     // Run Logic
@@ -297,40 +354,48 @@ async function main() {
     const taskDuration = Date.now() - taskStart
 
     // Save History
-    if (!task.skipped) {
-      History.saveExecutionTime(task.id, taskDuration)
+    if (!result.skipped) {
+      History.saveExecutionTime(task.id, taskDuration, modeLabel)
     }
-    const avg = History.getAverageDuration(task.id)
+    const avg = History.getAverageDuration(task.id, modeLabel)
 
     // Store Result
     results.push({
       ...task,
       ...result,
       duration: taskDuration,
+      avg,
     })
 
     // Show End & Output
     if (!isSilent) {
       // Print truncated output if present and not silent
-      if (result.output && !isQuiet) {
-        // If failed, show more lines, otherwise truncate heavily
-        const maxLines = result.success ? 5 : 50
+      if (!isQuiet && result.output && (result.warning || !result.success)) {
+        const output = result.output.trim()
+        const maxLines = result.success ? 8 : 50
         console.log(
-          c.dim +
-            UI.truncateOutput(result.output.trim(), maxLines) +
-            c.reset +
-            '\n'
+          c.dim + UI.truncateOutput(output, maxLines) + c.reset + '\n'
         )
       }
 
       if (!isQuiet) {
         UI.printScriptEnd(task.name, taskDuration, avg, result.success)
+      } else {
+        UI.printQuietStepEnd(
+          task.name,
+          i + 1,
+          TASKS.length,
+          taskDuration,
+          avg,
+          result.success
+        )
       }
     }
   }
 
   // 3. Generate Report & Summary
   const totalDuration = Date.now() - startTime
+  History.saveExecutionTime('quality-gate', totalDuration, modeLabel)
   const failed = results.filter(r => !r.success && !r.skipped)
   const warnings = results.filter(r => r.warning)
   const status = failed.length === 0 ? 'pass' : 'fail'
@@ -341,12 +406,20 @@ async function main() {
       `Tasks: ${results.length}`,
       `Passed: ${results.filter(r => r.success).length}`,
       `Failed: ${failed.length}`,
+      `Skipped: ${results.filter(r => r.skipped).length}`,
     ]
+    const timings = results.map(r => {
+      const duration = formatDuration(r.duration)
+      const avgText = r.avg ? ` | Avg: ${r.avg}` : ''
+      const status = r.skipped ? ' (skipped)' : r.success ? '' : ' (fail)'
+      return `${r.name}: ${duration}${avgText}${status}`
+    })
 
     UI.printSummary({
       title: 'QUALITY GATE',
       status,
       metrics,
+      timings,
       errors: failed.map(f => `${f.name}: ${f.message}`),
       warnings: warnings.map(w => `${w.name}: ${w.message}`),
       duration: (totalDuration / 1000).toFixed(2),
@@ -378,6 +451,7 @@ async function main() {
   // 4. Save Markdown Log
   saveMarkdownReport(results, totalDuration, status)
 
+  if (stopTimer) stopTimer()
   process.exit(status === 'pass' ? 0 : 1)
 }
 

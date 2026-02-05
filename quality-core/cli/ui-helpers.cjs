@@ -42,6 +42,59 @@ const SYMBOLS = {
 
 let spinnerIndex = 0
 let spinnerInterval = null
+const util = require('util')
+let elapsedInterval = null
+let elapsedActive = false
+
+function formatTag(label = 'QC', level = 'info') {
+  const colorMap = {
+    info: c.blue,
+    warn: c.yellow,
+    error: c.red,
+    success: c.green,
+  }
+  // eslint-disable-next-line security/detect-object-injection
+  const color = colorMap[level] || c.blue
+  const safeLabel = String(label).toUpperCase()
+  return `${c.dim}[${color}${safeLabel}${c.dim}]${c.reset}`
+}
+
+function formatMessage(args) {
+  return util.format(...args)
+}
+
+function createLogger({ tag = 'QC', silent = false, quiet = false } = {}) {
+  const clearElapsed = () => {
+    if (!elapsedActive || !process.stdout.isTTY) return
+    clearLine()
+  }
+  return {
+    info: (...args) => {
+      if (silent || quiet) return
+      clearElapsed()
+      console.log(`${formatTag(tag, 'info')} ${formatMessage(args)}`)
+    },
+    warn: (...args) => {
+      if (silent) return
+      clearElapsed()
+      console.warn(`${formatTag(tag, 'warn')} ${formatMessage(args)}`)
+    },
+    error: (...args) => {
+      clearElapsed()
+      console.error(`${formatTag(tag, 'error')} ${formatMessage(args)}`)
+    },
+    success: (...args) => {
+      if (silent || quiet) return
+      clearElapsed()
+      console.log(`${formatTag(tag, 'success')} ${formatMessage(args)}`)
+    },
+    raw: (...args) => {
+      if (silent || quiet) return
+      clearElapsed()
+      console.log(...args)
+    },
+  }
+}
 
 /**
  * Format a title with styling
@@ -50,6 +103,25 @@ function title(text, style = 'blue') {
   // eslint-disable-next-line security/detect-object-injection
   const color = c[style]
   return `${color}${c.bold}═══ ${text} ═══${c.reset}`
+}
+
+/**
+ * Print a standardized header with modes and active flags
+ * @param {Object} options
+ * @param {string} options.title
+ * @param {string[]} [options.modes]
+ * @param {string[]} [options.active]
+ */
+function printHeader({ title: headerTitle, modes = [], active = [] }) {
+  console.log(title(headerTitle, 'cyan'))
+  if (modes.length > 0) {
+    const activeText = active.length > 0 ? active.join(', ') : 'default'
+    console.log(
+      `${c.dim}Modes:${c.reset} ${c.cyan}${modes.join(', ')}${c.reset} ` +
+        `${c.dim}| Active:${c.reset} ${c.yellow}${activeText}${c.reset}`
+    )
+  }
+  console.log(separator(50))
 }
 
 /**
@@ -117,6 +189,67 @@ function stopSpinner(finalMessage = '', success = true) {
   const symbol = success ? SYMBOLS.success : SYMBOLS.error
   const color = success ? c.green : c.red
   process.stdout.write(`\r${color}${symbol}${c.reset} ${finalMessage}\n`)
+}
+
+/**
+ * Start elapsed timer line (TTY only)
+ * @param {Object} options
+ * @param {string|null} options.avgLabel
+ * @param {string} [options.label]
+ */
+function startElapsedTimer({
+  avgLabel = null,
+  label = 'Elapsed',
+  extraText = '',
+} = {}) {
+  if (!process.stdout.isTTY) {
+    return () => {}
+  }
+  elapsedActive = true
+  const start = Date.now()
+  const render = () => {
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1)
+    const avgText = avgLabel ? ` | Avg: ${avgLabel}` : ''
+    const extra = extraText ? ` ${extraText}` : ''
+    clearLine()
+    process.stdout.write(
+      `${c.dim}${SYMBOLS.clock}${label}: ${elapsed}s${avgText}${extra}${c.reset}`
+    )
+  }
+  render()
+  elapsedInterval = setInterval(render, 1000)
+  return () => {
+    if (elapsedInterval) {
+      clearInterval(elapsedInterval)
+      elapsedInterval = null
+    }
+    elapsedActive = false
+    clearLine()
+  }
+}
+
+function shouldLiveTimer() {
+  return process.stdout.isTTY && process.env.QC_LIVE_TIMER !== 'false'
+}
+
+function printTimingHeader({
+  avgLabel = null,
+  modeLabel = null,
+  live = false,
+} = {}) {
+  const avgText = avgLabel ? ` | Avg: ${avgLabel}` : ''
+  const modeText = modeLabel ? ` | Mode: ${modeLabel}` : ''
+  console.log(
+    `${c.dim}${SYMBOLS.clock} Elapsed: 0.0s${avgText}${modeText}${c.reset}`
+  )
+  if (live) {
+    return startElapsedTimer({
+      avgLabel,
+      label: 'Elapsed',
+      extraText: modeText,
+    })
+  }
+  return null
 }
 
 /**
@@ -202,11 +335,13 @@ function clearLine() {
 function printSummary({
   title,
   metrics = [],
+  timings = [],
   status = null,
   errors = [],
   warnings = [],
   duration = 0,
   reportDir = null,
+  maxItems = 5,
 }) {
   console.log('\n' + separator(50, '='))
   console.log(`📊 RESUMO DA EXECUÇÃO - ${title}`)
@@ -222,14 +357,27 @@ function printSummary({
     metrics.forEach(metric => console.log(metric))
   }
 
+  if (timings.length > 0) {
+    console.log(`\n${SYMBOLS.clock} Tempos por etapa:`)
+    timings.forEach(timing => console.log(`   - ${timing}`))
+  }
+
   if (warnings.length > 0) {
     console.log(`\n${SYMBOLS.warning} Avisos (${warnings.length}):`)
-    warnings.forEach(w => console.log(`   - ${w}`))
+    const shown = warnings.slice(0, maxItems)
+    shown.forEach(w => console.log(`   - ${w}`))
+    if (warnings.length > maxItems) {
+      console.log(`   - ... e mais ${warnings.length - maxItems}`)
+    }
   }
 
   if (errors.length > 0) {
     console.log(`\n${SYMBOLS.error} Erros (${errors.length}):`)
-    errors.forEach(e => console.log(`   - ${e}`))
+    const shown = errors.slice(0, maxItems)
+    shown.forEach(e => console.log(`   - ${e}`))
+    if (errors.length > maxItems) {
+      console.log(`   - ... e mais ${errors.length - maxItems}`)
+    }
   }
 
   console.log(`\n${SYMBOLS.clock} Tempo de execução: ${duration}s`)
@@ -247,6 +395,8 @@ module.exports = {
   error,
   warning,
   info,
+  formatTag,
+  createLogger,
   progressBar,
   startSpinner,
   stopSpinner,
@@ -256,10 +406,16 @@ module.exports = {
   table,
   clearLine,
   printSummary,
+  printHeader,
+  startElapsedTimer,
+  printTimingHeader,
+  shouldLiveTimer,
   truncateOutput,
   printPlan,
   printScriptStart,
   printScriptEnd,
+  printQuietStepStart,
+  printQuietStepEnd,
 }
 
 /**
@@ -289,9 +445,24 @@ function truncateOutput(output, maxLines = 15) {
  */
 function printPlan(tasks) {
   console.log('\n' + title('Execution Plan', 'magenta'))
+  let totalSeconds = 0
+  let totalCount = 0
   tasks.forEach((task, index) => {
-    console.log(`${c.dim} ${index + 1}. ${task.name}${c.reset}`)
+    const avg = task.avg ? ` ${c.dim}(avg ${task.avg})${c.reset}` : ''
+    console.log(`${c.dim} ${index + 1}. ${task.name}${c.reset}${avg}`)
+    if (task.avg) {
+      const match = String(task.avg).match(/([\d.]+)/)
+      if (match) {
+        totalSeconds += Number.parseFloat(match[1])
+        totalCount += 1
+      }
+    }
   })
+  if (totalCount > 0) {
+    console.log(
+      `${c.dim} ETA (avg total): ${totalSeconds.toFixed(2)}s${c.reset}`
+    )
+  }
   console.log(separator(50) + '\n')
 }
 
@@ -303,7 +474,10 @@ function printPlan(tasks) {
  */
 function printScriptStart(name, index, total) {
   const progress = `[${index}/${total}]`
-  console.log(`${c.cyan}${c.bold}▶ ${progress} [START] ${name}${c.reset}`)
+  const bar = progressBar(index - 1, total, 14)
+  console.log(
+    `${c.cyan}${c.bold}▶ ${progress} ${bar} [START] ${name}${c.reset}`
+  )
 }
 
 /**
@@ -324,4 +498,45 @@ function printScriptEnd(name, durationMs, avgDuration, success) {
   }
 
   console.log(`${color}${icon} [END] ${name}${c.reset} - ${stats}\n`)
+}
+
+/**
+ * Print minimal progress line for quiet mode
+ * @param {string} name
+ * @param {number} index
+ * @param {number} total
+ */
+function printQuietStepStart(name, index, total) {
+  const progress = `[${index}/${total}]`
+  console.log(`${c.dim}▶ ${progress} running ${name}...${c.reset}`)
+}
+
+/**
+ * Print minimal completion line for quiet mode
+ * @param {string} name
+ * @param {number} index
+ * @param {number} total
+ * @param {number} durationMs
+ * @param {string|null} avgDuration
+ * @param {boolean} success
+ */
+function printQuietStepEnd(
+  name,
+  index,
+  total,
+  durationMs,
+  avgDuration,
+  success
+) {
+  const duration = (durationMs / 1000).toFixed(2) + 's'
+  const progress = `[${index}/${total}]`
+  const icon = success ? SYMBOLS.success : SYMBOLS.error
+  const color = success ? c.green : c.red
+  let stats = `Elapsed: ${duration}`
+  if (avgDuration) {
+    stats += ` | Avg: ${avgDuration}`
+  }
+  console.log(
+    `${color}${icon}${c.reset} ${progress} ${name} - ${c.dim}${stats}${c.reset}`
+  )
 }
