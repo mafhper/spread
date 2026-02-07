@@ -160,7 +160,10 @@ function analyzeDependencies() {
       developmentList: devDeps,
     }
   } catch (err) {
-    console.error('[ANALYSIS - ERROR] Failed to analyze dependencies:', err.message)
+    console.error(
+      '[ANALYSIS - ERROR] Failed to analyze dependencies:',
+      err.message
+    )
     return null
   }
 }
@@ -247,7 +250,12 @@ async function runAnalysis() {
   const avg = History.getAverageDuration(historyKey, modeLabel)
 
   if (!isSilent && !isQuiet) {
-    UI.printScriptEnd('analysis', durationMs, avg, executionLog.errors.length === 0)
+    UI.printScriptEnd(
+      'analysis',
+      durationMs,
+      avg,
+      executionLog.errors.length === 0
+    )
   } else if (isQuiet) {
     UI.printQuietStepEnd(
       'analysis',
@@ -263,7 +271,9 @@ async function runAnalysis() {
   if (isSilent) {
     const metrics = []
     if (results.bundle && !results.bundle.error) {
-      metrics.push(`Bundle: ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB`)
+      metrics.push(
+        `Bundle: ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB`
+      )
     } else if (results.bundle && results.bundle.error) {
       metrics.push(`Bundle analysis: ${results.bundle.error}`)
     }

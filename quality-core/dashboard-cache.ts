@@ -141,18 +141,34 @@ interface CoverageEntry {
   statementMap?: CoverageStatementMap
 }
 
+const resolveSafePath = (baseDir: string, fileName: string) => {
+  const resolvedBase = path.resolve(baseDir)
+  const resolvedPath = path.resolve(baseDir, fileName)
+  if (!resolvedPath.startsWith(`${resolvedBase}${path.sep}`)) return null
+  return resolvedPath
+}
+
 const computeLineCoverage = (
   statementMap: CoverageStatementMap,
   statementCounts: CoverageCounts
 ) => {
-  const lineHits: Record<number, number> = {}
+  const countsMap = new Map<string, number>(
+    Object.entries(statementCounts || {}).map(([id, value]) => [
+      id,
+      safeNumber(value),
+    ])
+  )
+  const lineHits = new Map<number, number>()
   Object.entries(statementMap || {}).forEach(([id, loc]) => {
     const line = loc?.start?.line
     if (!line) return
-    const count = safeNumber(statementCounts?.[id])
-    lineHits[line] = Math.max(lineHits[line] || 0, count)
+    const count = countsMap.get(id) ?? 0
+    const current = lineHits.get(line) ?? 0
+    if (count > current) {
+      lineHits.set(line, count)
+    }
   })
-  const entries = Object.entries(lineHits)
+  const entries = Array.from(lineHits.entries())
   const total = entries.length
   const covered = entries.filter(([, count]) => count > 0).length
   const uncovered = entries
@@ -232,9 +248,10 @@ export async function buildDashboardCache(): Promise<DashboardCachePayload> {
 
     const entries = await Promise.all(
       files.map(async file => {
-        const raw = JSON.parse(
-          await fs.readFile(path.join(securityDir, file), 'utf-8')
-        )
+        const filePath = resolveSafePath(securityDir, file)
+        if (!filePath) return null
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        const raw = JSON.parse(await fs.readFile(filePath, 'utf-8'))
         const match = file.match(/security-(\d+)\.json/)
         const fallbackTs = match ? Number(match[1]) : 0
         const timestamp =
@@ -253,7 +270,9 @@ export async function buildDashboardCache(): Promise<DashboardCachePayload> {
       })
     )
     securityHistory = entries
-      .filter(entry => entry.timestamp)
+      .filter((entry): entry is DashboardCacheSecurityHistoryItem =>
+        Boolean(entry?.timestamp)
+      )
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -285,13 +304,11 @@ export async function buildDashboardCache(): Promise<DashboardCachePayload> {
           lastSeconds: round1(lastMs / 1000),
         }
       })
-      scriptHistory = Object.entries(history).reduce<Record<string, number[]>>(
-        (acc, [id, list]) => {
+      scriptHistory = Object.fromEntries(
+        Object.entries(history).map(([id, list]) => {
           const entries = Array.isArray(list) ? list : []
-          acc[id] = entries.map(value => round1(Number(value || 0) / 1000))
-          return acc
-        },
-        {}
+          return [id, entries.map(value => round1(Number(value || 0) / 1000))]
+        })
       )
     }
   } catch {
@@ -315,7 +332,10 @@ export async function buildDashboardCache(): Promise<DashboardCachePayload> {
       const statementCounts = Object.values(entry?.s || {})
       const functionCounts = Object.values(entry?.f || {})
       const branchCounts = Object.values(entry?.b || {}).flat()
-      const lines = computeLineCoverage(entry?.statementMap || {}, entry?.s || {})
+      const lines = computeLineCoverage(
+        entry?.statementMap || {},
+        entry?.s || {}
+      )
       return {
         file: path.relative(process.cwd(), file).replace(/\\/g, '/'),
         lines,

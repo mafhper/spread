@@ -41,7 +41,9 @@ const retryTransientOnlyRaw =
   process.env.LIGHTHOUSE_RETRY_TRANSIENT_ONLY ||
   'true'
 const retryBackoffMs = Number.parseInt(
-  process.env.LH_RETRY_BACKOFF_MS || process.env.LIGHTHOUSE_RETRY_BACKOFF_MS || '1200',
+  process.env.LH_RETRY_BACKOFF_MS ||
+    process.env.LIGHTHOUSE_RETRY_BACKOFF_MS ||
+    '1200',
   10
 )
 
@@ -238,6 +240,17 @@ function getHttpStatus(url) {
   })
 }
 
+function spawnCommand(command, args, options = {}) {
+  const useCmd =
+    process.platform === 'win32' && command.toLowerCase().endsWith('.cmd')
+  const finalCommand = useCmd ? process.env.ComSpec || 'cmd.exe' : command
+  const finalArgs = useCmd ? ['/c', command, ...args] : args
+  return spawn(finalCommand, finalArgs, {
+    shell: false,
+    ...options,
+  })
+}
+
 // Aguarda URL ficar disponivel
 async function waitForServer(resolveUrl, serverProcess, serverLogs) {
   const start = Date.now()
@@ -280,13 +293,12 @@ function startServer(port, logs) {
   log(`Iniciando servidor de preview na porta ${port}...`, 'wait')
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
   // Usar preview ja que dist deve existir apos quality:core
-  const child = spawn(
+  const child = spawnCommand(
     npmCmd,
     ['run', 'preview', '--', '--port', String(port), '--strictPort'],
     {
       cwd: path.resolve(__dirname, '../../'),
       stdio: ['ignore', 'pipe', 'pipe'],
-      shell: true,
       detached: false,
     }
   )
@@ -337,7 +349,10 @@ function classifyStderrFailure(stderr, code) {
   } else if (normalized.includes('ERR_CONNECTION_REFUSED')) {
     reasonCode = 'server_unreachable'
     reason = 'server_unreachable'
-  } else if (normalized.includes('Timeout') || normalized.includes('timed out')) {
+  } else if (
+    normalized.includes('Timeout') ||
+    normalized.includes('timed out')
+  ) {
     reasonCode = 'page_timeout'
     reason = 'page_timeout'
   } else if (normalized.includes('ENOENT')) {
@@ -360,9 +375,12 @@ function classifyStderrFailure(stderr, code) {
 function isTransientRuntimeReason(reason) {
   const match = String(reason || '').match(/^runtimeError=([A-Z_]+)/)
   if (!match?.[1]) return false
-  return ['NO_FCP', 'PROTOCOL_TIMEOUT', 'TARGET_CRASHED', 'NO_NAVSTART'].includes(
-    match[1]
-  )
+  return [
+    'NO_FCP',
+    'PROTOCOL_TIMEOUT',
+    'TARGET_CRASHED',
+    'NO_NAVSTART',
+  ].includes(match[1])
 }
 
 function shouldRetryFailure(failure) {
@@ -384,7 +402,9 @@ async function runLighthouseOnce(url, formFactor) {
     const outputPath = path.join(CONFIG.outputDir, filename)
 
     if (!isSilent)
-      console.log(`\n${c.cyan}Executando Lighthouse (${formFactor})...${c.reset}`)
+      console.log(
+        `\n${c.cyan}Executando Lighthouse (${formFactor})...${c.reset}`
+      )
 
     const profileDir = path.join(
       os.tmpdir(),
@@ -451,8 +471,7 @@ async function runLighthouseOnce(url, formFactor) {
     const cmd = isWindows ? 'npx.cmd' : 'npx'
 
     let stderr = ''
-    const child = spawn(cmd, ['lighthouse', ...args], {
-      shell: true,
+    const child = spawnCommand(cmd, ['lighthouse', ...args], {
       stdio: ['inherit', 'pipe', 'pipe'],
     })
 
@@ -647,8 +666,8 @@ async function main() {
       serverReady.reason === 'exit'
         ? `Servidor encerrou (code ${serverReady.code ?? 'n/a'})`
         : serverReady.reason === 'spawn'
-        ? `Falha ao iniciar servidor: ${serverReady.error?.message || serverReady.error}`
-        : 'Timeout: Servidor nao respondeu.'
+          ? `Falha ao iniciar servidor: ${serverReady.error?.message || serverReady.error}`
+          : 'Timeout: Servidor nao respondeu.'
     log(reason, 'error')
     if (!isSilent) {
       const out = serverLogs.stdout.toString()

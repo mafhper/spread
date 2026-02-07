@@ -28,6 +28,10 @@ function getArgValue(args, key) {
   return null
 }
 
+function hasArg(args, key) {
+  return args.includes(key) || args.some(arg => arg.startsWith(`${key}=`))
+}
+
 function runCommand(command, args, options = {}) {
   return new Promise(resolve => {
     const useCmd =
@@ -68,16 +72,18 @@ async function runWithRunner(runner) {
 
   const base = normalizeBasePath(basePath)
   const port =
-    getArgValue(forwardedArgs, '--port') ||
-    process.env.PREVIEW_PORT ||
-    '4173'
+    getArgValue(forwardedArgs, '--port') || process.env.PREVIEW_PORT || '4173'
   const url = `http://localhost:${port}${base}`
   console.log(`[preview] Open ${url}`)
 
-  const previewArgs =
+  const previewArgsBase =
     runner === 'npm'
       ? ['run', 'preview:serve', '--', ...forwardedArgs]
       : ['run', 'preview:serve', ...forwardedArgs]
+  const previewArgs = [...previewArgsBase]
+  if (!hasArg(forwardedArgs, '--port')) {
+    previewArgs.push('--port', String(port))
+  }
   const preview = await runCommand(command, previewArgs, { cwd: root })
   return preview
 }
