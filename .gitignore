@@ -39,7 +39,10 @@ REAL_REPORT.json
 # Internal Development and Documentation
 _dev/
 conductor/
-docs/*
-.gemini
-.gemini-clipboard
-.kilocode
+.gemini/
+.gemini-clipboard/
+GEMINI.md
+.codex/
+.agents/
+AGENTS.md
+

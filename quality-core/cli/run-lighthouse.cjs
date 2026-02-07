@@ -5,28 +5,56 @@
  * 2. Executa Lighthouse para Mobile e Desktop
  * 3. Salva reports JSON
  * 4. Encerra servidor se foi iniciado pelo script
-/**
- * Performance Test - Lighthouse CLI Runner (Autonomo)
- *
- * 1. Inicia servidor de desenvolvimento se necessario
- * 2. Executa Lighthouse para Mobile e Desktop
- * 3. Salva reports JSON
- * 4. Encerra servidor se foi iniciado pelo script
  */
 
 const { spawn } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const http = require('http')
+const os = require('os')
 const UI = require('./ui-helpers.cjs')
+const { refreshDashboardCache } = require('./dashboard-cache.cjs')
+
+const args = process.argv.slice(2)
+const isQuiet = args.includes('--quiet') || args.includes('-q')
+const isSilent = args.includes('--silent') || args.includes('-s')
+
+const serverHost =
+  process.env.LH_HOST || process.env.LIGHTHOUSE_HOST || '127.0.0.1'
+const basePathEnv =
+  process.env.LH_BASE_PATH || process.env.LIGHTHOUSE_BASE_PATH || ''
+const baseUrlEnv = process.env.LH_URL || process.env.LIGHTHOUSE_URL || ''
+const serverWaitOverride = Number.parseInt(
+  process.env.LH_SERVER_WAIT_MS || process.env.LIGHTHOUSE_SERVER_WAIT_MS || '',
+  10
+)
+const headlessMode =
+  process.env.LH_HEADLESS || process.env.LIGHTHOUSE_HEADLESS || 'new'
+const extraChromeFlags =
+  process.env.LH_CHROME_FLAGS || process.env.LIGHTHOUSE_CHROME_FLAGS || ''
+const retryCount = Number.parseInt(
+  process.env.LH_RETRY_COUNT || process.env.LIGHTHOUSE_RETRY_COUNT || '1',
+  10
+)
+const retryTransientOnlyRaw =
+  process.env.LH_RETRY_TRANSIENT_ONLY ||
+  process.env.LIGHTHOUSE_RETRY_TRANSIENT_ONLY ||
+  'true'
+const retryBackoffMs = Number.parseInt(
+  process.env.LH_RETRY_BACKOFF_MS || process.env.LIGHTHOUSE_RETRY_BACKOFF_MS || '1200',
+  10
+)
 
 // Configuracao
 const CONFIG = {
-  port: 4173,
-  getUrl: () => `http://localhost:${CONFIG.port}/spread`,
+  port: Number.parseInt(process.env.LH_PORT || '', 10) || 4173,
+  host: serverHost,
   outputDir: path.resolve(__dirname, '../../performance-reports/lighthouse'),
   categories: ['performance', 'accessibility', 'best-practices', 'seo'],
-  maxWaitTime: 60000, // 60s timeout para iniciar server
+  maxWaitTime:
+    Number.isFinite(serverWaitOverride) && serverWaitOverride > 0
+      ? serverWaitOverride
+      : 60000, // 60s timeout para iniciar server
 }
 
 // Cores
@@ -40,11 +68,6 @@ const c = {
   dim: '\x1b[2m',
 }
 
-// Flags
-const _args = process.argv.slice(2)
-const isQuiet = _args.includes('--quiet') || _args.includes('-q')
-const isSilent = _args.includes('--silent') || _args.includes('-s')
-
 // Rastreamento de erros/warnings em silent mode
 const executionLog = {
   startTime: Date.now(),
@@ -52,51 +75,185 @@ const executionLog = {
   warnings: [],
 }
 
+function parseBooleanEnv(value, fallback = true) {
+  if (value === undefined || value === null || value === '') return fallback
+  const normalized = String(value).trim().toLowerCase()
+  if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) return true
+  if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) return false
+  return fallback
+}
+
+const retryTransientOnly = parseBooleanEnv(retryTransientOnlyRaw, true)
+const TRANSIENT_REASON_CODES = new Set([
+  'runtime_error',
+  'chrome_connect',
+  'server_unreachable',
+  'protocol_timeout',
+  'page_timeout',
+  'unknown_timeout',
+])
+
 function log(msg, type = 'info') {
   if (isSilent) {
     // Em silent mode, registra apenas erros e warnings
     if (type === 'error') {
       executionLog.errors.push(msg)
-      console.log(`❌ ${msg}`)
+      console.log(`[error] ${msg}`)
     } else if (type === 'warn') {
       executionLog.warnings.push(msg)
-      console.log(`⚠️  ${msg}`)
+      console.log(`[warn] ${msg}`)
     }
     return
   }
   if (isQuiet && type === 'info') return
   const icons = {
-    info: 'ℹ️',
-    success: '✅',
-    error: '❌',
-    warn: '⚠️',
-    wait: '⏳',
+    info: '[info]',
+    success: '[ok]',
+    error: '[error]',
+    warn: '[warn]',
+    wait: '[wait]',
   }
   // eslint-disable-next-line security/detect-object-injection
   console.log(`${icons[type]} ${msg}`)
 }
 
+function normalizeBasePath(input) {
+  if (!input) return '/spread/'
+  let base = String(input).trim()
+  if (!base.startsWith('/')) base = `/${base}`
+  if (!base.endsWith('/')) base += '/'
+  return base
+}
+
+function resolveBasePath(projectRoot) {
+  if (basePathEnv) return normalizeBasePath(basePathEnv)
+  const indexPath = path.join(projectRoot, 'dist', 'index.html')
+  if (!fs.existsSync(indexPath)) return '/spread/'
+
+  try {
+    const html = fs.readFileSync(indexPath, 'utf8')
+    const assetMatch = html.match(
+      /(?:src|href)=["'](\/[^"']+?\/assets\/[^"']+)["']/
+    )
+    if (assetMatch?.[1]) {
+      const assetPath = assetMatch[1]
+      const idx = assetPath.indexOf('/assets/')
+      if (idx >= 0) return assetPath.slice(0, idx + 1)
+    }
+  } catch {
+    // Ignore parsing errors
+  }
+
+  return '/spread/'
+}
+
+function joinUrl(baseUrl, basePath) {
+  if (!basePath || basePath === '/') return baseUrl
+  return baseUrl.replace(/\/$/, '') + '/' + basePath.replace(/^\/+/, '')
+}
+
 // Verifica se porta esta em uso
-function isPortInUse(port) {
+function isPortInUseOnHost(port, host) {
   return new Promise(resolve => {
     const server = http.createServer()
+    let settled = false
+    const finalize = result => {
+      if (settled) return
+      settled = true
+      resolve(result)
+    }
     server.once('error', err => {
-      if (err.code === 'EADDRINUSE') resolve(true)
-      else resolve(false)
+      if (err.code === 'EADDRINUSE') finalize(true)
+      else finalize(false)
     })
     server.once('listening', () => {
-      server.close()
-      resolve(false)
+      server.close(() => finalize(false))
     })
-    server.listen(port)
+    try {
+      server.listen({ port, host })
+    } catch {
+      finalize(false)
+    }
+  })
+}
+
+async function isPortInUse(port) {
+  const inUseV4 = await isPortInUseOnHost(port, '127.0.0.1')
+  if (inUseV4) return true
+  const inUseV6 = await isPortInUseOnHost(port, '::1')
+  return inUseV6
+}
+
+async function findAvailablePort(startPort, attempts = 10) {
+  for (let i = 0; i < attempts; i += 1) {
+    const port = startPort + i
+    const inUse = await isPortInUse(port)
+    if (!inUse) return port
+  }
+  return startPort
+}
+
+function createLogBuffer(maxLines = 20) {
+  const lines = []
+  return {
+    push(data) {
+      const chunk = data.toString()
+      chunk.split('\n').forEach(line => {
+        if (!line.trim()) return
+        lines.push(line.trim())
+        if (lines.length > maxLines) lines.shift()
+      })
+    },
+    toString() {
+      return lines.join('\n')
+    },
+  }
+}
+
+function stripAnsi(input) {
+  return String(input || '').replace(/\u001b\[[0-9;]*m/g, '')
+}
+
+function extractPreviewUrl(logBuffer) {
+  if (!logBuffer) return null
+  const content = stripAnsi(logBuffer.toString())
+  const matches = content.match(
+    /http:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):\d+\/[^\s]*/g
+  )
+  if (!matches || matches.length === 0) return null
+  return matches[matches.length - 1]
+}
+
+function getHttpStatus(url) {
+  return new Promise(resolve => {
+    try {
+      const req = http.get(url, res => {
+        res.resume()
+        resolve(res.statusCode || null)
+      })
+      req.on('error', () => resolve(null))
+    } catch {
+      resolve(null)
+    }
   })
 }
 
 // Aguarda URL ficar disponivel
-async function waitForServer(url) {
+async function waitForServer(resolveUrl, serverProcess, serverLogs) {
   const start = Date.now()
   while (Date.now() - start < CONFIG.maxWaitTime) {
+    let url = resolveUrl()
+    if (serverProcess && serverProcess.exitCode !== null) {
+      return { ready: false, reason: 'exit', code: serverProcess.exitCode }
+    }
+    if (serverProcess && serverProcess._spawnError) {
+      return { ready: false, reason: 'spawn', error: serverProcess._spawnError }
+    }
     try {
+      const dynamicUrl = extractPreviewUrl(serverLogs?.stdout)
+      if (dynamicUrl && dynamicUrl !== url) {
+        url = dynamicUrl
+      }
       await new Promise((resolve, reject) => {
         http
           .get(url, res => {
@@ -109,35 +266,115 @@ async function waitForServer(url) {
           })
           .on('error', reject)
       })
-      return true
+      return { ready: true, url }
     } catch {
       await new Promise(r => setTimeout(r, 1000))
       if (!isQuiet && !isSilent) process.stdout.write('.')
     }
   }
-  return false
+  return { ready: false, reason: 'timeout' }
 }
 
 // Inicia servidor
-function startServer() {
-  log(`Iniciando servidor de preview na porta ${CONFIG.port}...`, 'wait')
+function startServer(port, logs) {
+  log(`Iniciando servidor de preview na porta ${port}...`, 'wait')
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
   // Usar preview ja que dist deve existir apos quality:core
   const child = spawn(
     npmCmd,
-    ['run', 'preview', '--', '--port', String(CONFIG.port), '--strictPort'],
+    ['run', 'preview', '--', '--port', String(port), '--strictPort'],
     {
       cwd: path.resolve(__dirname, '../../'),
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       shell: true,
       detached: false,
     }
   )
+  child.on('error', err => {
+    child._spawnError = err
+    logs?.stderr?.push?.(String(err.message || err))
+  })
+  if (logs) {
+    child.stdout?.on('data', data => logs.stdout.push(data))
+    child.stderr?.on('data', data => logs.stderr.push(data))
+  }
   return child
 }
 
-// Executa Lighthouse
-async function runLighthouse(url, formFactor, attempt = 1) {
+function getLastMeaningfulLine(stderr) {
+  const lines = String(stderr || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+  return lines.length > 0 ? lines[lines.length - 1].slice(0, 200) : null
+}
+
+function classifyStderrFailure(stderr, code) {
+  const normalized = String(stderr || '')
+  const lastLine = getLastMeaningfulLine(normalized)
+  let reasonCode = 'lighthouse_cli_error'
+  let reason = `exit_code=${code ?? 'unknown'}`
+
+  const runtimeMatch = normalized.match(/runtimeError(?:=|:)\s*([A-Z_]+)/i)
+  if (runtimeMatch?.[1]) {
+    reasonCode = 'runtime_error'
+    reason = `runtimeError=${runtimeMatch[1].toUpperCase()}`
+  } else if (normalized.includes('NO_FCP')) {
+    reasonCode = 'runtime_error'
+    reason = 'runtimeError=NO_FCP'
+  } else if (
+    normalized.includes('DevTools protocol') ||
+    normalized.includes('PROTOCOL_TIMEOUT')
+  ) {
+    reasonCode = 'protocol_timeout'
+    reason = 'protocol_timeout'
+  } else if (
+    normalized.includes('Unable to connect to Chrome') ||
+    normalized.includes('DevToolsActivePort')
+  ) {
+    reasonCode = 'chrome_connect'
+    reason = 'chrome_connect'
+  } else if (normalized.includes('ERR_CONNECTION_REFUSED')) {
+    reasonCode = 'server_unreachable'
+    reason = 'server_unreachable'
+  } else if (normalized.includes('Timeout') || normalized.includes('timed out')) {
+    reasonCode = 'page_timeout'
+    reason = 'page_timeout'
+  } else if (normalized.includes('ENOENT')) {
+    reasonCode = 'lighthouse_missing'
+    reason = 'lighthouse_cli_missing'
+  }
+
+  let message = `[${reasonCode}] ${reason}`
+  if (lastLine && !message.includes(lastLine)) {
+    message += ` | ${lastLine}`
+  }
+
+  return {
+    reasonCode,
+    reason,
+    message,
+  }
+}
+
+function isTransientRuntimeReason(reason) {
+  const match = String(reason || '').match(/^runtimeError=([A-Z_]+)/)
+  if (!match?.[1]) return false
+  return ['NO_FCP', 'PROTOCOL_TIMEOUT', 'TARGET_CRASHED', 'NO_NAVSTART'].includes(
+    match[1]
+  )
+}
+
+function shouldRetryFailure(failure) {
+  if (!failure || failure.success) return false
+  if (!retryTransientOnly) return true
+  if (TRANSIENT_REASON_CODES.has(failure.reasonCode)) return true
+  if (isTransientRuntimeReason(failure.reason)) return true
+  return false
+}
+
+// Executa Lighthouse (uma tentativa)
+async function runLighthouseOnce(url, formFactor) {
   return new Promise(resolve => {
     const timestamp = new Date()
       .toISOString()
@@ -147,27 +384,23 @@ async function runLighthouse(url, formFactor, attempt = 1) {
     const outputPath = path.join(CONFIG.outputDir, filename)
 
     if (!isSilent)
-      console.log(
-        `\n${c.cyan}🔦 Executando Lighthouse (${formFactor})...${c.reset}`
-      )
+      console.log(`\n${c.cyan}Executando Lighthouse (${formFactor})...${c.reset}`)
 
-    const profileDir = path.join(process.cwd(), '.lighthouse-profile')
-
-    // Limpa diretório de profile anterior para evitar problemas
-    if (fs.existsSync(profileDir)) {
-      try {
-        fs.rmSync(profileDir, { recursive: true, force: true })
-      } catch {
-        // Silencioso - se falhar, continua
-      }
-    }
+    const profileDir = path.join(
+      os.tmpdir(),
+      `lighthouse-profile-${process.pid}-${formFactor}-${Date.now()}`
+    )
 
     const isWindows = process.platform === 'win32'
+    const headlessFlag =
+      headlessMode === 'legacy' || headlessMode === 'old'
+        ? '--headless'
+        : '--headless=new'
 
     // Flags mais conservadoras para evitar problemas no headless mobile
-    // No Windows, usamos o modo headless antigo que é mais leve para emulação mobile
+    // No Windows, usamos o modo headless antigo que é mais leve para emulacao mobile
     const chromeFlags = [
-      isWindows ? '--headless' : '--headless=new',
+      isWindows ? '--headless' : headlessFlag,
       '--no-sandbox',
       '--disable-gpu',
       '--disable-dev-shm-usage',
@@ -179,6 +412,9 @@ async function runLighthouse(url, formFactor, attempt = 1) {
       '--disable-features=IsolateOrigins,site-per-process,AudioServiceOutOfProcess',
       `--user-data-dir=${profileDir}`,
     ]
+    if (extraChromeFlags) {
+      chromeFlags.push(extraChromeFlags)
+    }
 
     const args = [
       url,
@@ -190,6 +426,12 @@ async function runLighthouse(url, formFactor, attempt = 1) {
       '--quiet',
       '--legacy-navigation',
     ]
+
+    const maxWait =
+      process.env.LH_MAX_WAIT_MS || process.env.LIGHTHOUSE_MAX_WAIT_MS
+    if (maxWait) {
+      args.push(`--max-wait-for-load=${maxWait}`)
+    }
 
     if (formFactor === 'mobile') {
       args.push('--preset=perf')
@@ -214,7 +456,7 @@ async function runLighthouse(url, formFactor, attempt = 1) {
       stdio: ['inherit', 'pipe', 'pipe'],
     })
 
-    const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    const frames = ['|', '/', '-', '\\']
     let frameIdx = 0
     let spinner = null
     if (!isQuiet && !isSilent) {
@@ -237,65 +479,39 @@ async function runLighthouse(url, formFactor, attempt = 1) {
       const success = code === 0 || fs.existsSync(outputPath)
 
       if (!success) {
-        if (!isSilent)
-          console.error(
-            `${c.red}❌ Lighthouse falhou (code ${code}):${c.reset}`
-          )
-        if (!isSilent) console.error(stderr)
-        let errorMsg = 'Processo falhou'
-        if (stderr.includes('Chrome')) errorMsg = 'Erro no Chrome/Launcher'
-        else if (stderr.includes('REFUSED')) errorMsg = 'Servidor offline'
-        return resolve({ success: false, error: errorMsg })
+        const failure = classifyStderrFailure(stderr, code)
+        return resolve({
+          success: false,
+          error: failure.message,
+          reasonCode: failure.reasonCode,
+          reason: failure.reason,
+        })
       }
 
       if (code !== 0 && fs.existsSync(outputPath)) {
         if (!isSilent)
           console.log(
-            `${c.yellow}⚠️  Aviso: Erro de limpeza (Windows), mas report gerado.${c.reset}`
+            `${c.yellow}Aviso: Erro de limpeza (Windows), mas report gerado.${c.reset}`
           )
       }
 
       try {
         const report = JSON.parse(fs.readFileSync(outputPath, 'utf8'))
 
-        // Verifica se o Lighthouse encontrou erro ao carregar a página
+        // Verifica se o Lighthouse encontrou erro ao carregar a pagina
         if (report.runtimeError && report.runtimeError.code) {
           let errorMsg = report.runtimeError.message || report.runtimeError.code
-          if (
-            report.runtimeError.code === 'CHROME_INTERSTITIAL_ERROR' ||
-            errorMsg.includes('DevTools protocol') ||
-            errorMsg.includes('Timeout')
-          ) {
-            if (report.runtimeError.code === 'CHROME_INTERSTITIAL_ERROR') {
-              errorMsg = 'Chrome foi bloqueado/redirecionado'
-            }
-            // Tenta um retry para mobile
-            if (formFactor === 'mobile' && attempt < 2) {
-              // Reverted to 2 attempts
-              if (!isSilent) {
-                console.log(
-                  `${c.yellow}⚠️  Tentando novamente (tentativa ${attempt + 1}/2) - Erro: ${errorMsg}...${c.reset}`
-                )
-              }
-              // Aguarda um pouco e tenta novamente
-              setTimeout(async () => {
-                const retry = await runLighthouse(url, formFactor, attempt + 1)
-                resolve(retry)
-              }, 2000) // Reverted wait time
-              return
-            }
+          if (report.runtimeError.code === 'CHROME_INTERSTITIAL_ERROR') {
+            errorMsg = 'Chrome foi bloqueado/redirecionado'
           } else if (report.runtimeError.code === 'NAVIGATION_TIMEOUT') {
-            errorMsg = 'Timeout ao carregar página'
+            errorMsg = 'Timeout ao carregar pagina'
           }
-          if (!isSilent) {
-            console.error(`${c.red}❌ Erro Lighthouse: ${errorMsg}${c.reset}`)
-            if (report.runWarnings) {
-              report.runWarnings.forEach(warn => {
-                console.error(`   ${c.yellow}⚠️  ${warn}${c.reset}`)
-              })
-            }
-          }
-          return resolve({ success: false, error: errorMsg })
+          return resolve({
+            success: false,
+            error: `runtimeError=${errorMsg}`,
+            reasonCode: 'runtime_error',
+            reason: `runtimeError=${report.runtimeError.code}`,
+          })
         }
 
         const scores = CONFIG.categories.reduce((acc, cat) => {
@@ -303,49 +519,160 @@ async function runLighthouse(url, formFactor, attempt = 1) {
           acc[cat] = Math.round((report.categories[cat]?.score || 0) * 100)
           return acc
         }, {})
-        resolve({ success: true, scores, path: outputPath })
+        resolve({
+          success: true,
+          scores,
+          path: outputPath,
+          reasonCode: null,
+          reason: null,
+        })
       } catch (err) {
-        resolve({ success: false, error: 'Erro no JSON: ' + err.message })
+        resolve({
+          success: false,
+          error: 'Erro no JSON: ' + err.message,
+          reasonCode: 'invalid_json',
+          reason: 'invalid_json',
+        })
       }
     })
 
     child.on('error', err => {
       if (spinner) clearInterval(spinner)
-      resolve({ success: false, error: err.message })
+      resolve({
+        success: false,
+        error: err.message,
+        reasonCode: 'spawn_error',
+        reason: 'spawn_error',
+      })
     })
   })
 }
 
+// Executa Lighthouse com retry controlado
+async function runLighthouse(url, formFactor) {
+  const safeRetryCount =
+    Number.isFinite(retryCount) && retryCount >= 0 ? retryCount : 1
+  const maxAttempts = 1 + safeRetryCount
+  let lastFailure = null
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const outcome = await runLighthouseOnce(url, formFactor)
+    if (outcome.success) {
+      return {
+        ...outcome,
+        attempt,
+        attempts: maxAttempts,
+      }
+    }
+
+    lastFailure = {
+      ...outcome,
+      attempt,
+      attempts: maxAttempts,
+    }
+
+    if (attempt >= maxAttempts || !shouldRetryFailure(outcome)) {
+      break
+    }
+
+    if (!isSilent) {
+      const mode = retryTransientOnly ? 'transient-only' : 'all-failures'
+      log(
+        `Retry ${attempt}/${safeRetryCount} para ${formFactor} - ${outcome.error} | mode=${mode}`,
+        'warn'
+      )
+    }
+    const safeBackoff =
+      Number.isFinite(retryBackoffMs) && retryBackoffMs > 0
+        ? retryBackoffMs
+        : 1200
+    await new Promise(r => setTimeout(r, safeBackoff * attempt))
+  }
+
+  return (
+    lastFailure || {
+      success: false,
+      error: '[unknown_failure] sem detalhes',
+      reasonCode: 'unknown_failure',
+      reason: 'unknown_failure',
+      attempt: maxAttempts,
+      attempts: maxAttempts,
+    }
+  )
+}
+
 async function main() {
-  if (!isSilent) console.log(`${c.bold}🚀 Performance Automation${c.reset}\n`)
+  if (!isSilent) console.log(`${c.bold}Performance Automation${c.reset}\n`)
 
   // Ensure output dir
   if (!fs.existsSync(CONFIG.outputDir))
     fs.mkdirSync(CONFIG.outputDir, { recursive: true })
 
   let serverProcess = null
-  const portInUse = await isPortInUse(CONFIG.port)
+  const serverLogs = {
+    stdout: createLogBuffer(),
+    stderr: createLogBuffer(),
+  }
+  const port = await findAvailablePort(CONFIG.port, 5)
+  const baseUrl = `http://${CONFIG.host}:${port}`
+  const projectRoot = path.resolve(__dirname, '../../')
+  const basePath = resolveBasePath(projectRoot)
+  const targetUrl = baseUrlEnv || joinUrl(baseUrl, basePath)
+  let resolvedUrl = targetUrl
+  const resolveUrl = () => {
+    const fromLogs = extractPreviewUrl(serverLogs.stdout)
+    if (fromLogs) {
+      resolvedUrl = fromLogs
+    }
+    return resolvedUrl
+  }
+
+  if (port !== CONFIG.port) {
+    log(`Porta ${CONFIG.port} em uso. Usando ${port}.`, 'warn')
+  }
+
+  const portInUse = await isPortInUse(port)
 
   if (!portInUse) {
-    serverProcess = startServer()
+    serverProcess = startServer(port, serverLogs)
   } else {
-    log(`Servidor ja esta rodando na porta ${CONFIG.port}.`, 'info')
+    log(`Servidor ja esta rodando na porta ${port}.`, 'info')
   }
 
   log('Aguardando servidor...', 'wait')
-  const serverReady = await waitForServer(CONFIG.getUrl())
+  const serverReady = await waitForServer(resolveUrl, serverProcess, serverLogs)
 
-  if (!serverReady) {
-    log('Timeout: Servidor nao respondeu.', 'error')
+  if (!serverReady.ready) {
+    const reason =
+      serverReady.reason === 'exit'
+        ? `Servidor encerrou (code ${serverReady.code ?? 'n/a'})`
+        : serverReady.reason === 'spawn'
+        ? `Falha ao iniciar servidor: ${serverReady.error?.message || serverReady.error}`
+        : 'Timeout: Servidor nao respondeu.'
+    log(reason, 'error')
+    if (!isSilent) {
+      const out = serverLogs.stdout.toString()
+      const err = serverLogs.stderr.toString()
+      if (out) {
+        console.log(`${c.dim}${out}${c.reset}`)
+      }
+      if (err) {
+        console.log(`${c.dim}${err}${c.reset}`)
+      }
+    }
     if (serverProcess) serverProcess.kill()
     process.exit(1)
   }
 
+  if (serverReady.url) {
+    resolvedUrl = serverReady.url
+  }
   log('Servidor pronto!', 'success')
+  await getHttpStatus(resolvedUrl)
 
   const results = []
   for (const factor of ['mobile', 'desktop']) {
-    const res = await runLighthouse(CONFIG.getUrl(), factor)
+    const res = await runLighthouse(resolvedUrl, factor)
     results.push({ factor, ...res })
 
     if (res.success) {
@@ -424,6 +751,7 @@ async function main() {
       reportDir: CONFIG.outputDir,
     })
   }
+  await refreshDashboardCache({ silent: isSilent || isQuiet })
   process.exit(0)
 }
 
@@ -433,17 +761,17 @@ function generateMetrics(desktopResult, mobileResult) {
 
   if (desktopResult && desktopResult.success) {
     metrics.push(
-      `✅ Desktop: Perf ${desktopResult.scores.performance} | A11y ${desktopResult.scores.accessibility}`
+      `Desktop: Perf ${desktopResult.scores.performance} | A11y ${desktopResult.scores.accessibility}`
     )
   }
 
   if (mobileResult) {
     if (mobileResult.success) {
       metrics.push(
-        `✅ Mobile: Perf ${mobileResult.scores.performance} | A11y ${mobileResult.scores.accessibility}`
+        `Mobile: Perf ${mobileResult.scores.performance} | A11y ${mobileResult.scores.accessibility}`
       )
     } else {
-      const prefix = isWindows ? '⚠️  Mobile (Informativo)' : '❌ Mobile'
+      const prefix = isWindows ? 'Mobile (Informativo)' : 'Mobile'
       metrics.push(`${prefix}: Falhou - ${mobileResult.error}`)
     }
   }

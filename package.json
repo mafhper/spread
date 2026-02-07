@@ -28,7 +28,7 @@
     "dev": "astro dev",
     "dev:safe": "run-s quality:full dev",
     "preview": "node quality-core/scripts/run-preview.cjs",
-    "preview:serve": "vite preview --base=/spread",
+    "preview:serve": "astro preview --host 0.0.0.0 --port 4173",
     "build": "astro build",
     "build:analyze": "cross-env ANALYZE=true astro build",
     "build:prod": "run-s build build:prod:checks",
@@ -76,6 +76,7 @@
     "quality:full:quick-silent:parallel": "run-p lint type-check format:check test:core quality:core:quick-silent",
     "quality:reports:all": "run-s quality:core quality:lighthouse quality:snapshot analysis",
     "quality:reports:all:silent": "run-s quality:core:silent quality:lighthouse:silent analysis:silent quality:snapshot",
+    "quality:dashboard:refresh": "bun quality-core/scripts/refresh-dashboard-cache.ts",
     "quality:ci": "run-s quality:full quality:reports:all",
     "quality:ci:quick-silent": "run-s build quality:gate:quick-silent quality:core:quick-silent quality:lighthouse:silent analysis:silent"
   },

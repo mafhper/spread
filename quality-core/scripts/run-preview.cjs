@@ -4,11 +4,28 @@ const path = require('path')
 
 const root = path.resolve(__dirname, '../..')
 const forwardedArgs = process.argv.slice(2)
+const basePath = process.env.PREVIEW_BASE || '/spread'
 
 function resolveRunner(runner) {
   if (process.platform !== 'win32') return runner
   if (runner === 'npm') return 'npm.cmd'
   return runner
+}
+
+function normalizeBasePath(input) {
+  if (!input) return '/'
+  let base = String(input).trim()
+  if (!base.startsWith('/')) base = `/${base}`
+  if (!base.endsWith('/')) base += '/'
+  return base
+}
+
+function getArgValue(args, key) {
+  const direct = args.find(arg => arg.startsWith(`${key}=`))
+  if (direct) return direct.split('=').slice(1).join('=')
+  const index = args.indexOf(key)
+  if (index >= 0) return args[index + 1]
+  return null
 }
 
 function runCommand(command, args, options = {}) {
@@ -48,6 +65,14 @@ async function runWithRunner(runner) {
   const build = await runCommand(command, ['run', 'build'], { cwd: root })
   if (build.missing) return { missing: true }
   if (!build.ok) return { ok: false, exitCode: build.exitCode || 1 }
+
+  const base = normalizeBasePath(basePath)
+  const port =
+    getArgValue(forwardedArgs, '--port') ||
+    process.env.PREVIEW_PORT ||
+    '4173'
+  const url = `http://localhost:${port}${base}`
+  console.log(`[preview] Open ${url}`)
 
   const previewArgs =
     runner === 'npm'

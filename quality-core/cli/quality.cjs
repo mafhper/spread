@@ -13,6 +13,7 @@ const {
   hasValidDist,
 } = require('../packages/adapters/preview-server.cjs')
 const UI = require('./ui-helpers.cjs')
+const { refreshDashboardCache } = require('./dashboard-cache.cjs')
 
 /**
  * Safe fs helper with path validation
@@ -245,6 +246,8 @@ async function main() {
   }
 
   // Exit with appropriate code
+  await refreshDashboardCache({ silent: isSilent || isQuiet })
+
   if (result.status === 'fail') {
     if (isSilent) {
       const violations = result.violations || []

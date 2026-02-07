@@ -1,18 +1,21 @@
 /**
  * Analysis Report Generator CLI
- * Generates detailed analysis reports for bundles, dependencies, and code.
+ * Generates reports for bundle size and dependency inventory.
  */
 const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
 const UI = require('./ui-helpers.cjs')
+const History = require('./history.cjs')
+const { refreshDashboardCache } = require('./dashboard-cache.cjs')
 
-// Flags support
-const _args = process.argv.slice(2)
-const isQuiet = _args.includes('--quiet') || _args.includes('-q')
-const isSilent = _args.includes('--silent') || _args.includes('-s')
+const args = process.argv.slice(2)
+const isQuiet = args.includes('--quiet') || args.includes('-q')
+const isSilent = args.includes('--silent') || args.includes('-s')
+const modeLabel = [isSilent ? 'silent' : isQuiet ? 'quiet' : 'default'].join(
+  '-'
+)
 
-// Rastreamento de execução em silent mode
 const executionLog = {
   startTime: Date.now(),
   errors: [],
@@ -20,53 +23,43 @@ const executionLog = {
   reports: [],
 }
 
-const _rawLog = console.log.bind(console)
-const _rawError = console.error.bind(console)
+const rawLog = console.log.bind(console)
+const rawError = console.error.bind(console)
 
-if (!isSilent && !isQuiet) {
-  // Modo normal
-} else if (isSilent) {
-  // Silent mode - registra erros e warnings
+if (isSilent) {
   const originalLog = console.log
   const originalError = console.error
   console.log = (msg, ...rest) => {
     if (typeof msg === 'string' && msg.includes('ERROR')) {
       executionLog.errors.push(msg)
-      originalLog(`❌ ${msg}`, ...rest)
+      originalLog(`[ERROR] ${msg}`, ...rest)
     } else if (typeof msg === 'string' && msg.includes('INFO')) {
-      // Silencia info
+      return
     } else {
       originalLog(msg, ...rest)
     }
   }
   console.error = (msg, ...rest) => {
     executionLog.errors.push(msg)
-    originalError(`❌ ${msg}`, ...rest)
+    originalError(`[ERROR] ${msg}`, ...rest)
   }
-} else if (isQuiet && !isSilent) {
-  // Modo quiet - suprime apenas infos
+} else if (isQuiet) {
   console.log = (msg, ...rest) => {
     if (typeof msg === 'string' && msg.startsWith('[ANALYSIS - INFO]')) return
-    _rawLog(msg, ...rest)
+    rawLog(msg, ...rest)
   }
 }
 
 const BundleAnalysisAudit = require('../packages/audits/bundle-analysis.cjs')
+const DEFAULT_THRESHOLDS = require('../packages/core/thresholds.cjs')
 
-// Paths
 const ANALYSIS_DIR = path.join(process.cwd(), 'performance-reports', 'analysis')
 const DIST_DIR = path.join(process.cwd(), 'dist')
 
-/**
- * Validates and resolves a safe file path within the analysis directory
- * @param {string} filename - The filename to validate
- * @returns {string} - The resolved safe path
- */
 function getSafeFilePath(filename) {
   const resolvedPath = path.resolve(ANALYSIS_DIR, filename)
   const resolvedAnalysisDir = path.resolve(ANALYSIS_DIR)
 
-  // Ensure the resolved path is within the analysis directory
   if (!resolvedPath.startsWith(resolvedAnalysisDir)) {
     throw new Error(`Invalid filename: ${filename} - path traversal detected`)
   }
@@ -74,52 +67,41 @@ function getSafeFilePath(filename) {
   return resolvedPath
 }
 
-// Ensure analysis directory exists
 if (!fs.existsSync(ANALYSIS_DIR)) {
   fs.mkdirSync(ANALYSIS_DIR, { recursive: true })
 }
 
-/**
- * Save JSON report
- */
 function saveJsonReport(filename, data) {
   const filepath = getSafeFilePath(filename)
-  // Safe: filepath is validated by getSafeFilePath to prevent path traversal
-
   fs.writeFileSync(filepath, JSON.stringify(data, null, 2))
   console.log(`[ANALYSIS - INFO] JSON report saved: ${filepath}`)
   return filepath
 }
 
-/**
- * Generate Markdown report from analysis results
- */
 function generateMarkdownReport(results) {
   const date = new Date().toLocaleString()
   const commit = getGitCommit()
 
-  let md = `# Análise de Bundle e Build\n\n`
-  md += `**Data:** ${date}\n`
+  let md = `# Bundle and Build Analysis\n\n`
+  md += `**Date:** ${date}\n`
   md += `**Commit:** \`${commit}\`\n\n`
 
-  // Bundle Analysis Section
   if (results.bundle) {
-    md += `## 📦 Análise do Bundle\n\n`
-    md += `| Métrica | Valor |\n`
+    md += `## Bundle Analysis\n\n`
+    md += `| Metric | Value |\n`
     md += `| :--- | :--- |\n`
-    md += `| Tamanho Total JS | ${results.bundle.metrics.jsTotalKb.toFixed(2)} KB |\n`
-    md += `| Tamanho Total CSS | ${results.bundle.metrics.cssTotalKb.toFixed(2)} KB |\n`
-    md += `| Tamanho Total do Bundle | ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB |\n`
-    md += `| Maior Chunk | ${results.bundle.metrics.largestChunk.name} (${results.bundle.metrics.largestChunk.sizeKb.toFixed(2)} KB) |\n`
-    md += `| Total de Arquivos | ${results.bundle.metrics.fileCount} |\n`
-    md += `| Arquivos JS | ${results.bundle.metrics.jsFileCount} |\n`
-    md += `| Arquivos CSS | ${results.bundle.metrics.cssFileCount} |\n`
+    md += `| Total JS Size | ${results.bundle.metrics.jsTotalKb.toFixed(2)} KB |\n`
+    md += `| Total CSS Size | ${results.bundle.metrics.cssTotalKb.toFixed(2)} KB |\n`
+    md += `| Total Bundle Size | ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB |\n`
+    md += `| Largest Chunk | ${results.bundle.metrics.largestChunk.name} (${results.bundle.metrics.largestChunk.sizeKb.toFixed(2)} KB) |\n`
+    md += `| Total Files | ${results.bundle.metrics.fileCount} |\n`
+    md += `| JS Files | ${results.bundle.metrics.jsFileCount} |\n`
+    md += `| CSS Files | ${results.bundle.metrics.cssFileCount} |\n`
     md += `| Assets | ${results.bundle.metrics.assetsCount} |\n\n`
 
-    // Top chunks
     if (results.bundle.details?.chunks?.length > 0) {
-      md += `### Maiores Arquivos\n\n`
-      md += `| Arquivo | Tipo | Tamanho (KB) |\n`
+      md += `### Largest Files\n\n`
+      md += `| File | Type | Size (KB) |\n`
       md += `| :--- | :--- | :--- |\n`
       for (const chunk of results.bundle.details.chunks.slice(0, 10)) {
         md += `| ${chunk.name} | ${chunk.type.toUpperCase()} | ${chunk.size.toFixed(2)} |\n`
@@ -127,37 +109,32 @@ function generateMarkdownReport(results) {
       md += `\n`
     }
 
-    // Violations
     if (results.bundle.violations?.length > 0) {
-      md += `### ⚠️ Alertas\n\n`
+      md += `### Warnings\n\n`
       for (const v of results.bundle.violations) {
-        md += `- **${v.metric}**: ${v.value} (limite: ${v.threshold})\n`
+        md += `- **${v.metric}**: ${v.value} (threshold: ${v.threshold})\n`
       }
       md += `\n`
     } else {
-      md += `### ✅ Sem Alertas\n\n`
-      md += `O bundle está dentro dos limites definidos.\n\n`
+      md += `### No Warnings\n\n`
+      md += `Bundle is within defined limits.\n\n`
     }
   }
 
-  // Dependencies Section
   if (results.dependencies) {
-    md += `## 📚 Análise de Dependências\n\n`
-    md += `| Métrica | Valor |\n`
+    md += `## Dependency Analysis\n\n`
+    md += `| Metric | Value |\n`
     md += `| :--- | :--- |\n`
-    md += `| Total de Dependências | ${results.dependencies.total || 'N/A'} |\n`
-    md += `| Dependências de Produção | ${results.dependencies.production || 'N/A'} |\n`
-    md += `| Dependências de Desenvolvimento | ${results.dependencies.development || 'N/A'} |\n\n`
+    md += `| Total Dependencies | ${results.dependencies.total || 'N/A'} |\n`
+    md += `| Production Dependencies | ${results.dependencies.production || 'N/A'} |\n`
+    md += `| Development Dependencies | ${results.dependencies.development || 'N/A'} |\n\n`
   }
 
-  md += `---\n*Gerado pelo Quality Core - Analysis Module*\n`
+  md += `---\nGenerated by Quality Core - Analysis Module\n`
 
   return md
 }
 
-/**
- * Get git commit hash
- */
 function getGitCommit() {
   try {
     return execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim()
@@ -166,9 +143,6 @@ function getGitCommit() {
   }
 }
 
-/**
- * Analyze dependencies from package.json
- */
 function analyzeDependencies() {
   try {
     const pkg = JSON.parse(
@@ -186,18 +160,37 @@ function analyzeDependencies() {
       developmentList: devDeps,
     }
   } catch (err) {
-    console.error(
-      '[ANALYSIS - ERROR] Failed to analyze dependencies:',
-      err.message
-    )
+    console.error('[ANALYSIS - ERROR] Failed to analyze dependencies:', err.message)
     return null
   }
 }
 
-/**
- * Run all analysis
- */
 async function runAnalysis() {
+  const historyKey = 'analysis'
+  let stopTimer = null
+
+  if (!isSilent) {
+    UI.printHeader({
+      title: 'QUALITY CORE - ANALYSIS',
+      modes: ['--silent', '--quiet'],
+      active: [isSilent ? 'silent' : null, isQuiet ? 'quiet' : null].filter(
+        Boolean
+      ),
+    })
+    const avgHeader = History.getAverageDuration(historyKey, modeLabel)
+    stopTimer = UI.printTimingHeader({
+      avgLabel: avgHeader,
+      modeLabel,
+      live: UI.shouldLiveTimer() && !isQuiet,
+    })
+  }
+
+  if (!isSilent && !isQuiet) {
+    UI.printScriptStart('analysis', 1, 1)
+  } else if (isQuiet) {
+    UI.printQuietStepStart('analysis', 1, 1)
+  }
+
   console.log('[ANALYSIS - INFO] Starting analysis...')
   console.log(`[ANALYSIS - INFO] Output directory: ${ANALYSIS_DIR}`)
 
@@ -210,10 +203,8 @@ async function runAnalysis() {
     },
   }
 
-  // 1. Bundle Analysis
   console.log('[ANALYSIS - INFO] Running bundle analysis...')
   try {
-    const DEFAULT_THRESHOLDS = require('../packages/core/thresholds.cjs')
     const bundleResult = await BundleAnalysisAudit.run({
       distDir: DIST_DIR,
       thresholds: DEFAULT_THRESHOLDS,
@@ -227,7 +218,6 @@ async function runAnalysis() {
     results.bundle = { error: err.message }
   }
 
-  // 2. Dependencies Analysis
   console.log('[ANALYSIS - INFO] Analyzing dependencies...')
   results.dependencies = analyzeDependencies()
   if (results.dependencies) {
@@ -236,49 +226,58 @@ async function runAnalysis() {
     )
   }
 
-  // Save JSON report
   const jsonFilename = `analysis-${timestamp}.json`
   saveJsonReport(jsonFilename, results)
-
-  // Save latest JSON
   saveJsonReport('analysis-latest.json', results)
 
-  // Generate and save Markdown report
   const mdContent = generateMarkdownReport(results)
   const mdFilename = `analysis-${timestamp}.md`
   const mdFilepath = getSafeFilePath(mdFilename)
-  // Safe: mdFilepath is validated by getSafeFilePath to prevent path traversal
-
   fs.writeFileSync(mdFilepath, mdContent)
   console.log(`[ANALYSIS - INFO] Markdown report saved: ${mdFilepath}`)
 
-  // Save latest Markdown
   const latestMdPath = getSafeFilePath('analysis-latest.md')
-  // Safe: latestMdPath is validated by getSafeFilePath to prevent path traversal
-
   fs.writeFileSync(latestMdPath, mdContent)
 
   console.log('[ANALYSIS - INFO] Analysis complete!')
   console.log(`[ANALYSIS - INFO] Reports saved to: ${ANALYSIS_DIR}`)
 
+  const durationMs = Date.now() - executionLog.startTime
+  History.saveExecutionTime(historyKey, durationMs, modeLabel)
+  const avg = History.getAverageDuration(historyKey, modeLabel)
+
+  if (!isSilent && !isQuiet) {
+    UI.printScriptEnd('analysis', durationMs, avg, executionLog.errors.length === 0)
+  } else if (isQuiet) {
+    UI.printQuietStepEnd(
+      'analysis',
+      1,
+      1,
+      durationMs,
+      avg,
+      executionLog.errors.length === 0
+    )
+  }
+  if (stopTimer) stopTimer()
+
   if (isSilent) {
     const metrics = []
     if (results.bundle && !results.bundle.error) {
-      metrics.push(
-        `✅ Bundle: ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB`
-      )
+      metrics.push(`Bundle: ${results.bundle.metrics.bundleTotalKb.toFixed(2)} KB`)
     } else if (results.bundle && results.bundle.error) {
-      metrics.push(`❌ Bundle Analysis: ${results.bundle.error}`)
+      metrics.push(`Bundle analysis: ${results.bundle.error}`)
     }
 
     if (results.dependencies) {
-      metrics.push(`✅ Dependências: ${results.dependencies.total} encontradas`)
+      metrics.push(`Dependencies: ${results.dependencies.total}`)
     }
 
-    const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+    const duration = (durationMs / 1000).toFixed(2)
+    const status = executionLog.errors.length > 0 ? 'fail' : 'pass'
 
     UI.printSummary({
-      title: 'ANÁLISE',
+      title: 'ANALYSIS',
+      status,
       metrics,
       errors: executionLog.errors,
       warnings: executionLog.warnings,
@@ -287,23 +286,30 @@ async function runAnalysis() {
     })
   }
 
+  await refreshDashboardCache({ silent: isSilent || isQuiet })
   return results
 }
 
-// Run if called directly
 if (require.main === module) {
   runAnalysis().catch(err => {
-    _rawError('[ANALYSIS - ERROR] Analysis failed:', err)
+    rawError('[ANALYSIS - ERROR] Analysis failed:', err)
     if (isSilent) {
       executionLog.errors.push(err.message)
-      const duration = ((Date.now() - executionLog.startTime) / 1000).toFixed(2)
+      const durationMs = Date.now() - executionLog.startTime
+      const duration = (durationMs / 1000).toFixed(2)
+      History.saveExecutionTime('analysis', durationMs, modeLabel)
       UI.printSummary({
-        title: 'ANÁLISE',
+        title: 'ANALYSIS',
         status: 'fail',
         errors: executionLog.errors,
         duration,
         reportDir: ANALYSIS_DIR,
       })
+    } else {
+      const durationMs = Date.now() - executionLog.startTime
+      History.saveExecutionTime('analysis', durationMs, modeLabel)
+      const avg = History.getAverageDuration('analysis', modeLabel)
+      UI.printScriptEnd('analysis', durationMs, avg, false)
     }
     process.exit(1)
   })

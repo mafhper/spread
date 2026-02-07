@@ -6,6 +6,7 @@ import { createReadStream } from 'fs'
 import path from 'path'
 import { exec } from 'child_process'
 import { SnapshotStore } from './snapshots.store'
+import { readDashboardCache, writeDashboardCache } from './dashboard-cache'
 
 const PORT_DEFAULT = 3334
 const DIST_DIR = path.join(__dirname, 'dashboard', 'dist')
@@ -82,11 +83,13 @@ async function startServer(port: number) {
     // API: Listar todos os snapshots
     if (url.pathname === '/api/snapshots' && req.method === 'GET') {
       try {
-        const snapshots = await SnapshotStore.list()
+        const refresh = url.searchParams.get('refresh') === '1'
+        const cached = refresh ? null : await readDashboardCache()
+        const payload = cached || (await writeDashboardCache())
         res.writeHead(200, {
           'Content-Type': 'application/json; charset=utf-8',
         })
-        res.end(JSON.stringify({ success: true, data: snapshots }))
+        res.end(JSON.stringify(payload))
       } catch (err: unknown) {
         res.writeHead(500, {
           'Content-Type': 'application/json; charset=utf-8',

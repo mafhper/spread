@@ -14,8 +14,36 @@ import { visualizer } from 'rollup-plugin-visualizer'
 // Check if analysis mode is enabled
 const isAnalyze = process.env.ANALYZE === 'true'
 
+function normalizeBasePath(basePath) {
+  if (!basePath) return '/'
+  let normalized = String(basePath).trim()
+  if (!normalized.startsWith('/')) normalized = `/${normalized}`
+  if (!normalized.endsWith('/')) normalized += '/'
+  return normalized
+}
+
+function previewRedirectPlugin(basePath) {
+  const target = normalizeBasePath(basePath)
+  return {
+    name: 'preview-redirect',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (!req?.url) return next()
+        const url = req.url.split('?')[0]
+        if (url === '/' || url === '') {
+          res.statusCode = 302
+          res.setHeader('Location', target)
+          res.end()
+          return
+        }
+        next()
+      })
+    },
+  }
+}
+
 // Base Vite plugins
-const vitePlugins = [tailwindcss()]
+const vitePlugins = [tailwindcss(), previewRedirectPlugin('/spread')]
 
 // Add bundle visualizer in analyze mode
 if (isAnalyze) {

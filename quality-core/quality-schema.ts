@@ -36,6 +36,18 @@ export interface PerformanceMetrics {
     bestPractices: number
     seo: number
   }
+  lighthouseHome?: {
+    performance: number
+    accessibility: number
+    bestPractices: number
+    seo: number
+  }
+  lighthouseFeed?: {
+    performance: number
+    accessibility: number
+    bestPractices: number
+    seo: number
+  }
   webVitals: {
     lcp: number // ms
     cls: number

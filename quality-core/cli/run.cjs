@@ -10,6 +10,7 @@ const { spawn } = require('child_process')
 const config = require('./config.cjs')
 const UI = require('./ui-helpers.cjs')
 const History = require('./history.cjs')
+const { refreshDashboardCache } = require('./dashboard-cache.cjs')
 
 // Flags
 const args = process.argv.slice(2)
@@ -452,6 +453,7 @@ async function main() {
   saveMarkdownReport(results, totalDuration, status)
 
   if (stopTimer) stopTimer()
+  await refreshDashboardCache({ silent: isSilent || isQuiet })
   process.exit(status === 'pass' ? 0 : 1)
 }
 

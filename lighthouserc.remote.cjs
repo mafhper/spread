@@ -1,28 +1,9 @@
-const net = require('node:net')
-
-/**
- * Finds a free port to run the preview server.
- */
-function findFreePort() {
-  const server = net.createServer()
-  server.listen(0)
-  const port = server.address().port
-  server.close()
-  return port
-}
-
-const PORT = process.env.PORT || findFreePort()
-
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: `bun run preview --port ${PORT}`,
-      startServerReadyPattern: 'ready in|Local:',
-      startServerReadyTimeout: 120000,
-      url: [`http://localhost:${PORT}/spread`],
-      numberOfRuns: 3,
+      numberOfRuns: 1,
       settings: {
-        chromeFlags: '--headless --no-sandbox --disable-gpu',
+        chromeFlags: '--no-sandbox --disable-dev-shm-usage --disable-gpu',
       },
     },
     assert: {

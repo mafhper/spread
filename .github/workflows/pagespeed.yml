@@ -27,6 +27,7 @@ jobs:
       - name: Lighthouse CI (Remote)
         uses: treosh/lighthouse-ci-action@v12
         with:
+          configPath: ./lighthouserc.remote.cjs
           urls: 'https://mafhper.github.io/spread'
           uploadArtifacts: true
           temporaryPublicStorage: true

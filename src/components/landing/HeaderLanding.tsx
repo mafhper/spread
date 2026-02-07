@@ -28,15 +28,15 @@ const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
 
 const navItems: NavItem[] = [
   { label: 'Início', href: `${base}/`, id: 'home' },
-  { label: 'Funções', href: `${base}/info#recursos`, id: 'recursos' },
-  { label: 'Tecnologia', href: `${base}/info#tecnologia`, id: 'tecnologia' },
+  { label: 'Funções', href: `${base}/info/#recursos`, id: 'recursos' },
+  { label: 'Tecnologia', href: `${base}/info/#tecnologia`, id: 'tecnologia' },
   {
     label: 'Desenvolvimento',
-    href: `${base}/info#opensource`,
+    href: `${base}/info/#opensource`,
     id: 'opensource',
   },
-  { label: 'Autor', href: `${base}/info#sobre`, id: 'sobre' },
-  { label: 'Projetos', href: `${base}/info#projetos`, id: 'projetos' },
+  { label: 'Autor', href: `${base}/info/#sobre`, id: 'sobre' },
+  { label: 'Projetos', href: `${base}/info/#projetos`, id: 'projetos' },
 ]
 
 export const HeaderLanding: React.FC<HeaderLandingProps> = ({
@@ -175,6 +175,12 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
           }
           setActiveSection(targetId)
         }
+      } else if (isAnchor) {
+        // Force navigation for cross-page anchors in preview/static mode
+        e.preventDefault()
+        window.location.assign(href)
+        setIsMobileMenuOpen(false)
+        return
       }
 
       setIsMobileMenuOpen(false)

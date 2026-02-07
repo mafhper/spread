@@ -66,6 +66,20 @@ npm run quality:lighthouse
 npm run security:audit
 ```
 
+### Lighthouse Runner - Variáveis de Ambiente
+
+O `quality:lighthouse` aceita variáveis de ambiente adicionais para aumentar estabilidade:
+
+- `LH_RETRY_COUNT` (default: 1) - número de retries adicionais.
+- `LH_RETRY_TRANSIENT_ONLY` (default: true) - retry apenas para falhas transitórias.
+- `LH_RETRY_BACKOFF_MS` (default: 1200) - intervalo base de backoff entre tentativas.
+- `LH_MAX_WAIT_MS` - tempo máximo de espera do Lighthouse (passa `--max-wait-for-load`).
+
+### Lighthouse CI - Remoto vs Local
+
+- `lighthouserc.cjs` é usado para auditoria local com `startServerCommand`.
+- `lighthouserc.remote.cjs` é usado no workflow remoto e não inicia servidor local.
+
 ### Dashboard de Qualidade
 
 ```bash
