@@ -1,9 +1,8 @@
 name: PageSpeed Monitor
 
 on:
-  schedule:
-    # Run daily at 9 AM UTC
-    - cron: '0 9 * * *'
+  # Temporarily disabled: no automatic execution.
+  # Keep manual dispatch available for future reimplementation/testing.
   workflow_dispatch:
 
 jobs:
