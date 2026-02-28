@@ -102,7 +102,8 @@
     "lodash": "^4.17.23",
     "js-yaml": "^4.1.1",
     "@remix-run/router": "^1.23.1",
-    "esbuild": "0.25.0"
+    "esbuild": "0.25.0",
+    "rollup": "4.57.1"
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
@@ -111,7 +112,8 @@
     "lodash": "^4.17.23",
     "js-yaml": "^4.1.1",
     "@remix-run/router": "^1.23.1",
-    "esbuild": "0.25.0"
+    "esbuild": "0.25.0",
+    "rollup": "4.57.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
