@@ -28,7 +28,7 @@
     "dev": "astro dev",
     "dev:safe": "run-s quality:full dev",
     "preview": "node quality-core/scripts/run-preview.cjs",
-    "preview:serve": "astro preview --host 127.0.0.1",
+    "preview:serve": "astro preview",
     "build": "astro build",
     "build:analyze": "cross-env ANALYZE=true astro build",
     "build:prod": "run-s build build:prod:checks",

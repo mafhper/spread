@@ -177,8 +177,8 @@ export const CanvasControls: React.FC = () => {
           summary: `Preset atual: ${activePreset.label}`,
           defaultMobile: true,
           content: (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2">
+            <div className="space-y-2.5">
+              <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
                   Visualização
                 </p>
@@ -200,7 +200,7 @@ export const CanvasControls: React.FC = () => {
                     className={clsx(
                       'flex flex-col items-center justify-center rounded-xl border transition-all',
                       isCompactViewport
-                        ? 'min-h-[58px] gap-1.5 px-2 py-2'
+                        ? 'min-h-[54px] gap-1 px-2 py-1.5'
                         : 'min-h-[64px] gap-1 p-3',
                       canvasSize.preset === preset.name
                         ? 'bg-white text-black border-transparent shadow-lg scale-[1.02]'
@@ -226,7 +226,7 @@ export const CanvasControls: React.FC = () => {
             <button
               onClick={handleAutoColors}
               disabled={isExtracting || !image}
-              className="flex items-center gap-1 px-3 py-2 min-h-[32px] bg-white/5 hover:bg-white/10 rounded-md text-[10px] font-bold transition-all disabled:opacity-30"
+              className="flex items-center gap-1 rounded-md bg-white/5 px-3 py-1.5 min-h-[32px] text-[10px] font-bold transition-all hover:bg-white/10 disabled:opacity-30"
               aria-label="Extrair cores automaticamente"
             >
               {isExtracting ? (
@@ -239,10 +239,10 @@ export const CanvasControls: React.FC = () => {
           ),
           content: (
             <div
-              className={clsx('space-y-3', isCompactViewport && 'space-y-2.5')}
+              className={clsx('space-y-2.5', isCompactViewport && 'space-y-2')}
             >
               <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2">
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
                   <input
                     type="color"
                     value={colors.bg1}
@@ -256,7 +256,7 @@ export const CanvasControls: React.FC = () => {
                     className="w-full bg-transparent text-[10px] font-mono uppercase text-white/80 focus:outline-none"
                   />
                 </div>
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2">
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
                   <input
                     type="color"
                     value={colors.bg2}
@@ -277,7 +277,7 @@ export const CanvasControls: React.FC = () => {
                   <button
                     key={angle.value}
                     onClick={() => updateField('gradientStyle', angle.value)}
-                    className={`flex min-h-[38px] items-center justify-center rounded-lg text-[12px] font-bold transition-all ${
+                    className={`flex min-h-[34px] items-center justify-center rounded-lg text-[12px] font-bold transition-all ${
                       gradientStyle === angle.value
                         ? 'bg-white text-black scale-[1.02]'
                         : 'bg-white/5 hover:bg-white/10 text-white/40'
@@ -297,7 +297,7 @@ export const CanvasControls: React.FC = () => {
           title: 'Textura e Imagem',
           summary: textureSummary,
           content: (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
@@ -314,7 +314,7 @@ export const CanvasControls: React.FC = () => {
                     <button
                       key={p.value}
                       onClick={() => updateField('pattern', p.value)}
-                      className={`min-h-[40px] rounded-xl px-3 py-2 text-[10px] font-medium transition-all ${
+                      className={`min-h-[38px] rounded-xl px-3 py-1.5 text-[10px] font-medium transition-all ${
                         pattern === p.value
                           ? 'bg-white text-black'
                           : 'bg-white/5 hover:bg-white/10 text-white/50'
@@ -329,7 +329,7 @@ export const CanvasControls: React.FC = () => {
               {!customBgImage ? (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full min-h-[42px] items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 py-3 text-[10px] text-white/50 transition-all hover:border-white/40 hover:text-white"
+                  className="flex w-full min-h-[40px] items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 py-2.5 text-[10px] text-white/50 transition-all hover:border-white/40 hover:text-white"
                   aria-label="Fazer upload de imagem customizada para o fundo"
                 >
                   <Upload size={14} /> Imagem Customizada
@@ -365,8 +365,8 @@ export const CanvasControls: React.FC = () => {
           title: 'Posição do Card',
           summary: `X ${cardPosition.x}% · Y ${cardPosition.y}%`,
           content: (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5">
+            <div className="space-y-2.5">
+              <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[10px] text-white/40 block">
                     Eixo X
@@ -401,7 +401,7 @@ export const CanvasControls: React.FC = () => {
                   className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2.5">
+              <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[10px] text-white/40 block">
                     Eixo Y

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process')
+const os = require('os')
 const path = require('path')
 const {
   findAvailablePort,
@@ -22,6 +23,28 @@ function normalizeBasePath(input) {
   if (!base.startsWith('/')) base = `/${base}`
   if (!base.endsWith('/')) base += '/'
   return base
+}
+
+function getNetworkPreviewUrls(port, base) {
+  const interfaces = os.networkInterfaces()
+  const urls = new Set()
+
+  for (const addresses of Object.values(interfaces)) {
+    for (const address of addresses || []) {
+      if (
+        address == null ||
+        address.internal ||
+        address.family !== 'IPv4' ||
+        !address.address
+      ) {
+        continue
+      }
+
+      urls.add(`http://${address.address}:${port}${base}`)
+    }
+  }
+
+  return Array.from(urls)
 }
 
 function getArgValue(args, key) {
@@ -128,9 +151,25 @@ async function runWithRunner(runner) {
       ? ['run', 'preview:serve', '--', ...previewArgsSource]
       : ['run', 'preview:serve', ...previewArgsSource]
   const previewArgs = [...previewArgsBase]
+  if (!hasArg(previewArgsSource, '--host')) {
+    previewArgs.push('--host', '0.0.0.0')
+  }
   if (!hasArg(previewArgsSource, '--port')) {
     previewArgs.push('--port', String(port))
   }
+
+  const localUrl = `http://127.0.0.1:${port}${base}`
+  console.log(`[preview] Local   ${localUrl}`)
+
+  const networkUrls = getNetworkPreviewUrls(port, base)
+  if (networkUrls.length === 0) {
+    console.log('[preview] Network indisponivel. Nenhum IPv4 local encontrado.')
+  } else {
+    for (const networkUrl of networkUrls) {
+      console.log(`[preview] Network ${networkUrl}`)
+    }
+  }
+
   const preview = await runCommand(command, previewArgs, { cwd: root })
   return preview
 }

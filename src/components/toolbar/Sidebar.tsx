@@ -177,26 +177,18 @@ export const Sidebar: React.FC<{
       ? 'Resetar Imagem'
       : `Resetar ${activeTabDef.label}`
 
-  const resolveClampedSheetRatio = React.useCallback(
-    (ratio: number) => {
-      const min = 0.46
-      const max = 0.84
-      return Math.min(max, Math.max(min, ratio))
-    },
-    []
-  )
+  const resolveClampedSheetRatio = React.useCallback((ratio: number) => {
+    const min = 0.46
+    const max = 0.84
+    return Math.min(max, Math.max(min, ratio))
+  }, [])
 
-  const getNearestSheetRatio = React.useCallback(
-    (ratio: number) => {
-      const snapPoints = [0.46, 0.58, 0.72, 0.84]
-      return snapPoints.reduce((nearest, current) =>
-        Math.abs(current - ratio) < Math.abs(nearest - ratio)
-          ? current
-          : nearest
-      )
-    },
-    []
-  )
+  const getNearestSheetRatio = React.useCallback((ratio: number) => {
+    const snapPoints = [0.46, 0.58, 0.72, 0.84]
+    return snapPoints.reduce((nearest, current) =>
+      Math.abs(current - ratio) < Math.abs(nearest - ratio) ? current : nearest
+    )
+  }, [])
 
   const handleSheetPointerMove = React.useCallback(
     (event: PointerEvent) => {
@@ -241,7 +233,9 @@ export const Sidebar: React.FC<{
     ]
   )
 
-  const handleSheetPointerStart = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleSheetPointerStart = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
     if (!isMobile || mobileViewportHeight == null) return
 
     dragStateRef.current = {

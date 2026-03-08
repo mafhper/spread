@@ -65,9 +65,9 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="-mx-4 overflow-x-auto px-4 scrollbar-hide">
-        <div className="flex min-w-max gap-1.5">
+    <div className="space-y-2.5">
+      <div className="-mx-3 overflow-x-auto px-3 scrollbar-hide">
+        <div className="flex min-w-max gap-1.5 pr-10">
           {sections.map(section => {
             const isActive = section.id === activeSection.id
 
@@ -77,7 +77,7 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
                 type="button"
                 onClick={() => setActiveSectionId(section.id)}
                 className={clsx(
-                  'flex-none rounded-full border px-2.5 py-1.5 text-[10px] font-semibold transition-all',
+                  'flex-none rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-all',
                   isActive
                     ? 'border-white/10 bg-white text-black'
                     : 'border-white/10 bg-white/5 text-white/65 hover:bg-white/10 hover:text-white'
@@ -91,13 +91,13 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
         </div>
       </div>
 
-      <section className="rounded-2xl border border-white/8 bg-white/[0.03] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+      <section className="rounded-2xl border border-white/8 bg-white/[0.025] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
         {activeSection.action && (
-          <div className="flex justify-end px-3 pt-3">
+          <div className="flex justify-end px-2.5 pt-2.5">
             {activeSection.action}
           </div>
         )}
-        <div className="px-3 pt-3 pb-3">{activeSection.content}</div>
+        <div className="px-2.5 pt-2 pb-2.5">{activeSection.content}</div>
       </section>
     </div>
   )

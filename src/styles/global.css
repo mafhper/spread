@@ -152,3 +152,24 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #52525b; /* zinc-600 */
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-width: 1px;
+    background: rgba(113, 113, 122, 0.45);
+  }
+}

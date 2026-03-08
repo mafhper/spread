@@ -38,6 +38,9 @@ export const SpreadEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false)
   const [isCompactToolbar, setIsCompactToolbar] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [mobileViewportHeight, setMobileViewportHeight] = useState<
+    number | null
+  >(null)
   const previewRef = React.useRef<
     import('./preview/PreviewSection').PreviewSectionHandle | null
   >(null)
@@ -136,6 +139,29 @@ export const SpreadEditor: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const updateViewportHeight = () => {
+      const nextHeight =
+        window.innerWidth < 768
+          ? Math.round(window.visualViewport?.height ?? window.innerHeight)
+          : null
+      setMobileViewportHeight(nextHeight)
+    }
+
+    updateViewportHeight()
+    window.addEventListener('resize', updateViewportHeight)
+    window.visualViewport?.addEventListener('resize', updateViewportHeight)
+    window.visualViewport?.addEventListener('scroll', updateViewportHeight)
+
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight)
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight)
+      window.visualViewport?.removeEventListener('scroll', updateViewportHeight)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!isWelcome && url) {
       setInputUrl(url)
     }
@@ -205,7 +231,14 @@ export const SpreadEditor: React.FC = () => {
   // Welcome state: Full Landing Page experience
   if (isWelcome) {
     return (
-      <div className="min-h-screen h-[100svh] md:h-[100dvh] w-full flex flex-col overflow-hidden bg-zinc-950 text-white">
+      <div
+        className="min-h-screen h-[100svh] md:h-[100dvh] w-full flex flex-col overflow-hidden bg-zinc-950 text-white"
+        style={
+          mobileViewportHeight != null
+            ? { height: `${mobileViewportHeight}px` }
+            : undefined
+        }
+      >
         {/* Landing Page Content (scrollable) */}
         <div
           id="landing-scroll-container"
@@ -239,10 +272,15 @@ export const SpreadEditor: React.FC = () => {
   return (
     <div
       className={`min-h-screen h-[100svh] md:h-[100dvh] w-full overflow-hidden bg-black text-[var(--text-main)] ${isMobile ? 'flex flex-col' : 'flex'}`}
+      style={
+        mobileViewportHeight != null
+          ? { height: `${mobileViewportHeight}px` }
+          : undefined
+      }
     >
       {/* Left Sidebar */}
       <div className={isMobile ? 'order-2 z-30 flex-none' : 'z-30 h-full'}>
-        <Sidebar />
+        <Sidebar mobileViewportHeight={mobileViewportHeight} />
       </div>
 
       {/* Main Content Area */}
