@@ -139,6 +139,44 @@ describe('Sidebar Component', () => {
     tabs.forEach(tab => expect(tab).toHaveClass('justify-center'))
   })
 
+  it('keeps the mobile sheet open on the initial compact render when the store is already open', () => {
+    window.innerWidth = 375
+    window.dispatchEvent(new Event('resize'))
+
+    vi.mocked(useCardStore).mockReturnValue({
+      ...mockStore,
+      isSidebarOpen: true,
+    })
+
+    render(<Sidebar />)
+
+    expect(
+      screen.getByLabelText('Barra lateral de personalização')
+    ).toBeInTheDocument()
+    expect(mockStore.updateField).not.toHaveBeenCalledWith(
+      'isSidebarOpen',
+      false
+    )
+  })
+
+  it('sizes the mobile sheet from the visible viewport height prop', () => {
+    window.innerWidth = 375
+    window.dispatchEvent(new Event('resize'))
+
+    vi.mocked(useCardStore).mockReturnValue({
+      ...mockStore,
+      isSidebarOpen: true,
+    })
+
+    render(<Sidebar mobileViewportHeight={780} />)
+
+    const sheet = screen.getByLabelText('Barra lateral de personalização')
+    expect(sheet).toHaveStyle({
+      height: '452px',
+      maxHeight: '696px',
+    })
+  })
+
   it('does not render a mobile overlay over the preview area', () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))

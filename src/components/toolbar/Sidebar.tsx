@@ -72,7 +72,9 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
   }
 }
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<{
+  mobileViewportHeight?: number | null
+}> = ({ mobileViewportHeight = null }) => {
   const {
     isSidebarOpen,
     updateField,
@@ -84,7 +86,16 @@ export const Sidebar: React.FC = () => {
     resetPhoto,
   } = useCardStore()
   const [activeTab, setActiveTab] = useState<TabType>('canvas')
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+  const [mobileSheetRatio, setMobileSheetRatio] = useState(0.58)
+  const hasResolvedViewportRef = React.useRef(false)
+  const dragStateRef = React.useRef<{
+    pointerId: number
+    startY: number
+    startRatio: number
+  } | null>(null)
   const contentScrollRef = React.useRef<HTMLDivElement>(null)
   const activeTabDef = TABS.find(tab => tab.id === activeTab) ?? TABS[0]
 
@@ -100,18 +111,30 @@ export const Sidebar: React.FC = () => {
   const isOpen = isSidebarOpen
   const setIsOpen = (val: boolean) => updateField('isSidebarOpen', val)
 
-  // Auto-close on mobile only
+  // Close only when the viewport transitions from desktop to mobile.
+  // Do not close on the initial mobile render after generating a card.
   useEffect(() => {
-    if (isMobile) {
+    if (!hasResolvedViewportRef.current) {
+      hasResolvedViewportRef.current = true
+      return
+    }
+
+    if (isMobile && isOpen) {
       setIsOpen(false)
     }
-  }, [isMobile])
+  }, [isMobile, isOpen])
 
   useEffect(() => {
     if (contentScrollRef.current) {
       contentScrollRef.current.scrollTop = 0
     }
   }, [activeTab])
+
+  useEffect(() => {
+    if (isMobile && isOpen) {
+      setMobileSheetRatio(0.58)
+    }
+  }, [isMobile, isOpen])
 
   const renderTabContent = () => (
     <Suspense
@@ -154,6 +177,110 @@ export const Sidebar: React.FC = () => {
       ? 'Resetar Imagem'
       : `Resetar ${activeTabDef.label}`
 
+  const resolveClampedSheetRatio = React.useCallback(
+    (ratio: number) => {
+      const min = 0.46
+      const max = 0.84
+      return Math.min(max, Math.max(min, ratio))
+    },
+    []
+  )
+
+  const getNearestSheetRatio = React.useCallback(
+    (ratio: number) => {
+      const snapPoints = [0.46, 0.58, 0.72, 0.84]
+      return snapPoints.reduce((nearest, current) =>
+        Math.abs(current - ratio) < Math.abs(nearest - ratio)
+          ? current
+          : nearest
+      )
+    },
+    []
+  )
+
+  const handleSheetPointerMove = React.useCallback(
+    (event: PointerEvent) => {
+      if (!isMobile || mobileViewportHeight == null) return
+      const dragState = dragStateRef.current
+      if (!dragState || dragState.pointerId !== event.pointerId) return
+
+      const deltaY = dragState.startY - event.clientY
+      const ratioDelta = deltaY / mobileViewportHeight
+      setMobileSheetRatio(
+        resolveClampedSheetRatio(dragState.startRatio + ratioDelta)
+      )
+    },
+    [isMobile, mobileViewportHeight, resolveClampedSheetRatio]
+  )
+
+  const handleSheetPointerEnd = React.useCallback(
+    (event: PointerEvent) => {
+      const dragState = dragStateRef.current
+      if (!dragState || dragState.pointerId !== event.pointerId) return
+
+      dragStateRef.current = null
+      window.removeEventListener('pointermove', handleSheetPointerMove)
+      window.removeEventListener('pointerup', handleSheetPointerEnd)
+      window.removeEventListener('pointercancel', handleSheetPointerEnd)
+
+      if (!isMobile || mobileViewportHeight == null) return
+
+      const deltaY = event.clientY - dragState.startY
+      if (deltaY > mobileViewportHeight * 0.16) {
+        setIsOpen(false)
+        return
+      }
+
+      setMobileSheetRatio(current => getNearestSheetRatio(current))
+    },
+    [
+      getNearestSheetRatio,
+      handleSheetPointerMove,
+      isMobile,
+      mobileViewportHeight,
+    ]
+  )
+
+  const handleSheetPointerStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMobile || mobileViewportHeight == null) return
+
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startRatio: mobileSheetRatio,
+    }
+
+    window.addEventListener('pointermove', handleSheetPointerMove)
+    window.addEventListener('pointerup', handleSheetPointerEnd)
+    window.addEventListener('pointercancel', handleSheetPointerEnd)
+  }
+
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('pointermove', handleSheetPointerMove)
+      window.removeEventListener('pointerup', handleSheetPointerEnd)
+      window.removeEventListener('pointercancel', handleSheetPointerEnd)
+    }
+  }, [handleSheetPointerEnd, handleSheetPointerMove])
+
+  const mobileDrawerStyle = isMobile
+    ? {
+        height:
+          mobileViewportHeight != null
+            ? `${Math.round(
+                Math.min(
+                  Math.max(mobileViewportHeight * mobileSheetRatio, 300),
+                  mobileViewportHeight - 84
+                )
+              )}px`
+            : undefined,
+        maxHeight:
+          mobileViewportHeight != null
+            ? `${Math.max(mobileViewportHeight - 84, 300)}px`
+            : undefined,
+      }
+    : undefined
+
   // Mobile button is rendered in the editor header to avoid overlapping
   // preview controls near the bottom edge.
   if (isMobile && !isOpen) {
@@ -170,15 +297,20 @@ export const Sidebar: React.FC = () => {
             : 'relative flex-shrink-0 h-full border-r border-white/10',
           !isMobile && (isOpen ? 'w-80' : 'w-0 overflow-hidden opacity-0')
         )}
+        style={mobileDrawerStyle}
         aria-label="Barra lateral de personalização"
       >
         {isMobile && (
-          <div className="relative border-b border-white/10 bg-black/88 px-4 pt-2 pb-1.5">
-            <div className="mx-auto h-1.5 w-10 rounded-full bg-white/18" />
-            <div className="absolute right-3 top-1.5 flex items-center justify-end">
+          <div className="flex-shrink-0 border-b border-white/10 bg-black/92 px-4 pt-2 pb-2">
+            <div
+              className="relative flex min-h-[34px] items-center justify-center"
+              onPointerDown={handleSheetPointerStart}
+              style={{ touchAction: 'none' }}
+            >
+              <div className="h-1.5 w-10 rounded-full bg-white/18" />
               <button
                 onClick={() => setIsOpen(false)}
-                className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-xl p-2 transition-colors hover:bg-white/10"
+                className="absolute right-0 top-1/2 flex min-h-[40px] min-w-[40px] -translate-y-1/2 items-center justify-center rounded-xl p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label="Fechar menu lateral"
               >
                 <X size={17} />
@@ -200,7 +332,7 @@ export const Sidebar: React.FC = () => {
           ref={contentScrollRef}
           className={clsx(
             'flex-1 overflow-y-auto p-4 custom-scrollbar',
-            isMobile ? 'px-3 pb-2 pt-1.5' : 'pb-6'
+            isMobile ? 'scrollbar-hide px-3 pb-2 pt-2' : 'pb-6'
           )}
         >
           {renderTabContent()}
