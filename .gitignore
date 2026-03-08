@@ -60,3 +60,7 @@ AGENTS.md
 CLAUDE.md
 QWEN.md
 KIMI.md
+
+# Local visual validation artifacts
+output/
+output-*.png

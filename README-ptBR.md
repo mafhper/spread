@@ -2,7 +2,7 @@
 
 Spread é um utilitário web de alta fidelidade projetado para a geração de ativos estéticos de visualização de links. A plataforma facilita a transformação de URLs de diversas fontes digitais — incluindo serviços de streaming, redes sociais e portais de notícias — em componentes visuais profissionais otimizados para distribuição em alta resolução.
 
-![Banner](public/docs/assets/banner.png)
+![Banner](public/docs/assets/banner.jpeg)
 
 <div align="center">
 
