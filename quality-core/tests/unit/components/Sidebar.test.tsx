@@ -47,7 +47,7 @@ describe('Sidebar Component', () => {
       isSidebarOpen: true,
     })
     render(<Sidebar />)
-    expect(screen.getByText('Formato')).toBeDefined()
+    expect(screen.getByRole('tab', { name: 'Formato' })).toBeInTheDocument()
   })
 
   it('switches tabs correctly', async () => {
@@ -68,6 +68,22 @@ describe('Sidebar Component', () => {
     expect(formatTab).toHaveAttribute('aria-selected', 'true')
   })
 
+  it('resets the active category from the fixed footer action', () => {
+    vi.mocked(useCardStore).mockReturnValue({
+      ...mockStore,
+      isSidebarOpen: true,
+    })
+
+    render(<Sidebar />)
+
+    fireEvent.click(screen.getByText('Resetar Formato'))
+    expect(mockStore.resetCanvas).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByLabelText('Cores'))
+    fireEvent.click(screen.getByText('Resetar Cores'))
+    expect(mockStore.resetColors).toHaveBeenCalled()
+  })
+
   it('handles sidebar toggle on desktop', () => {
     vi.mocked(useCardStore).mockReturnValue({
       ...mockStore,
@@ -83,7 +99,7 @@ describe('Sidebar Component', () => {
     )
   })
 
-  it('handles mobile view correctly', async () => {
+  it('does not render the mobile sheet when closed', async () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))
 
@@ -94,9 +110,7 @@ describe('Sidebar Component', () => {
 
     const { rerender } = render(<Sidebar />)
 
-    const openButton = screen.getByLabelText('Abrir menu lateral')
-    fireEvent.click(openButton)
-    expect(mockStore.updateField).toHaveBeenCalledWith('isSidebarOpen', true)
+    expect(screen.queryByLabelText('Fechar menu lateral')).toBeNull()
 
     vi.mocked(useCardStore).mockReturnValue({
       ...mockStore,
@@ -109,7 +123,23 @@ describe('Sidebar Component', () => {
     expect(mockStore.updateField).toHaveBeenCalledWith('isSidebarOpen', false)
   })
 
-  it('handles Escape key on mobile overlay', async () => {
+  it('renders centered icon tabs on mobile', () => {
+    window.innerWidth = 375
+    window.dispatchEvent(new Event('resize'))
+
+    vi.mocked(useCardStore).mockReturnValue({
+      ...mockStore,
+      isSidebarOpen: true,
+    })
+
+    render(<Sidebar />)
+
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(5)
+    tabs.forEach(tab => expect(tab).toHaveClass('justify-center'))
+  })
+
+  it('does not render a mobile overlay over the preview area', () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))
     vi.mocked(useCardStore).mockReturnValue({
@@ -119,9 +149,7 @@ describe('Sidebar Component', () => {
 
     render(<Sidebar />)
 
-    const overlay = await screen.findByRole('presentation')
-    fireEvent.keyDown(overlay, { key: 'Escape' })
-    expect(mockStore.updateField).toHaveBeenCalledWith('isSidebarOpen', false)
+    expect(screen.queryByRole('presentation')).toBeNull()
   })
 
   it('cleans up resize listener on unmount', () => {

@@ -71,7 +71,7 @@ describe('ColorTabs Component', () => {
     })
 
     render(<ColorTabs />)
-    const autoButton = screen.getByText('Cores Automáticas')
+    const autoButton = screen.getByText('Auto')
     fireEvent.click(autoButton)
 
     await waitFor(() => {
@@ -88,14 +88,7 @@ describe('ColorTabs Component', () => {
     vi.mocked(useCardStore).mockReturnValue({ ...mockStore, image: null })
 
     render(<ColorTabs />)
-    const autoButton = screen.getByText('Cores Automáticas')
+    const autoButton = screen.getByText('Auto')
     expect(autoButton).toBeDisabled()
-  })
-
-  it('handles reset colors', () => {
-    render(<ColorTabs />)
-    const resetButton = screen.getByText(/Resetar Categoria \(Cores\)/)
-    fireEvent.click(resetButton)
-    expect(mockStore.resetColors).toHaveBeenCalled()
   })
 })

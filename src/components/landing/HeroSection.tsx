@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { Zap, Loader2, Sparkles, Save } from 'lucide-react'
+import { Zap, Loader2, Save } from 'lucide-react'
 
 interface HeroSectionProps {
   inputUrl: string
@@ -70,28 +70,33 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto w-full">
         {/* Animated Logo */}
         <div className="relative mb-6 sm:mb-12">
-          {/* Glow ring */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-36 h-36 sm:w-52 sm:h-52 bg-gradient-to-tr from-violet-500/20 via-fuchsia-500/20 to-cyan-500/20 rounded-full blur-2xl animate-pulse" />
-          </div>
-
           {/* Logo container */}
-          <div className="relative w-24 h-24 sm:w-36 sm:h-36 transform hover:scale-110 transition-transform duration-500">
-            <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-3xl rotate-6 opacity-80" />
-            <div className="absolute inset-1 bg-zinc-950 rounded-3xl flex items-center justify-center">
+          <div className="relative w-24 h-24 sm:w-36 sm:h-36 transition-transform duration-500 hover:scale-[1.04]">
+            <div
+              className="absolute -inset-10 sm:-inset-14 rounded-[3rem] opacity-55 blur-2xl mix-blend-screen animate-hero-logo-glow-color"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle, rgba(139,92,246,0.24) 0%, rgba(217,70,239,0.18) 24%, rgba(34,211,238,0.12) 46%, rgba(236,72,153,0.08) 60%, rgba(24,24,27,0) 78%)',
+              }}
+            />
+            <div
+              className="absolute -inset-[3px] sm:-inset-1 rounded-[1.9rem] opacity-85 animate-hero-logo-color-wheel"
+              style={{
+                backgroundImage:
+                  'conic-gradient(from 210deg, rgba(139,92,246,0.82), rgba(217,70,239,0.86), rgba(236,72,153,0.74), rgba(34,211,238,0.76), rgba(139,92,246,0.82))',
+              }}
+            />
+            <div className="absolute inset-0 rounded-3xl bg-zinc-950/96 shadow-[0_12px_40px_rgba(0,0,0,0.28),inset_0_0_24px_rgba(255,255,255,0.03)]" />
+            <div className="absolute inset-[4px] rounded-[1.35rem] bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.05),transparent_48%),linear-gradient(180deg,rgba(24,24,27,0.98),rgba(9,9,11,0.98))]" />
+            <div className="absolute inset-0 flex items-center justify-center">
               <img
                 src="/spread/logo.svg"
                 alt="Spread"
-                className="w-12 h-12 sm:w-20 sm:h-20 opacity-90 drop-shadow-[0_0_30px_rgba(139,92,246,0.4)] animate-color-shift"
-                style={{ filter: 'brightness(1.3) contrast(1.1)' }}
+                className="w-12 h-12 sm:w-20 sm:h-20 opacity-95 drop-shadow-[0_0_18px_rgba(217,70,239,0.2)]"
+                style={{ filter: 'brightness(1.16) contrast(1.06)' }}
                 fetchPriority="high"
                 loading="eager"
               />
-            </div>
-
-            {/* Sparkle accent */}
-            <div className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-lg shadow-2xl flex items-center justify-center animate-bounce">
-              <Sparkles size={18} className="text-violet-600" />
             </div>
           </div>
         </div>

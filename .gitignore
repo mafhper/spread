@@ -46,3 +46,17 @@ GEMINI.md
 .agents/
 AGENTS.md
 
+# Codex local private files
+.dev/
+.claude/
+.qwen/
+.kimi/
+
+# Codex local private files
+.roo/
+.cursor/
+.windsurf/
+.claude-code/
+CLAUDE.md
+QWEN.md
+KIMI.md

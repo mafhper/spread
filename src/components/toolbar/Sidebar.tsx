@@ -7,9 +7,9 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
-  Menu,
   X,
   Palette,
+  RotateCcw,
   // Frame, // DISABLED: Feature not working
 } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -34,11 +34,6 @@ const ColorTabs = lazy(() =>
 // const FrameTabs = lazy(() =>
 //   import('./tabs/FrameTabs').then(m => ({ default: m.FrameTabs }))
 // )
-const MessageSuggestions = lazy(() =>
-  import('./tabs/MessageSuggestions').then(m => ({
-    default: m.MessageSuggestions,
-  }))
-)
 
 type TabType =
   | 'card'
@@ -69,17 +64,7 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
     case 'canvas':
       return <CanvasControls />
     case 'text':
-      return (
-        <div className="space-y-6">
-          <TypographyTabs />
-          <div className="border-t border-white/10 pt-6">
-            <h4 className="text-sm font-medium text-white/40 mb-4 px-1">
-              Sugestões de Mensagem
-            </h4>
-            <MessageSuggestions />
-          </div>
-        </div>
-      )
+      return <TypographyTabs />
     // case 'frame':
     //   return <FrameTabs />
     default:
@@ -88,9 +73,20 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
 }
 
 export const Sidebar: React.FC = () => {
-  const { isSidebarOpen, updateField } = useCardStore()
+  const {
+    isSidebarOpen,
+    updateField,
+    resetCanvas,
+    resetColors,
+    resetTypography,
+    resetCard,
+    resetBackground,
+    resetPhoto,
+  } = useCardStore()
   const [activeTab, setActiveTab] = useState<TabType>('canvas')
   const [isMobile, setIsMobile] = useState(false)
+  const contentScrollRef = React.useRef<HTMLDivElement>(null)
+  const activeTabDef = TABS.find(tab => tab.id === activeTab) ?? TABS[0]
 
   // Detect mobile
   useEffect(() => {
@@ -111,6 +107,12 @@ export const Sidebar: React.FC = () => {
     }
   }, [isMobile])
 
+  useEffect(() => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTop = 0
+    }
+  }, [activeTab])
+
   const renderTabContent = () => (
     <Suspense
       fallback={
@@ -123,89 +125,169 @@ export const Sidebar: React.FC = () => {
     </Suspense>
   )
 
-  // Mobile: Floating toggle button
+  const handleResetActiveTab = () => {
+    switch (activeTab) {
+      case 'canvas':
+        resetCanvas()
+        return
+      case 'colors':
+        resetColors()
+        return
+      case 'text':
+        resetTypography()
+        return
+      case 'card':
+        resetCard()
+        return
+      case 'media':
+        resetBackground()
+        resetPhoto()
+        return
+      default:
+        return
+    }
+  }
+
+  const activeResetLabel = isMobile
+    ? 'Resetar'
+    : activeTab === 'media'
+      ? 'Resetar Imagem'
+      : `Resetar ${activeTabDef.label}`
+
+  // Mobile button is rendered in the editor header to avoid overlapping
+  // preview controls near the bottom edge.
   if (isMobile && !isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 left-4 z-50 w-14 h-14 bg-white text-black rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
-        aria-label="Abrir menu lateral"
-      >
-        <Menu size={24} />
-      </button>
-    )
+    return null
   }
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isMobile && isOpen && (
-        <div
-          role="presentation"
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setIsOpen(false)}
-          onKeyDown={e => e.key === 'Escape' && setIsOpen(false)}
-        />
-      )}
-
-      {/* Desktop Layout - Sidebar + Toggle */}
       <div
         className={clsx(
-          'h-full bg-black/95 backdrop-blur-xl border-r border-white/10 flex flex-col transition-all duration-300 shadow-2xl z-50',
-          isMobile ? 'fixed left-0 top-0 w-80' : 'relative flex-shrink-0',
+          'bg-black/95 backdrop-blur-xl flex flex-col transition-all duration-300 shadow-2xl z-50',
+          isMobile
+            ? 'relative w-full h-[min(42vh,22rem)] rounded-t-[1.5rem] border border-b-0 border-white/10 shadow-[0_-18px_40px_rgba(0,0,0,0.35)]'
+            : 'relative flex-shrink-0 h-full border-r border-white/10',
           !isMobile && (isOpen ? 'w-80' : 'w-0 overflow-hidden opacity-0')
         )}
+        aria-label="Barra lateral de personalização"
       >
-        {/* Mobile close button */}
         {isMobile && (
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 p-3 hover:bg-white/10 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-            aria-label="Fechar menu lateral"
-          >
-            <X size={20} />
-          </button>
+          <div className="relative border-b border-white/10 bg-black/88 px-4 pt-2 pb-1.5">
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-white/18" />
+            <div className="absolute right-3 top-1.5 flex items-center justify-end">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="flex min-h-[40px] min-w-[40px] items-center justify-center rounded-xl p-2 transition-colors hover:bg-white/10"
+                aria-label="Fechar menu lateral"
+              >
+                <X size={17} />
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* Tab Icons - Horizontal on top */}
-        <div className="flex-shrink-0 flex items-center gap-1 p-3 border-b border-white/10 bg-black/50">
-          {TABS.map(tab => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={clsx(
-                  'flex-1 py-3 min-h-[44px] rounded-xl flex items-center justify-center transition-all',
-                  isActive
-                    ? 'bg-white text-black'
-                    : 'text-white/50 hover:bg-white/10 hover:text-white'
-                )}
-                title={tab.label}
-                aria-label={tab.label}
-                aria-selected={isActive}
-                role="tab"
-              >
-                <Icon size={18} />
-              </button>
-            )
-          })}
-        </div>
-
         {/* Tab Header */}
-        <div className="flex-shrink-0 p-4 border-b border-white/10">
+        <div className="hidden md:block flex-shrink-0 p-4 border-b border-white/10">
           <h3 className="font-semibold text-sm flex items-center gap-2">
-            {React.createElement(TABS.find(t => t.id === activeTab)!.icon, {
-              size: 16,
-            })}
-            {TABS.find(t => t.id === activeTab)?.label}
+            {React.createElement(activeTabDef.icon, { size: 16 })}
+            {activeTabDef.label}
           </h3>
         </div>
 
         {/* Tab Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div
+          ref={contentScrollRef}
+          className={clsx(
+            'flex-1 overflow-y-auto p-4 custom-scrollbar',
+            isMobile ? 'px-3 pb-2 pt-1.5' : 'pb-6'
+          )}
+        >
           {renderTabContent()}
+        </div>
+
+        <div className="flex-shrink-0 border-t border-white/10 bg-black/88 px-3 py-2">
+          {!isMobile && (
+            <button
+              onClick={handleResetActiveTab}
+              className="flex w-full min-h-[34px] items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/70 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-200"
+            >
+              <RotateCcw size={13} />
+              <span>{activeResetLabel}</span>
+            </button>
+          )}
+
+          <div
+            className={clsx(
+              'border border-white/8 bg-black/65',
+              isMobile
+                ? 'overflow-x-auto rounded-2xl px-2 py-1.5 scrollbar-hide'
+                : 'mt-2 overflow-hidden rounded-xl p-2'
+            )}
+          >
+            {isMobile ? (
+              <div className="flex min-w-max items-center justify-center gap-2">
+                {TABS.map(tab => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={clsx(
+                        'flex h-11 w-11 flex-none items-center justify-center rounded-xl px-0 transition-all',
+                        isActive
+                          ? 'bg-white text-black'
+                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      )}
+                      title={tab.label}
+                      aria-label={tab.label}
+                      aria-selected={isActive}
+                      role="tab"
+                    >
+                      <Icon size={16} />
+                    </button>
+                  )
+                })}
+                <button
+                  onClick={handleResetActiveTab}
+                  className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-0 text-red-200 transition-all hover:border-red-400/35 hover:bg-red-500/15"
+                  title={activeResetLabel}
+                  aria-label={activeResetLabel}
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="grid w-full grid-cols-5 gap-1.5">
+                {TABS.map(tab => {
+                  const Icon = tab.icon
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={clsx(
+                        'flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-[9px] font-medium transition-all',
+                        isActive
+                          ? 'bg-white text-black'
+                          : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      )}
+                      title={tab.label}
+                      aria-label={tab.label}
+                      aria-selected={isActive}
+                      role="tab"
+                    >
+                      <Icon size={16} />
+                      <span className="max-w-full text-center leading-[1.05] whitespace-normal">
+                        {tab.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -46,6 +46,7 @@ const retryBackoffMs = Number.parseInt(
     '1200',
   10
 )
+const UNAVAILABLE_PORT_ERROR_CODES = new Set(['EADDRINUSE', 'EACCES', 'EPERM'])
 
 // Configuracao
 const CONFIG = {
@@ -165,7 +166,7 @@ function isPortInUseOnHost(port, host) {
       resolve(result)
     }
     server.once('error', err => {
-      if (err.code === 'EADDRINUSE') finalize(true)
+      if (UNAVAILABLE_PORT_ERROR_CODES.has(err.code)) finalize(true)
       else finalize(false)
     })
     server.once('listening', () => {
@@ -186,13 +187,15 @@ async function isPortInUse(port) {
   return inUseV6
 }
 
-async function findAvailablePort(startPort, attempts = 10) {
+async function findAvailablePort(startPort, attempts = 300) {
   for (let i = 0; i < attempts; i += 1) {
     const port = startPort + i
     const inUse = await isPortInUse(port)
     if (!inUse) return port
   }
-  return startPort
+  throw new Error(
+    `Nenhuma porta disponivel encontrada a partir de ${startPort} apos ${attempts} tentativas`
+  )
 }
 
 function createLogBuffer(maxLines = 20) {
@@ -632,7 +635,7 @@ async function main() {
     stdout: createLogBuffer(),
     stderr: createLogBuffer(),
   }
-  const port = await findAvailablePort(CONFIG.port, 5)
+  const port = await findAvailablePort(CONFIG.port, 300)
   const baseUrl = `http://${CONFIG.host}:${port}`
   const projectRoot = path.resolve(__dirname, '../../')
   const basePath = resolveBasePath(projectRoot)

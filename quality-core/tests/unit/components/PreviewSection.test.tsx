@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { toPng } from 'html-to-image'
 import download from 'downloadjs'
-import { PreviewSection } from '@/components/preview/PreviewSection'
+import {
+  PreviewSection,
+  type PreviewSectionHandle,
+} from '@/components/preview/PreviewSection'
 import { useCardStore } from '@/store/cardStore'
 import { useHistory } from '@/hooks/useHistory'
 import { useColorExtractor } from '@/hooks/useColorExtractor'
@@ -65,42 +69,36 @@ describe('PreviewSection Component', () => {
     expect(screen.getByRole('region', { name: /preview/i })).toBeInTheDocument()
   })
 
-  it('handles download button click', async () => {
+  it('keeps editor controls out of the preview canvas', () => {
+    const mockStore = createMockCardStore({ isWelcomeState: false })
+    vi.mocked(useCardStore).mockReturnValue(mockStore)
+
+    render(<PreviewSection />)
+
+    expect(
+      screen.queryByRole('button', { name: /baixar imagem/i })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Link ativo')).not.toBeInTheDocument()
+  })
+
+  it('exposes download through the preview ref', async () => {
     const mockStore = createMockCardStore({ isWelcomeState: false })
     vi.mocked(useCardStore).mockReturnValue(mockStore)
 
     const mockBase64 = 'data:image/png;base64,mock-data'
     vi.mocked(toPng).mockResolvedValue(mockBase64)
+    const previewRef = React.createRef<PreviewSectionHandle>()
 
-    render(<PreviewSection />)
+    render(<PreviewSection ref={previewRef} />)
 
-    const downloadButton = screen.getByRole('button', {
-      name: /baixar imagem/i,
+    await act(async () => {
+      await previewRef.current?.download()
     })
-    fireEvent.click(downloadButton)
 
     await waitFor(() => {
       expect(toPng).toHaveBeenCalled()
       expect(download).toHaveBeenCalledWith(mockBase64, expect.any(String))
     })
-  })
-
-  it('shows loading state during generation', async () => {
-    const mockStore = createMockCardStore({ isWelcomeState: false })
-    vi.mocked(useCardStore).mockReturnValue(mockStore)
-
-    vi.mocked(toPng).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve(''), 100))
-    )
-
-    render(<PreviewSection />)
-
-    const downloadButton = screen.getByRole('button', {
-      name: /baixar imagem/i,
-    })
-    fireEvent.click(downloadButton)
-
-    expect(screen.getByText(/gerando/i)).toBeInTheDocument()
   })
 
   it('handles link generation success', async () => {

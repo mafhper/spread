@@ -182,6 +182,7 @@ export const useAutoScale = (
     if (!enabled) return
 
     const container = containerRef.current
+    const content = contentRef.current
     if (!container) return
 
     // Recalcula inicial
@@ -195,6 +196,9 @@ export const useAutoScale = (
     })
 
     resizeObserver.observe(container)
+    if (content) {
+      resizeObserver.observe(content)
+    }
 
     // Observa redimensionamento da janela
     const handleWindowResize = () => {

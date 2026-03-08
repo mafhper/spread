@@ -61,6 +61,47 @@ html {
   animation: color-shift 5s linear infinite;
 }
 
+@keyframes hero-logo-color-wheel {
+  0% {
+    filter: hue-rotate(0deg) saturate(1.02) brightness(0.98);
+    opacity: 0.72;
+  }
+  50% {
+    filter: hue-rotate(140deg) saturate(1.08) brightness(1.04);
+    opacity: 0.86;
+  }
+  100% {
+    filter: hue-rotate(280deg) saturate(1.02) brightness(0.99);
+    opacity: 0.72;
+  }
+}
+
+@keyframes hero-logo-glow-color {
+  0% {
+    transform: scale(0.96);
+    filter: hue-rotate(0deg) saturate(1) brightness(0.94);
+    opacity: 0.34;
+  }
+  50% {
+    transform: scale(1.03);
+    filter: hue-rotate(150deg) saturate(1.1) brightness(1.06);
+    opacity: 0.46;
+  }
+  100% {
+    transform: scale(0.97);
+    filter: hue-rotate(300deg) saturate(1.02) brightness(0.98);
+    opacity: 0.36;
+  }
+}
+
+.animate-hero-logo-color-wheel {
+  animation: hero-logo-color-wheel 18s linear infinite;
+}
+
+.animate-hero-logo-glow-color {
+  animation: hero-logo-glow-color 14s ease-in-out infinite;
+}
+
 /* ===============================
    Preview Render / Measure Split
    =============================== */

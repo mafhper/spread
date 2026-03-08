@@ -6,10 +6,13 @@ const { spawn, execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const http = require('http')
+const net = require('net')
 
 const DEFAULT_PORT = 4173
 const DEFAULT_TIMEOUT = 120000
 const POLL_INTERVAL = 1000
+const PORT_SCAN_ATTEMPTS = 300
+const PORT_ERROR_CODES = new Set(['EADDRINUSE', 'EACCES', 'EPERM'])
 
 /**
  * Safe fs helpers with path validation
@@ -52,6 +55,112 @@ function isServerReady(url) {
       resolve(false)
     })
   })
+}
+
+function normalizePort(port) {
+  const parsed = Number.parseInt(String(port || ''), 10)
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 65535) {
+    return DEFAULT_PORT
+  }
+  return parsed
+}
+
+function buildPreviewUrl({
+  protocol = 'http:',
+  host = '127.0.0.1',
+  port,
+  pathname = '/',
+}) {
+  const normalizedPath = pathname && pathname !== '' ? pathname : '/'
+  const safePath = normalizedPath.startsWith('/')
+    ? normalizedPath
+    : `/${normalizedPath}`
+  return `${protocol}//${host}:${port}${safePath}`
+}
+
+function parsePreviewUrl(url) {
+  if (!url) {
+    return {
+      protocol: 'http:',
+      host: '127.0.0.1',
+      port: DEFAULT_PORT,
+      pathname: '/',
+      explicit: false,
+    }
+  }
+
+  try {
+    const parsed = new URL(url)
+    return {
+      protocol: parsed.protocol || 'http:',
+      host: parsed.hostname || '127.0.0.1',
+      port: normalizePort(parsed.port || DEFAULT_PORT),
+      pathname: parsed.pathname || '/',
+      explicit: true,
+    }
+  } catch {
+    return {
+      protocol: 'http:',
+      host: '127.0.0.1',
+      port: DEFAULT_PORT,
+      pathname: '/',
+      explicit: false,
+    }
+  }
+}
+
+function canListenOnHost(port, host) {
+  return new Promise(resolve => {
+    const server = net.createServer()
+    let settled = false
+    const finish = available => {
+      if (settled) return
+      settled = true
+      resolve(available)
+    }
+
+    server.once('error', err => {
+      if (PORT_ERROR_CODES.has(err.code)) {
+        finish(false)
+        return
+      }
+      finish(false)
+    })
+
+    server.once('listening', () => {
+      server.close(() => finish(true))
+    })
+
+    try {
+      server.listen({ port, host, exclusive: true })
+    } catch {
+      finish(false)
+    }
+  })
+}
+
+async function isPortAvailable(port, hosts = ['127.0.0.1', '::1']) {
+  for (const host of hosts) {
+    const available = await canListenOnHost(port, host)
+    if (!available) return false
+  }
+  return true
+}
+
+async function findAvailablePort(
+  startPort = DEFAULT_PORT,
+  attempts = PORT_SCAN_ATTEMPTS
+) {
+  const initialPort = normalizePort(startPort)
+  for (let offset = 0; offset < attempts; offset += 1) {
+    const candidate = initialPort + offset
+    if (candidate > 65535) break
+    const available = await isPortAvailable(candidate)
+    if (available) return candidate
+  }
+  throw new Error(
+    `Nenhuma porta disponivel encontrada a partir de ${initialPort} apos ${attempts} tentativas`
+  )
 }
 
 /**
@@ -301,10 +410,36 @@ async function stopPreviewServer(serverInfo) {
  * Gerenciador de ciclo de vida do servidor preview
  */
 async function withPreviewServer(options, callback) {
-  const {
-    url = `http://localhost:${DEFAULT_PORT}`,
-    projectRoot = process.cwd(),
-  } = options
+  const { projectRoot = process.cwd() } = options
+  const requested = parsePreviewUrl(options.url)
+  const requestedUrl = buildPreviewUrl({
+    protocol: requested.protocol,
+    host: requested.host,
+    port: requested.port,
+    pathname: requested.pathname,
+  })
+
+  if (requested.explicit) {
+    console.log(
+      `[PREVIEW-SERVER - INFO] Verificando servidor informado manualmente em ${requestedUrl}...`
+    )
+    const explicitServerReady = await isServerReady(requestedUrl)
+    if (explicitServerReady) {
+      console.log(
+        `[PREVIEW-SERVER - INFO] Usando servidor ja em execucao em ${requestedUrl}`
+      )
+      return callback({ url: requestedUrl, port: requested.port })
+    }
+  }
+
+  const preferredPort = normalizePort(options.port || requested.port)
+  const selectedPort = await findAvailablePort(preferredPort)
+  const url = buildPreviewUrl({
+    protocol: requested.protocol,
+    host: requested.host,
+    port: selectedPort,
+    pathname: requested.pathname,
+  })
   let serverInfo = null
 
   // Verifica se o servidor ja esta rodando
@@ -325,7 +460,11 @@ async function withPreviewServer(options, callback) {
 
   try {
     // Inicia o servidor
-    serverInfo = await startPreviewServer({ ...options, projectRoot })
+    serverInfo = await startPreviewServer({
+      ...options,
+      port: selectedPort,
+      projectRoot,
+    })
 
     // Aguarda servidor estar pronto
     console.log(
@@ -335,7 +474,7 @@ async function withPreviewServer(options, callback) {
     console.log(`[PREVIEW-SERVER - INFO] Servidor pronto em ${url}`)
 
     // Executa o callback
-    const result = await callback()
+    const result = await callback({ url, port: selectedPort })
 
     return result
   } finally {
@@ -354,4 +493,6 @@ module.exports = {
   withPreviewServer,
   hasValidDist,
   DEFAULT_PORT,
+  findAvailablePort,
+  isPortAvailable,
 }

@@ -203,9 +203,7 @@ async function main() {
   }
 
   // URL configuration
-  let url =
-    args.find(a => a.startsWith('--url='))?.split('=')[1] ||
-    'http://localhost:4173'
+  let url = args.find(a => a.startsWith('--url='))?.split('=')[1] || null
 
   const projectRoot = process.cwd()
 
@@ -214,7 +212,7 @@ async function main() {
     presetName === 'github-pages' ? GITHUB_PAGES_PRESET : GITHUB_PAGES_PRESET
 
   const context = {
-    url: url,
+    url,
     preset: presetName,
     device: preset.device || 'mobile',
     thresholds: DEFAULT_THRESHOLDS,
@@ -239,7 +237,8 @@ async function main() {
     // Modo automatico - gerencia o ciclo de vida do servidor
     result = await withPreviewServer(
       { url, projectRoot, timeout: 120000 },
-      async () => {
+      async preview => {
+        context.url = preview.url
         return await runQualityChecks(context, isQuick)
       }
     )

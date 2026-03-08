@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { History, RotateCcw } from 'lucide-react'
+import { Download, History, Loader2, Menu, Zap } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
 import { useCardStore } from '../store/cardStore'
 import { fetchMetadata } from '../services/metadata'
@@ -35,9 +35,17 @@ export const SpreadEditor: React.FC = () => {
   const [inputUrl, setInputUrl] = useState('')
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   const [hasDraft, setHasDraft] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isCompactToolbar, setIsCompactToolbar] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const previewRef = React.useRef<
+    import('./preview/PreviewSection').PreviewSectionHandle | null
+  >(null)
 
   const {
     isWelcomeState: isWelcome,
+    isSidebarOpen,
+    url,
     setFullState,
     updateNestedField,
     updateField,
@@ -115,6 +123,24 @@ export const SpreadEditor: React.FC = () => {
     debouncedPersistUrl(inputUrl)
   }, [inputUrl, debouncedPersistUrl])
 
+  useEffect(() => {
+    const syncViewport = () => {
+      setIsMobile(window.innerWidth < 768)
+      setIsCompactToolbar(window.innerWidth < 1024)
+    }
+
+    syncViewport()
+    window.addEventListener('resize', syncViewport)
+
+    return () => window.removeEventListener('resize', syncViewport)
+  }, [])
+
+  useEffect(() => {
+    if (!isWelcome && url) {
+      setInputUrl(url)
+    }
+  }, [isWelcome, url])
+
   const handleGenerate = async () => {
     if (!inputUrl) return
     setIsLoadingMetadata(true)
@@ -160,6 +186,22 @@ export const SpreadEditor: React.FC = () => {
     }
   }
 
+  const handleOpenHistory = () => {
+    updateField('isSidebarOpen', false)
+    setShowHistory(true)
+  }
+
+  const handleDownloadFromToolbar = async () => {
+    if (!previewRef.current) return
+
+    setIsDownloading(true)
+    try {
+      await previewRef.current.download()
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   // Welcome state: Full Landing Page experience
   if (isWelcome) {
     return (
@@ -195,91 +237,233 @@ export const SpreadEditor: React.FC = () => {
 
   // Editor state: Card generation UI
   return (
-    <div className="h-screen w-full flex bg-black text-[var(--text-main)] overflow-hidden">
+    <div
+      className={`h-screen w-full bg-black text-[var(--text-main)] overflow-hidden ${isMobile ? 'flex flex-col' : 'flex'}`}
+    >
       {/* Left Sidebar */}
-      <div className="z-30 h-full">
+      <div className={isMobile ? 'order-2 z-30 flex-none' : 'z-30 h-full'}>
         <Sidebar />
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative min-w-0 z-10">
+      <div className="order-1 flex-1 flex flex-col relative min-w-0 z-10 min-h-0">
         {/* Header / Top Bar */}
-        <header className="flex-shrink-0 px-4 py-3 sm:p-6 flex justify-between items-center z-20">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-2 sm:gap-3 p-2 sm:pl-3 sm:pr-5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:scale-105 active:scale-95 transition-all min-h-[44px]"
-            >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 sm:p-1.5 shadow-xl">
-                <img
-                  src="/spread/logo.svg"
-                  alt=""
-                  className="w-full h-full opacity-95 invert brightness-0"
-                />
-              </div>
-              <span className="font-extrabold text-sm sm:text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
-                Spread
-              </span>
-            </button>
-
-            <a
-              href="https://github.com/mafhper/spread"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2.5 sm:p-3 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-[var(--bg-input)] transition-all min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:text-white"
-              title="Ver no GitHub"
-              aria-label="Ver no GitHub"
-            >
-              <svg
-                viewBox="0 0 16 16"
-                width="20"
-                height="20"
-                fill="currentColor"
-              >
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8" />
-              </svg>
-            </a>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (
-                  confirm(
-                    'Tem certeza que deseja resetar todas as personalizações?'
-                  )
-                ) {
-                  useCardStore.getState().reset()
+        <header
+          className={`flex-shrink-0 z-20 ${isMobile ? 'px-3 py-3' : isCompactToolbar ? 'px-4 py-3 space-y-3' : 'px-6 py-4'}`}
+        >
+          {isMobile ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => updateField('isSidebarOpen', !isSidebarOpen)}
+                className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 text-[var(--text-muted)] shadow-lg backdrop-blur-md transition-all hover:bg-[var(--bg-input)] hover:text-white"
+                aria-label={
+                  isSidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'
                 }
-              }}
-              className="p-2.5 sm:p-3 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-red-500/10 hover:border-red-500/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:text-red-400 group"
-              title="Resetar tudo"
-              aria-label="Resetar tudo"
-            >
-              <RotateCcw
-                size={20}
-                className="group-hover:rotate-[-45deg] transition-transform"
-              />
-            </button>
+                aria-expanded={isSidebarOpen}
+              >
+                <Menu size={20} />
+              </button>
 
-            <button
-              onClick={() => setShowHistory(true)}
-              className="p-2.5 sm:p-3 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-[var(--bg-input)] transition-all min-w-[44px] min-h-[44px] flex items-center gap-2 text-[var(--text-muted)] hover:text-white group"
-              title="Histórico"
-              aria-label="Histórico"
-            >
-              <History
-                size={20}
-                className="group-hover:rotate-[-20deg] transition-transform"
+              <button
+                onClick={() => window.location.reload()}
+                className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 sm:p-1.5 shadow-xl">
+                  <img
+                    src="/spread/logo.svg"
+                    alt=""
+                    className="w-full h-full opacity-95 invert brightness-0"
+                  />
+                </div>
+              </button>
+
+              <input
+                type="url"
+                placeholder="Cole seu link aqui..."
+                value={inputUrl}
+                onChange={e => setInputUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleGenerate()}
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[var(--bg-card)]/80 px-3 py-2.5 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+                aria-label="URL do link"
               />
-            </button>
-          </div>
+              <button
+                onClick={handleGenerate}
+                disabled={isLoadingMetadata}
+                className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-white text-black transition-all hover:bg-gray-200 disabled:opacity-50"
+                aria-label="Atualizar card"
+                title="Atualizar card"
+              >
+                {isLoadingMetadata ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Zap size={18} className="fill-black" />
+                )}
+              </button>
+              <button
+                onClick={handleDownloadFromToolbar}
+                disabled={isDownloading}
+                className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-white text-black transition-all hover:bg-gray-200 disabled:opacity-50"
+                aria-label="Baixar imagem"
+                title="Baixar imagem"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Download size={18} />
+                )}
+              </button>
+              <button
+                onClick={handleOpenHistory}
+                className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 text-[var(--text-muted)] shadow-lg backdrop-blur-md transition-all hover:bg-[var(--bg-input)] hover:text-white"
+                title="Histórico"
+                aria-label="Histórico"
+              >
+                <History size={18} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div
+                className={`flex items-center min-w-0 ${isCompactToolbar ? 'justify-between gap-3' : 'gap-3'}`}
+              >
+                <div
+                  className={`flex items-center min-w-0 ${isCompactToolbar ? 'gap-2 sm:gap-4' : 'flex-none gap-3'}`}
+                >
+                  <button
+                    onClick={() => updateField('isSidebarOpen', !isSidebarOpen)}
+                    className="md:hidden p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-[var(--bg-input)] transition-all min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:text-white"
+                    aria-label={
+                      isSidebarOpen
+                        ? 'Fechar menu lateral'
+                        : 'Abrir menu lateral'
+                    }
+                    aria-expanded={isSidebarOpen}
+                  >
+                    <Menu size={20} />
+                  </button>
+
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="flex items-center gap-3 rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 pl-3 pr-5 min-h-[44px] min-w-0 shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 sm:p-1.5 shadow-xl">
+                      <img
+                        src="/spread/logo.svg"
+                        alt=""
+                        className="w-full h-full opacity-95 invert brightness-0"
+                      />
+                    </div>
+                    <span className="font-extrabold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
+                      Spread
+                    </span>
+                  </button>
+                </div>
+
+                {!isCompactToolbar && (
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <input
+                      type="url"
+                      placeholder="Cole seu link aqui..."
+                      value={inputUrl}
+                      onChange={e => setInputUrl(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleGenerate()}
+                      className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[var(--bg-card)]/80 px-5 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+                      aria-label="URL do link"
+                    />
+                    <button
+                      onClick={handleGenerate}
+                      disabled={isLoadingMetadata}
+                      className="min-h-[44px] flex-none rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      aria-label="Atualizar card"
+                    >
+                      {isLoadingMetadata ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Zap size={18} className="fill-black" />
+                          <span>Atualizar card</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleDownloadFromToolbar}
+                      disabled={isDownloading}
+                      className="min-h-[44px] flex-none rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      aria-label="Baixar imagem"
+                    >
+                      {isDownloading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Download size={18} />
+                          <span>Baixar imagem</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                <div
+                  className={`flex items-center gap-2 ${isCompactToolbar ? 'flex-none' : 'ml-auto flex-none'}`}
+                >
+                  <button
+                    onClick={handleOpenHistory}
+                    className="p-2.5 sm:p-3 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-[var(--bg-input)] transition-all min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:text-white"
+                    title="Histórico"
+                    aria-label="Histórico"
+                  >
+                    <History size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {!isWelcome && isCompactToolbar && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    placeholder="Cole seu link aqui..."
+                    value={inputUrl}
+                    onChange={e => setInputUrl(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleGenerate()}
+                    className="flex-1 min-w-0 rounded-2xl border border-white/10 bg-[var(--bg-card)]/80 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20"
+                    aria-label="URL do link"
+                  />
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isLoadingMetadata}
+                    className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-white text-black transition-all hover:bg-gray-200 disabled:opacity-50"
+                    aria-label="Atualizar card"
+                    title="Atualizar card"
+                  >
+                    {isLoadingMetadata ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Zap size={18} className="fill-black" />
+                    )}
+                  </button>
+                  <button
+                    onClick={handleDownloadFromToolbar}
+                    disabled={isDownloading}
+                    className="flex h-11 w-11 flex-none items-center justify-center rounded-2xl bg-white text-black transition-all hover:bg-gray-200 disabled:opacity-50"
+                    aria-label="Baixar imagem"
+                    title="Baixar imagem"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Download size={18} />
+                    )}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </header>
 
         {/* Main Preview Area */}
         <main className="flex-1 min-h-0 overflow-hidden">
           <Suspense fallback={<LoadingFallback />}>
-            <PreviewSection />
+            <PreviewSection ref={previewRef} />
           </Suspense>
         </main>
       </div>

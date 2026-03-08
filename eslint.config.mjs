@@ -12,6 +12,7 @@ export default [
       'dist/',
       'node_modules/',
       '.astro/',
+      '.dev/',
       '.gemini/',
       '_dev/',
       'coverage/',

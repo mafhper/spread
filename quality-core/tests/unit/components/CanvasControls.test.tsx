@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { act, render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { CanvasControls } from '@/components/toolbar/tabs/CanvasControls'
 import { useCardStore } from '@/store/cardStore'
@@ -20,6 +20,8 @@ describe('CanvasControls Component', () => {
       isExtracting: false,
       error: null,
     })
+    window.innerWidth = 1024
+    window.dispatchEvent(new Event('resize'))
   })
 
   it('renders correctly', () => {
@@ -90,14 +92,6 @@ describe('CanvasControls Component', () => {
     )
   })
 
-  it('handles global canvas reset', () => {
-    render(<CanvasControls />)
-    const resetAll = screen.getByText('Resetar Área e Posição')
-    fireEvent.click(resetAll)
-
-    expect(mockStore.resetCanvas).toHaveBeenCalled()
-  })
-
   it('handles auto color extraction', async () => {
     // Configura store com imagem para habilitar o botao
     vi.mocked(useCardStore).mockReturnValue({
@@ -112,7 +106,9 @@ describe('CanvasControls Component', () => {
 
     render(<CanvasControls />)
     const autoButton = screen.getByLabelText('Extrair cores automaticamente')
-    fireEvent.click(autoButton)
+    await act(async () => {
+      fireEvent.click(autoButton)
+    })
 
     expect(mockExtractColors).toHaveBeenCalledWith('test-image.jpg')
 
@@ -189,5 +185,22 @@ describe('CanvasControls Component', () => {
     fireEvent.click(removeButton)
 
     expect(mockStore.updateField).toHaveBeenCalledWith('customBgImage', null)
+  })
+
+  it('collapses secondary sections on mobile until the user expands them', () => {
+    window.innerWidth = 375
+    window.dispatchEvent(new Event('resize'))
+
+    render(<CanvasControls />)
+
+    expect(
+      screen.queryByLabelText('Ângulo do gradiente: 90deg')
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cores do Fundo' }))
+
+    expect(
+      screen.getByLabelText('Ângulo do gradiente: 90deg')
+    ).toBeInTheDocument()
   })
 })

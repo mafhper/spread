@@ -16,6 +16,8 @@ import { Menu, X, Clock, History } from 'lucide-react'
 interface HeaderLandingProps {
   onHistoryClick: () => void
   noSpacer?: boolean
+  hideBrand?: boolean
+  hideHistoryButton?: boolean
 }
 
 interface NavItem {
@@ -42,6 +44,8 @@ const navItems: NavItem[] = [
 export const HeaderLanding: React.FC<HeaderLandingProps> = ({
   onHistoryClick,
   noSpacer = false,
+  hideBrand = false,
+  hideHistoryButton = false,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
@@ -217,29 +221,36 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo + Title */}
-            <a
-              href="#home"
-              onClick={e => handleNavClick(e, '#home')}
-              className="flex items-center gap-3 group min-h-[44px] min-w-[44px]"
-              aria-label="Voltar ao início"
-            >
-              <div className="relative w-10 h-10 sm:w-11 sm:h-11">
-                <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
-                <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
-                  <img
-                    src={`${base}/logo.svg`}
-                    alt="Logo Spread"
-                    className="w-5 h-5 sm:w-6 sm:h-6 opacity-90"
-                  />
+            {hideBrand ? (
+              <div
+                className="hidden md:block w-32 lg:w-36"
+                aria-hidden="true"
+              />
+            ) : (
+              <a
+                href="#home"
+                onClick={e => handleNavClick(e, '#home')}
+                className="flex items-center gap-3 group min-h-[44px] min-w-[44px]"
+                aria-label="Voltar ao início"
+              >
+                <div className="relative w-10 h-10 sm:w-11 sm:h-11">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
+                  <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
+                    <img
+                      src={`${base}/logo.svg`}
+                      alt="Logo Spread"
+                      className="w-5 h-5 sm:w-6 sm:h-6 opacity-90"
+                    />
+                  </div>
                 </div>
-              </div>
-              <span className="text-lg sm:text-xl font-bold text-white hidden sm:block">
-                Spread
-              </span>
-            </a>
+                <span className="text-lg sm:text-xl font-bold text-white hidden sm:block">
+                  Spread
+                </span>
+              </a>
+            )}
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:absolute md:left-1/2 md:-translate-x-1/2 md:flex items-center gap-1">
               {navItems.map(item => (
                 <a
                   key={item.id}
@@ -261,17 +272,17 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
 
             {/* Right Side - History Button */}
             <div className="flex items-center gap-2">
-              {/* History Button */}
-              <button
-                onClick={onHistoryClick}
-                className="flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 min-h-[44px] text-sm font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-200"
-                aria-label="Abrir histórico"
-              >
-                <History size={18} className="sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Histórico</span>
-              </button>
+              {!hideHistoryButton && (
+                <button
+                  onClick={onHistoryClick}
+                  className="flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 min-h-[44px] text-sm font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-200"
+                  aria-label="Abrir histórico"
+                >
+                  <History size={18} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Histórico</span>
+                </button>
+              )}
 
-              {/* Mobile Menu Button */}
               <button
                 onClick={toggleMobileMenu}
                 className="md:hidden p-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -336,18 +347,20 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
           </div>
 
           {/* Mobile History Button */}
-          <div className="border-t border-white/10 p-3">
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false)
-                onHistoryClick()
-              }}
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-medium text-white bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 hover:from-violet-500/30 hover:to-fuchsia-500/30 border border-white/10 rounded-xl transition-colors"
-            >
-              <Clock size={20} />
-              Ver Histórico
-            </button>
-          </div>
+          {!hideHistoryButton && (
+            <div className="border-t border-white/10 p-3">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false)
+                  onHistoryClick()
+                }}
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-medium text-white bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 hover:from-violet-500/30 hover:to-fuchsia-500/30 border border-white/10 rounded-xl transition-colors"
+              >
+                <Clock size={20} />
+                Ver Histórico
+              </button>
+            </div>
+          )}
         </nav>
       </div>
 

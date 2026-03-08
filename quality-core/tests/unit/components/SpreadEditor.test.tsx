@@ -295,21 +295,13 @@ describe('SpreadEditor Component', () => {
     // HistoryPanel is lazy loaded, but we check for no crash
   })
 
-  it('handles global reset with confirmation', async () => {
-    const mockReset = vi.fn()
+  it('does not expose a global reset action in the editor header', async () => {
     const mockStore = createMockCardStore({ isWelcomeState: false })
     vi.mocked(useCardStore).mockReturnValue(mockStore)
 
-    // testing internal implementation
-    useCardStore.getState = vi.fn().mockReturnValue({ reset: mockReset })
-
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-
     render(<SpreadEditor />)
-    const resetButton = screen.getByLabelText(/resetar tudo/i)
-    fireEvent.click(resetButton)
+    await screen.findByRole('region', { name: /preview/i }, { timeout: 3000 })
 
-    expect(window.confirm).toHaveBeenCalled()
-    expect(mockReset).toHaveBeenCalled()
+    expect(screen.queryByLabelText(/resetar tudo/i)).not.toBeInTheDocument()
   })
 })

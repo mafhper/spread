@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process')
 const path = require('path')
+const {
+  findAvailablePort,
+  DEFAULT_PORT,
+} = require('../packages/adapters/preview-server.cjs')
 
 const root = path.resolve(__dirname, '../..')
 const forwardedArgs = process.argv.slice(2)
@@ -30,6 +34,35 @@ function getArgValue(args, key) {
 
 function hasArg(args, key) {
   return args.includes(key) || args.some(arg => arg.startsWith(`${key}=`))
+}
+
+function upsertArg(args, key, value) {
+  const result = []
+  let replaced = false
+
+  for (let index = 0; index < args.length; index += 1) {
+    const current = args[index]
+    if (current === key) {
+      result.push(key, String(value))
+      index += 1
+      replaced = true
+      continue
+    }
+
+    if (current.startsWith(`${key}=`)) {
+      result.push(`${key}=${value}`)
+      replaced = true
+      continue
+    }
+
+    result.push(current)
+  }
+
+  if (!replaced) {
+    result.push(key, String(value))
+  }
+
+  return result
 }
 
 function runCommand(command, args, options = {}) {
@@ -71,17 +104,31 @@ async function runWithRunner(runner) {
   if (!build.ok) return { ok: false, exitCode: build.exitCode || 1 }
 
   const base = normalizeBasePath(basePath)
-  const port =
-    getArgValue(forwardedArgs, '--port') || process.env.PREVIEW_PORT || '4173'
+  const requestedPort =
+    getArgValue(forwardedArgs, '--port') ||
+    process.env.PREVIEW_PORT ||
+    DEFAULT_PORT
+  const strictPort = hasArg(forwardedArgs, '--strictPort')
+  const port = strictPort
+    ? Number.parseInt(String(requestedPort), 10) || DEFAULT_PORT
+    : await findAvailablePort(requestedPort)
+  const previewArgsSource = strictPort
+    ? forwardedArgs
+    : upsertArg(forwardedArgs, '--port', port)
   const url = `http://localhost:${port}${base}`
+  if (!strictPort && String(port) !== String(requestedPort)) {
+    console.log(
+      `[preview] Porta ${requestedPort} indisponivel. Usando ${port}.`
+    )
+  }
   console.log(`[preview] Open ${url}`)
 
   const previewArgsBase =
     runner === 'npm'
-      ? ['run', 'preview:serve', '--', ...forwardedArgs]
-      : ['run', 'preview:serve', ...forwardedArgs]
+      ? ['run', 'preview:serve', '--', ...previewArgsSource]
+      : ['run', 'preview:serve', ...previewArgsSource]
   const previewArgs = [...previewArgsBase]
-  if (!hasArg(forwardedArgs, '--port')) {
+  if (!hasArg(previewArgsSource, '--port')) {
     previewArgs.push('--port', String(port))
   }
   const preview = await runCommand(command, previewArgs, { cwd: root })

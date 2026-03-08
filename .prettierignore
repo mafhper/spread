@@ -8,3 +8,5 @@ coverage
 .lighthouseci
 performance-reports
 temp-vitest-report.json
+audit-root.json
+quality-core/dashboard/audit-dashboard.json
