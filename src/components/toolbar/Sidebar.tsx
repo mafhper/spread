@@ -166,7 +166,7 @@ export const Sidebar: React.FC = () => {
         className={clsx(
           'bg-black/95 backdrop-blur-xl flex flex-col transition-all duration-300 shadow-2xl z-50',
           isMobile
-            ? 'relative w-full h-[min(42vh,22rem)] rounded-t-[1.5rem] border border-b-0 border-white/10 shadow-[0_-18px_40px_rgba(0,0,0,0.35)]'
+            ? 'relative w-full h-[min(40svh,21rem)] max-h-[calc(100svh-7.5rem)] rounded-t-[1.5rem] border border-b-0 border-white/10 shadow-[0_-18px_40px_rgba(0,0,0,0.35)]'
             : 'relative flex-shrink-0 h-full border-r border-white/10',
           !isMobile && (isOpen ? 'w-80' : 'w-0 overflow-hidden opacity-0')
         )}
@@ -206,7 +206,12 @@ export const Sidebar: React.FC = () => {
           {renderTabContent()}
         </div>
 
-        <div className="flex-shrink-0 border-t border-white/10 bg-black/88 px-3 py-2">
+        <div
+          className={clsx(
+            'flex-shrink-0 border-t border-white/10 bg-black/88 px-3 py-2',
+            isMobile && 'pb-[calc(0.5rem+env(safe-area-inset-bottom))]'
+          )}
+        >
           {!isMobile && (
             <button
               onClick={handleResetActiveTab}

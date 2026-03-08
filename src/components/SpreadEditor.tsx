@@ -205,7 +205,7 @@ export const SpreadEditor: React.FC = () => {
   // Welcome state: Full Landing Page experience
   if (isWelcome) {
     return (
-      <div className="h-screen w-full flex flex-col bg-zinc-950 text-white overflow-hidden">
+      <div className="min-h-screen h-[100svh] md:h-[100dvh] w-full flex flex-col overflow-hidden bg-zinc-950 text-white">
         {/* Landing Page Content (scrollable) */}
         <div
           id="landing-scroll-container"
@@ -238,7 +238,7 @@ export const SpreadEditor: React.FC = () => {
   // Editor state: Card generation UI
   return (
     <div
-      className={`h-screen w-full bg-black text-[var(--text-main)] overflow-hidden ${isMobile ? 'flex flex-col' : 'flex'}`}
+      className={`min-h-screen h-[100svh] md:h-[100dvh] w-full overflow-hidden bg-black text-[var(--text-main)] ${isMobile ? 'flex flex-col' : 'flex'}`}
     >
       {/* Left Sidebar */}
       <div className={isMobile ? 'order-2 z-30 flex-none' : 'z-30 h-full'}>
