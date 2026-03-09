@@ -41,6 +41,7 @@ export const SpreadEditor: React.FC = () => {
   const [mobileViewportHeight, setMobileViewportHeight] = useState<
     number | null
   >(null)
+  const [mobileSidebarReservation, setMobileSidebarReservation] = useState(0)
   const previewRef = React.useRef<
     import('./preview/PreviewSection').PreviewSectionHandle | null
   >(null)
@@ -280,7 +281,10 @@ export const SpreadEditor: React.FC = () => {
     >
       {/* Left Sidebar */}
       <div className={isMobile ? 'order-2 z-30 flex-none' : 'z-30 h-full'}>
-        <Sidebar mobileViewportHeight={mobileViewportHeight} />
+        <Sidebar
+          mobileViewportHeight={mobileViewportHeight}
+          onMobileViewportReservationChange={setMobileSidebarReservation}
+        />
       </div>
 
       {/* Main Content Area */}
@@ -499,7 +503,14 @@ export const SpreadEditor: React.FC = () => {
         </header>
 
         {/* Main Preview Area */}
-        <main className="flex-1 min-h-0 overflow-hidden">
+        <main
+          className="flex-1 min-h-0 overflow-hidden"
+          style={
+            isMobile && mobileSidebarReservation > 0
+              ? { paddingBottom: `${mobileSidebarReservation}px` }
+              : undefined
+          }
+        >
           <Suspense fallback={<LoadingFallback />}>
             <PreviewSection ref={previewRef} />
           </Suspense>

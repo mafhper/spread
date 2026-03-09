@@ -10,12 +10,10 @@ import {
   X,
   Palette,
   RotateCcw,
-  // Frame, // DISABLED: Feature not working
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCardStore } from '../../store/cardStore'
 
-// Lazy load tabs for code splitting
 const CardTabs = lazy(() =>
   import('./tabs/CardTabs').then(m => ({ default: m.CardTabs }))
 )
@@ -31,9 +29,6 @@ const TypographyTabs = lazy(() =>
 const ColorTabs = lazy(() =>
   import('./tabs/ColorTabs').then(m => ({ default: m.ColorTabs }))
 )
-// const FrameTabs = lazy(() =>
-//   import('./tabs/FrameTabs').then(m => ({ default: m.FrameTabs }))
-// )
 
 type TabType =
   | 'card'
@@ -49,9 +44,10 @@ const TABS = [
   { id: 'media' as const, label: 'Imagem', icon: ImageIcon },
   { id: 'text' as const, label: 'Texto', icon: Type },
   { id: 'colors' as const, label: 'Cores', icon: Palette },
-  // { id: 'frame' as const, label: 'Frames', icon: Frame }, // DISABLED: Feature not working - to be fixed later
   { id: 'card' as const, label: 'Ajustes', icon: Layout },
 ]
+
+const MOBILE_DOCK_HEIGHT = 88
 
 const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
   switch (activeTab) {
@@ -65,8 +61,6 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
       return <CanvasControls />
     case 'text':
       return <TypographyTabs />
-    // case 'frame':
-    //   return <FrameTabs />
     default:
       return null
   }
@@ -74,7 +68,8 @@ const TabContent: React.FC<{ activeTab: TabType }> = ({ activeTab }) => {
 
 export const Sidebar: React.FC<{
   mobileViewportHeight?: number | null
-}> = ({ mobileViewportHeight = null }) => {
+  onMobileViewportReservationChange?: (height: number) => void
+}> = ({ mobileViewportHeight = null, onMobileViewportReservationChange }) => {
   const {
     isSidebarOpen,
     updateField,
@@ -89,7 +84,7 @@ export const Sidebar: React.FC<{
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   )
-  const [mobileSheetRatio, setMobileSheetRatio] = useState(0.58)
+  const [mobileSheetRatio, setMobileSheetRatio] = useState(0.62)
   const hasResolvedViewportRef = React.useRef(false)
   const dragStateRef = React.useRef<{
     pointerId: number
@@ -99,7 +94,6 @@ export const Sidebar: React.FC<{
   const contentScrollRef = React.useRef<HTMLDivElement>(null)
   const activeTabDef = TABS.find(tab => tab.id === activeTab) ?? TABS[0]
 
-  // Detect mobile
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
@@ -107,12 +101,9 @@ export const Sidebar: React.FC<{
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Sync local state with global store for desktop sidebar
   const isOpen = isSidebarOpen
-  const setIsOpen = (val: boolean) => updateField('isSidebarOpen', val)
+  const setIsOpen = (value: boolean) => updateField('isSidebarOpen', value)
 
-  // Close only when the viewport transitions from desktop to mobile.
-  // Do not close on the initial mobile render after generating a card.
   useEffect(() => {
     if (!hasResolvedViewportRef.current) {
       hasResolvedViewportRef.current = true
@@ -128,19 +119,19 @@ export const Sidebar: React.FC<{
     if (contentScrollRef.current) {
       contentScrollRef.current.scrollTop = 0
     }
-  }, [activeTab])
+  }, [activeTab, isOpen])
 
   useEffect(() => {
     if (isMobile && isOpen) {
-      setMobileSheetRatio(0.58)
+      setMobileSheetRatio(0.62)
     }
   }, [isMobile, isOpen])
 
   const renderTabContent = () => (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-32">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="flex h-32 items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white" />
         </div>
       }
     >
@@ -178,17 +169,32 @@ export const Sidebar: React.FC<{
       : `Resetar ${activeTabDef.label}`
 
   const resolveClampedSheetRatio = React.useCallback((ratio: number) => {
-    const min = 0.46
-    const max = 0.84
+    const min = 0.5
+    const max = 0.9
     return Math.min(max, Math.max(min, ratio))
   }, [])
 
   const getNearestSheetRatio = React.useCallback((ratio: number) => {
-    const snapPoints = [0.46, 0.58, 0.72, 0.84]
+    const snapPoints = [0.5, 0.62, 0.76, 0.9]
     return snapPoints.reduce((nearest, current) =>
       Math.abs(current - ratio) < Math.abs(nearest - ratio) ? current : nearest
     )
   }, [])
+
+  const resolvedMobileSheetHeight =
+    isMobile && mobileViewportHeight != null
+      ? Math.round(
+          Math.min(
+            Math.max(mobileViewportHeight * mobileSheetRatio, 360),
+            mobileViewportHeight - 40
+          )
+        )
+      : null
+
+  const resolvedMobileContentHeight =
+    resolvedMobileSheetHeight != null
+      ? Math.max(resolvedMobileSheetHeight - MOBILE_DOCK_HEIGHT, 220)
+      : null
 
   const handleSheetPointerMove = React.useCallback(
     (event: PointerEvent) => {
@@ -218,7 +224,7 @@ export const Sidebar: React.FC<{
       if (!isMobile || mobileViewportHeight == null) return
 
       const deltaY = event.clientY - dragState.startY
-      if (deltaY > mobileViewportHeight * 0.16) {
+      if (deltaY > mobileViewportHeight * 0.14) {
         setIsOpen(false)
         return
       }
@@ -257,177 +263,181 @@ export const Sidebar: React.FC<{
     }
   }, [handleSheetPointerEnd, handleSheetPointerMove])
 
-  const mobileDrawerStyle = isMobile
-    ? {
-        height:
-          mobileViewportHeight != null
-            ? `${Math.round(
-                Math.min(
-                  Math.max(mobileViewportHeight * mobileSheetRatio, 300),
-                  mobileViewportHeight - 84
-                )
-              )}px`
-            : undefined,
-        maxHeight:
-          mobileViewportHeight != null
-            ? `${Math.max(mobileViewportHeight - 84, 300)}px`
-            : undefined,
-      }
-    : undefined
+  useEffect(() => {
+    if (onMobileViewportReservationChange == null) return
 
-  // Mobile button is rendered in the editor header to avoid overlapping
-  // preview controls near the bottom edge.
-  if (isMobile && !isOpen) {
-    return null
+    if (!isMobile) {
+      onMobileViewportReservationChange(0)
+      return
+    }
+
+    onMobileViewportReservationChange(
+      isOpen
+        ? (resolvedMobileSheetHeight ?? MOBILE_DOCK_HEIGHT)
+        : MOBILE_DOCK_HEIGHT
+    )
+  }, [
+    isMobile,
+    isOpen,
+    onMobileViewportReservationChange,
+    resolvedMobileSheetHeight,
+  ])
+
+  const renderMobileDock = () => (
+    <div className="pointer-events-auto border-t border-white/10 bg-black/92 px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      <div className="overflow-x-auto rounded-2xl border border-white/8 bg-black/65 px-2 py-1.5 scrollbar-hide">
+        <div className="flex min-w-max items-center justify-center gap-2">
+          {TABS.map(tab => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id)
+                  setIsOpen(true)
+                }}
+                className={clsx(
+                  'flex h-11 w-11 flex-none items-center justify-center rounded-xl px-0 transition-all',
+                  isActive
+                    ? 'bg-white text-black'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white'
+                )}
+                title={tab.label}
+                aria-label={tab.label}
+                aria-selected={isActive}
+                role="tab"
+              >
+                <Icon size={16} />
+              </button>
+            )
+          })}
+          <button
+            onClick={handleResetActiveTab}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-0 text-red-200 transition-all hover:border-red-400/35 hover:bg-red-500/15"
+            title={activeResetLabel}
+            aria-label={activeResetLabel}
+          >
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50">
+        {isOpen && (
+          <div
+            className="pointer-events-auto mx-auto flex w-full flex-col overflow-hidden rounded-t-[1.5rem] border border-b-0 border-white/10 bg-black/95 shadow-[0_-18px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all duration-300"
+            style={
+              resolvedMobileContentHeight != null
+                ? { height: `${resolvedMobileContentHeight}px` }
+                : undefined
+            }
+            aria-label="Barra lateral de personalização"
+          >
+            <div className="flex-shrink-0 border-b border-white/10 bg-black/92 px-4 pt-2 pb-2">
+              <div
+                className="relative flex min-h-[34px] items-center justify-center"
+                onPointerDown={handleSheetPointerStart}
+                style={{ touchAction: 'none' }}
+              >
+                <div className="h-1.5 w-10 rounded-full bg-white/18" />
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="absolute right-0 top-1/2 flex min-h-[40px] min-w-[40px] -translate-y-1/2 items-center justify-center rounded-xl p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label="Fechar menu lateral"
+                >
+                  <X size={17} />
+                </button>
+              </div>
+            </div>
+
+            <div
+              ref={contentScrollRef}
+              className="flex-1 overflow-y-auto px-3 pb-2 pt-2 scrollbar-hide"
+            >
+              {renderTabContent()}
+            </div>
+          </div>
+        )}
+
+        {renderMobileDock()}
+      </div>
+    )
   }
 
   return (
     <>
       <div
         className={clsx(
-          'bg-black/95 backdrop-blur-xl flex flex-col transition-all duration-300 shadow-2xl z-50',
-          isMobile
-            ? 'relative w-full h-[min(40svh,21rem)] max-h-[calc(100svh-7.5rem)] rounded-t-[1.5rem] border border-b-0 border-white/10 shadow-[0_-18px_40px_rgba(0,0,0,0.35)]'
-            : 'relative flex-shrink-0 h-full border-r border-white/10',
-          !isMobile && (isOpen ? 'w-80' : 'w-0 overflow-hidden opacity-0')
+          'relative z-50 flex h-full flex-shrink-0 flex-col border-r border-white/10 bg-black/95 shadow-2xl backdrop-blur-xl transition-all duration-300',
+          isOpen ? 'w-80' : 'w-0 overflow-hidden opacity-0'
         )}
-        style={mobileDrawerStyle}
         aria-label="Barra lateral de personalização"
       >
-        {isMobile && (
-          <div className="flex-shrink-0 border-b border-white/10 bg-black/92 px-4 pt-2 pb-2">
-            <div
-              className="relative flex min-h-[34px] items-center justify-center"
-              onPointerDown={handleSheetPointerStart}
-              style={{ touchAction: 'none' }}
-            >
-              <div className="h-1.5 w-10 rounded-full bg-white/18" />
-              <button
-                onClick={() => setIsOpen(false)}
-                className="absolute right-0 top-1/2 flex min-h-[40px] min-w-[40px] -translate-y-1/2 items-center justify-center rounded-xl p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Fechar menu lateral"
-              >
-                <X size={17} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tab Header */}
-        <div className="hidden md:block flex-shrink-0 p-4 border-b border-white/10">
-          <h3 className="font-semibold text-sm flex items-center gap-2">
+        <div className="flex-shrink-0 border-b border-white/10 p-4">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
             {React.createElement(activeTabDef.icon, { size: 16 })}
             {activeTabDef.label}
           </h3>
         </div>
 
-        {/* Tab Content - Scrollable */}
         <div
           ref={contentScrollRef}
-          className={clsx(
-            'flex-1 overflow-y-auto p-4 custom-scrollbar',
-            isMobile ? 'scrollbar-hide px-3 pb-2 pt-2' : 'pb-6'
-          )}
+          className="custom-scrollbar flex-1 overflow-y-auto p-4 pb-6"
         >
           {renderTabContent()}
         </div>
 
-        <div
-          className={clsx(
-            'flex-shrink-0 border-t border-white/10 bg-black/88 px-3 py-2',
-            isMobile && 'pb-[calc(0.5rem+env(safe-area-inset-bottom))]'
-          )}
-        >
-          {!isMobile && (
-            <button
-              onClick={handleResetActiveTab}
-              className="flex w-full min-h-[34px] items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/70 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-200"
-            >
-              <RotateCcw size={13} />
-              <span>{activeResetLabel}</span>
-            </button>
-          )}
-
-          <div
-            className={clsx(
-              'border border-white/8 bg-black/65',
-              isMobile
-                ? 'overflow-x-auto rounded-2xl px-2 py-1.5 scrollbar-hide'
-                : 'mt-2 overflow-hidden rounded-xl p-2'
-            )}
+        <div className="flex-shrink-0 border-t border-white/10 bg-black/88 px-3 py-2">
+          <button
+            onClick={handleResetActiveTab}
+            className="flex w-full min-h-[34px] items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/70 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-200"
           >
-            {isMobile ? (
-              <div className="flex min-w-max items-center justify-center gap-2">
-                {TABS.map(tab => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={clsx(
-                        'flex h-11 w-11 flex-none items-center justify-center rounded-xl px-0 transition-all',
-                        isActive
-                          ? 'bg-white text-black'
-                          : 'text-white/60 hover:bg-white/10 hover:text-white'
-                      )}
-                      title={tab.label}
-                      aria-label={tab.label}
-                      aria-selected={isActive}
-                      role="tab"
-                    >
-                      <Icon size={16} />
-                    </button>
-                  )
-                })}
-                <button
-                  onClick={handleResetActiveTab}
-                  className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-0 text-red-200 transition-all hover:border-red-400/35 hover:bg-red-500/15"
-                  title={activeResetLabel}
-                  aria-label={activeResetLabel}
-                >
-                  <RotateCcw size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="grid w-full grid-cols-5 gap-1.5">
-                {TABS.map(tab => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={clsx(
-                        'flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-[9px] font-medium transition-all',
-                        isActive
-                          ? 'bg-white text-black'
-                          : 'text-white/60 hover:bg-white/10 hover:text-white'
-                      )}
-                      title={tab.label}
-                      aria-label={tab.label}
-                      aria-selected={isActive}
-                      role="tab"
-                    >
-                      <Icon size={16} />
-                      <span className="max-w-full text-center leading-[1.05] whitespace-normal">
-                        {tab.label}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            )}
+            <RotateCcw size={13} />
+            <span>{activeResetLabel}</span>
+          </button>
+
+          <div className="mt-2 overflow-hidden rounded-xl border border-white/8 bg-black/65 p-2">
+            <div className="grid w-full grid-cols-5 gap-1.5">
+              {TABS.map(tab => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={clsx(
+                      'flex min-h-[56px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-[9px] font-medium transition-all',
+                      isActive
+                        ? 'bg-white text-black'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
+                    )}
+                    title={tab.label}
+                    aria-label={tab.label}
+                    aria-selected={isActive}
+                    role="tab"
+                  >
+                    <Icon size={16} />
+                    <span className="max-w-full whitespace-normal text-center leading-[1.05]">
+                      {tab.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Desktop Toggle Button - Bottom aligned */}
       {!isMobile && (
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={clsx(
-            'absolute bottom-4 z-[60] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-r-xl bg-black/80 border border-l-0 border-white/20 text-white hover:bg-white hover:text-black transition-all duration-300 shadow-xl',
+            'absolute bottom-4 z-[60] flex min-h-[44px] min-w-[44px] items-center justify-center rounded-r-xl border border-l-0 border-white/20 bg-black/80 p-2 text-white shadow-xl transition-all duration-300 hover:bg-white hover:text-black',
             isOpen ? 'left-80' : 'left-0'
           )}
           title={isOpen ? 'Recolher menu' : 'Personalizar'}

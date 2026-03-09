@@ -99,7 +99,7 @@ describe('Sidebar Component', () => {
     )
   })
 
-  it('does not render the mobile sheet when closed', async () => {
+  it('keeps the mobile dock visible when the sheet is closed', async () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))
 
@@ -111,6 +111,7 @@ describe('Sidebar Component', () => {
     const { rerender } = render(<Sidebar />)
 
     expect(screen.queryByLabelText('Fechar menu lateral')).toBeNull()
+    expect(screen.getByRole('tab', { name: 'Formato' })).toBeInTheDocument()
 
     vi.mocked(useCardStore).mockReturnValue({
       ...mockStore,
@@ -159,7 +160,7 @@ describe('Sidebar Component', () => {
     )
   })
 
-  it('sizes the mobile sheet from the visible viewport height prop', () => {
+  it('sizes the mobile sheet content from the visible viewport height prop', () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))
 
@@ -172,8 +173,7 @@ describe('Sidebar Component', () => {
 
     const sheet = screen.getByLabelText('Barra lateral de personalização')
     expect(sheet).toHaveStyle({
-      height: '452px',
-      maxHeight: '696px',
+      height: '396px',
     })
   })
 
@@ -188,6 +188,27 @@ describe('Sidebar Component', () => {
     render(<Sidebar />)
 
     expect(screen.queryByRole('presentation')).toBeNull()
+  })
+
+  it('reports reserved mobile height for preview spacing', () => {
+    window.innerWidth = 375
+    window.dispatchEvent(new Event('resize'))
+
+    const onReservationChange = vi.fn()
+
+    vi.mocked(useCardStore).mockReturnValue({
+      ...mockStore,
+      isSidebarOpen: true,
+    })
+
+    render(
+      <Sidebar
+        mobileViewportHeight={780}
+        onMobileViewportReservationChange={onReservationChange}
+      />
+    )
+
+    expect(onReservationChange).toHaveBeenCalledWith(484)
   })
 
   it('cleans up resize listener on unmount', () => {
