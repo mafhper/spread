@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
-import { Download, History, Loader2, Menu, Zap } from 'lucide-react'
+import { Download, History, Loader2, Zap } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
 import { useCardStore } from '../store/cardStore'
 import { fetchMetadata } from '../services/metadata'
@@ -48,7 +48,6 @@ export const SpreadEditor: React.FC = () => {
 
   const {
     isWelcomeState: isWelcome,
-    isSidebarOpen,
     url,
     setFullState,
     updateNestedField,
@@ -296,17 +295,6 @@ export const SpreadEditor: React.FC = () => {
           {isMobile ? (
             <div className="flex items-center gap-2">
               <button
-                onClick={() => updateField('isSidebarOpen', !isSidebarOpen)}
-                className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 text-[var(--text-muted)] shadow-lg backdrop-blur-md transition-all hover:bg-[var(--bg-input)] hover:text-white"
-                aria-label={
-                  isSidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral'
-                }
-                aria-expanded={isSidebarOpen}
-              >
-                <Menu size={20} />
-              </button>
-
-              <button
                 onClick={() => window.location.reload()}
                 className="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95"
               >
@@ -371,19 +359,6 @@ export const SpreadEditor: React.FC = () => {
                 <div
                   className={`flex items-center min-w-0 ${isCompactToolbar ? 'gap-2 sm:gap-4' : 'flex-none gap-3'}`}
                 >
-                  <button
-                    onClick={() => updateField('isSidebarOpen', !isSidebarOpen)}
-                    className="md:hidden p-2.5 rounded-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border-color)] shadow-lg hover:bg-[var(--bg-input)] transition-all min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--text-muted)] hover:text-white"
-                    aria-label={
-                      isSidebarOpen
-                        ? 'Fechar menu lateral'
-                        : 'Abrir menu lateral'
-                    }
-                    aria-expanded={isSidebarOpen}
-                  >
-                    <Menu size={20} />
-                  </button>
-
                   <button
                     onClick={() => window.location.reload()}
                     className="flex items-center gap-3 rounded-full border border-[var(--border-color)] bg-[var(--bg-card)]/80 pl-3 pr-5 min-h-[44px] min-w-0 shadow-lg backdrop-blur-md transition-all hover:scale-105 active:scale-95"

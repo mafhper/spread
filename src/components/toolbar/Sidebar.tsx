@@ -85,7 +85,6 @@ export const Sidebar: React.FC<{
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   )
   const [mobileSheetRatio, setMobileSheetRatio] = useState(0.62)
-  const hasResolvedViewportRef = React.useRef(false)
   const dragStateRef = React.useRef<{
     pointerId: number
     startY: number
@@ -104,16 +103,16 @@ export const Sidebar: React.FC<{
   const isOpen = isSidebarOpen
   const setIsOpen = (value: boolean) => updateField('isSidebarOpen', value)
 
+  const prevIsMobileRef = React.useRef(isMobile)
   useEffect(() => {
-    if (!hasResolvedViewportRef.current) {
-      hasResolvedViewportRef.current = true
-      return
-    }
+    const wasMobile = prevIsMobileRef.current
+    prevIsMobileRef.current = isMobile
 
-    if (isMobile && isOpen) {
+    // Close sidebar only when transitioning from desktop to mobile
+    if (isMobile && !wasMobile && isOpen) {
       setIsOpen(false)
     }
-  }, [isMobile, isOpen])
+  }, [isMobile])
 
   useEffect(() => {
     if (contentScrollRef.current) {
