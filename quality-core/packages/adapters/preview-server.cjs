@@ -169,8 +169,21 @@ async function findAvailablePort(
 async function waitForServer(url, timeout = DEFAULT_TIMEOUT) {
   const startTime = Date.now()
   let attempts = 0
+  const targets = [url]
 
-  console.log(`[PREVIEW-SERVER - INFO] Health check em ${url}`)
+  try {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.hostname === '127.0.0.1') {
+      parsedUrl.hostname = 'localhost'
+      targets.push(parsedUrl.toString())
+    }
+  } catch {
+    // Mantem apenas a URL principal em caso de parse invalido
+  }
+
+  console.log(
+    `[PREVIEW-SERVER - INFO] Health check em ${targets.join(' | ')}`
+  )
 
   while (Date.now() - startTime < timeout) {
     attempts++
@@ -180,16 +193,21 @@ async function waitForServer(url, timeout = DEFAULT_TIMEOUT) {
       )
     }
 
-    if (await isServerReady(url)) {
-      console.log(
-        `[PREVIEW-SERVER - INFO] Servidor respondeu apos ${attempts} tentativas`
-      )
-      return true
+    for (const target of targets) {
+      if (await isServerReady(target)) {
+        console.log(
+          `[PREVIEW-SERVER - INFO] Servidor respondeu apos ${attempts} tentativas`
+        )
+        return true
+      }
     }
+
     await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL))
   }
 
-  throw new Error(`Servidor nao iniciou em ${timeout}ms. URL: ${url}`)
+  throw new Error(
+    `Servidor nao iniciou em ${timeout}ms. URL(s): ${targets.join(', ')}`
+  )
 }
 
 /**
