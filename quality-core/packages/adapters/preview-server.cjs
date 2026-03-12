@@ -13,6 +13,7 @@ const DEFAULT_TIMEOUT = 120000
 const POLL_INTERVAL = 1000
 const PORT_SCAN_ATTEMPTS = 300
 const PORT_ERROR_CODES = new Set(['EADDRINUSE', 'EACCES', 'EPERM'])
+const DEFAULT_PREVIEW_PATH = process.env.PREVIEW_BASE || '/spread/'
 
 /**
  * Safe fs helpers with path validation
@@ -69,12 +70,18 @@ function buildPreviewUrl({
   protocol = 'http:',
   host = '127.0.0.1',
   port,
-  pathname = '/',
+  pathname = DEFAULT_PREVIEW_PATH,
 }) {
-  const normalizedPath = pathname && pathname !== '' ? pathname : '/'
-  const safePath = normalizedPath.startsWith('/')
+  const normalizedPath =
+    pathname && pathname !== '' ? String(pathname).trim() : DEFAULT_PREVIEW_PATH
+  let safePath = normalizedPath.startsWith('/')
     ? normalizedPath
     : `/${normalizedPath}`
+
+  if (!safePath.endsWith('/')) {
+    safePath = `${safePath}/`
+  }
+
   return `${protocol}//${host}:${port}${safePath}`
 }
 
@@ -84,7 +91,7 @@ function parsePreviewUrl(url) {
       protocol: 'http:',
       host: '127.0.0.1',
       port: DEFAULT_PORT,
-      pathname: '/',
+      pathname: DEFAULT_PREVIEW_PATH,
       explicit: false,
     }
   }
@@ -103,7 +110,7 @@ function parsePreviewUrl(url) {
       protocol: 'http:',
       host: '127.0.0.1',
       port: DEFAULT_PORT,
-      pathname: '/',
+      pathname: DEFAULT_PREVIEW_PATH,
       explicit: false,
     }
   }
@@ -225,7 +232,12 @@ function hasValidDist(projectRoot) {
  * Inicia o servidor preview
  */
 function startPreviewServer(options = {}) {
-  const { port = DEFAULT_PORT, projectRoot = process.cwd() } = options
+  const {
+    port = DEFAULT_PORT,
+    projectRoot = process.cwd(),
+    host = '127.0.0.1',
+    pathname = DEFAULT_PREVIEW_PATH,
+  } = options
 
   return new Promise((resolve, reject) => {
     console.log(
@@ -243,12 +255,31 @@ function startPreviewServer(options = {}) {
 
     if (hasDist) {
       // Usa vite preview diretamente
+      const previewBase = pathname.endsWith('/')
+        ? pathname.slice(0, -1)
+        : pathname
       if (useBun) {
         command = 'bunx'
-        args = ['vite', 'preview', '--port', port.toString(), '--base=/spread']
+        args = [
+          'vite',
+          'preview',
+          '--host',
+          host,
+          '--port',
+          port.toString(),
+          `--base=${previewBase}`,
+        ]
       } else {
         command = 'npx'
-        args = ['vite', 'preview', '--port', port.toString(), '--base=/spread']
+        args = [
+          'vite',
+          'preview',
+          '--host',
+          host,
+          '--port',
+          port.toString(),
+          `--base=${previewBase}`,
+        ]
       }
     } else {
       // Precisa fazer build primeiro
@@ -451,7 +482,7 @@ async function withPreviewServer(options, callback) {
     console.log(
       `[PREVIEW-SERVER - INFO] Usando servidor ja em execucao em ${url}`
     )
-    return callback()
+    return callback({ url, port: selectedPort })
   }
 
   console.log(
@@ -463,6 +494,7 @@ async function withPreviewServer(options, callback) {
     serverInfo = await startPreviewServer({
       ...options,
       port: selectedPort,
+      pathname: requested.pathname,
       projectRoot,
     })
 
