@@ -39,6 +39,10 @@ function runCommand(command, args, options = {}) {
 
 async function cleanup() {
   try {
+    fs.rmSync(path.join(worktreeDir, 'node_modules'), {
+      recursive: true,
+      force: true,
+    })
     await runCommand('git', ['worktree', 'remove', '--force', worktreeDir], {
       cwd: repoRoot,
     })
@@ -59,6 +63,15 @@ async function main() {
       worktreeDir,
       'HEAD',
     ])
+    await runCommand('git', ['config', 'core.autocrlf', 'false'], {
+      cwd: worktreeDir,
+    })
+    await runCommand('git', ['config', 'core.eol', 'lf'], {
+      cwd: worktreeDir,
+    })
+    await runCommand('git', ['reset', '--hard', 'HEAD'], {
+      cwd: worktreeDir,
+    })
     await runCommand('bun', ['install', '--frozen-lockfile'], {
       cwd: worktreeDir,
     })
