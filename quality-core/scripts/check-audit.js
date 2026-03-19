@@ -3,6 +3,28 @@
 import fs from 'fs'
 import path from 'path'
 
+const SUMMARY_KEYS = ['critical', 'high', 'moderate', 'low']
+
+function addSeverity(counts, severity) {
+  if (severity === 'critical') counts.critical += 1
+  else if (severity === 'high') counts.high += 1
+  else if (severity === 'moderate') counts.moderate += 1
+  else if (severity === 'low') counts.low += 1
+}
+
+function hasSummaryShape(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return SUMMARY_KEYS.some(key => typeof value[key] === 'number')
+}
+
+function countPackageEntries(counts, entries) {
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue
+    const severity = entry.severity || entry.metadata?.severity
+    addSeverity(counts, severity)
+  }
+}
+
 const file = process.argv[2]
 if (!file) {
   console.error('Missing audit JSON file path')
@@ -17,48 +39,52 @@ if (!fs.existsSync(auditPath)) {
 
 try {
   const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'))
+  const counts = {
+    critical: 0,
+    high: 0,
+    moderate: 0,
+    low: 0,
+  }
 
-  // Handle both NPM and Bun audit formats
-  const vulns = audit.vulnerabilities || audit.advisories || {}
-
-  // Track counts
-  let high = 0
-  let critical = 0
-  let moderate = 0
-  let low = 0
-
-  // Bun audit format (simple object with severity keys)
-  if (
+  if (hasSummaryShape(audit.metadata?.vulnerabilities)) {
+    counts.critical = audit.metadata.vulnerabilities.critical || 0
+    counts.high = audit.metadata.vulnerabilities.high || 0
+    counts.moderate = audit.metadata.vulnerabilities.moderate || 0
+    counts.low = audit.metadata.vulnerabilities.low || 0
+  } else if (hasSummaryShape(audit.vulnerabilities)) {
+    counts.critical = audit.vulnerabilities.critical || 0
+    counts.high = audit.vulnerabilities.high || 0
+    counts.moderate = audit.vulnerabilities.moderate || 0
+    counts.low = audit.vulnerabilities.low || 0
+  } else if (
     audit.vulnerabilities &&
     typeof audit.vulnerabilities === 'object' &&
     !Array.isArray(audit.vulnerabilities)
   ) {
-    // If it's the summary format from bun
-    critical = audit.vulnerabilities.critical || 0
-    high = audit.vulnerabilities.high || 0
-    moderate = audit.vulnerabilities.moderate || 0
-    low = audit.vulnerabilities.low || 0
+    countPackageEntries(counts, Object.values(audit.vulnerabilities))
+  } else if (audit.advisories && typeof audit.advisories === 'object') {
+    countPackageEntries(counts, Object.values(audit.advisories))
   } else {
-    // Standard NPM format or detailed Bun list
-    for (const name in vulns) {
-      // eslint-disable-next-line security/detect-object-injection
-      const v = vulns[name]
-      const severity = v.severity || (v.metadata && v.metadata.severity)
+    const packageEntries = Object.entries(audit).filter(
+      ([name]) => !['auditReportVersion', 'metadata', 'error'].includes(name)
+    )
 
-      if (severity === 'critical') critical++
-      else if (severity === 'high') high++
-      else if (severity === 'moderate') moderate++
-      else if (severity === 'low') low++
+    for (const [, advisories] of packageEntries) {
+      if (Array.isArray(advisories)) {
+        countPackageEntries(counts, advisories)
+      } else if (advisories && typeof advisories === 'object') {
+        countPackageEntries(counts, [advisories])
+      }
     }
   }
 
   console.log(`Security audit summary for ${file}:`)
-  console.log(`  Critical: ${critical}`)
-  console.log(`  High:     ${high}`)
-  console.log(`  Moderate: ${moderate}`)
-  console.log(`  Low:      ${low}`)
+  console.log(`  Critical: ${counts.critical}`)
+  console.log(`  High:     ${counts.high}`)
+  console.log(`  Moderate: ${counts.moderate}`)
+  console.log(`  Low:      ${counts.low}`)
 
-  if (critical > 0 || high > 0) {
+  if (counts.critical > 0 || counts.high > 0) {
     console.error(`\nBlocking due to high/critical vulnerabilities in ${file}.`)
     process.exit(1)
   }

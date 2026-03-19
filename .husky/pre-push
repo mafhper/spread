@@ -1,6 +1,6 @@
 #!/bin/sh
-echo "🔐 Running security audit (high & critical only)..."
-bun run security:audit || {
-  echo '❌ Security audit failed. Fix vulnerabilities before pushing.'
+echo "🔐 Running clean-checkout preflight..."
+bun run preflight:clean || {
+  echo '❌ Clean preflight failed. Fix the issues before pushing.'
   exit 1
 }
