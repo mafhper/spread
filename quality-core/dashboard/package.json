@@ -91,6 +91,16 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
+    "picomatch": "4.0.4",
+    "anymatch": {
+      "picomatch": "2.3.2"
+    },
+    "micromatch": {
+      "picomatch": "2.3.2"
+    },
+    "readdirp": {
+      "picomatch": "2.3.2"
+    },
     "flatted": "^3.4.2",
     "rollup": "4.59.0"
   }

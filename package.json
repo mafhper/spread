@@ -85,7 +85,7 @@
   "dependencies": {
     "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "^3.7.0",
-    "astro": "^5.17.1",
+    "astro": "^5.18.1",
     "clsx": "^2.1.1",
     "colorthief": "^2.7.0",
     "downloadjs": "^1.4.7",
@@ -99,6 +99,7 @@
   },
   "resolutions": {
     "@isaacs/brace-expansion": "5.0.1",
+    "picomatch": "4.0.4",
     "tmp": "0.2.5",
     "glob": "^11.0.0",
     "flatted": "^3.4.2",
@@ -111,6 +112,13 @@
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
+    "picomatch": "4.0.4",
+    "anymatch": {
+      "picomatch": "2.3.2"
+    },
+    "micromatch": {
+      "picomatch": "2.3.2"
+    },
     "tmp": "0.2.5",
     "glob": "^11.0.0",
     "flatted": "^3.4.2",
