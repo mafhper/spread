@@ -64,7 +64,8 @@ function upsertArg(args, key, value) {
   let replaced = false
 
   for (let index = 0; index < args.length; index += 1) {
-    const current = args[index]
+    const current = args.at(index)
+    if (current == null) continue
     if (current === key) {
       result.push(key, String(value))
       index += 1

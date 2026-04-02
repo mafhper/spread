@@ -3,8 +3,6 @@
 import fs from 'fs'
 import path from 'path'
 
-const SUMMARY_KEYS = ['critical', 'high', 'moderate', 'low']
-
 function addSeverity(counts, severity) {
   if (severity === 'critical') counts.critical += 1
   else if (severity === 'high') counts.high += 1
@@ -14,7 +12,12 @@ function addSeverity(counts, severity) {
 
 function hasSummaryShape(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
-  return SUMMARY_KEYS.some(key => typeof value[key] === 'number')
+  return (
+    typeof value.critical === 'number' ||
+    typeof value.high === 'number' ||
+    typeof value.moderate === 'number' ||
+    typeof value.low === 'number'
+  )
 }
 
 function countPackageEntries(counts, entries) {
