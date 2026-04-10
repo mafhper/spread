@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "jsdom": "^27.4.0",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.4"
   },
   "overrides": {
     "esbuild": "0.25.0",
