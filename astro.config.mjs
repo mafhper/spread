@@ -71,6 +71,7 @@ export default defineConfig({
   // Substitua 'spread' pelo nome do seu repositório
   site: 'https://mafhp.github.io',
   base: '/spread',
+  output: 'static',
 
   integrations: [react(), sitemap()],
 
