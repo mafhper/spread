@@ -159,6 +159,7 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
         if (isHomeLink) {
           if (container) container.scrollTo({ top: 0, behavior: 'smooth' })
           else window.scrollTo({ top: 0, behavior: 'smooth' })
+          window.history.pushState(null, '', `${base}/`)
           setActiveSection('home')
         } else if (element) {
           const offsetTop = element.offsetTop - 80
@@ -177,6 +178,7 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
               behavior: 'smooth',
             })
           }
+          window.history.pushState(null, '', href)
           setActiveSection(targetId)
         }
       } else if (isAnchor) {
@@ -227,26 +229,33 @@ export const HeaderLanding: React.FC<HeaderLandingProps> = ({
                 aria-hidden="true"
               />
             ) : (
-              <a
-                href="#home"
-                onClick={e => handleNavClick(e, '#home')}
-                className="flex items-center gap-3 group min-h-[44px] min-w-[44px]"
-                aria-label="Voltar ao início"
-              >
-                <div className="relative w-10 h-10 sm:w-11 sm:h-11">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
-                  <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
-                    <img
-                      src={`${base}/logo.svg`}
-                      alt="Logo Spread"
-                      className="w-5 h-5 sm:w-6 sm:h-6 opacity-90"
-                    />
+              <div className="flex items-center gap-3 min-h-[44px] min-w-[44px]">
+                <a
+                  href={`${base}/`}
+                  onClick={e => handleNavClick(e, `${base}/`)}
+                  className="group flex min-h-[44px] min-w-[44px] items-center justify-center"
+                  aria-label="Voltar ao início"
+                >
+                  <div className="relative w-10 h-10 sm:w-11 sm:h-11">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-xl rotate-6 opacity-80 group-hover:rotate-12 transition-transform duration-300" />
+                    <div className="absolute inset-[2px] bg-zinc-950 rounded-xl flex items-center justify-center">
+                      <img
+                        src={`${base}/logo.svg`}
+                        alt="Logo Spread"
+                        className="w-5 h-5 sm:w-6 sm:h-6 opacity-90"
+                      />
+                    </div>
                   </div>
-                </div>
-                <span className="text-lg sm:text-xl font-bold text-white hidden sm:block">
+                </a>
+                <a
+                  href={`${base}/info/#recursos`}
+                  onClick={e => handleNavClick(e, `${base}/info/#recursos`)}
+                  className="hidden min-h-[44px] items-center text-lg font-bold text-white transition-colors hover:text-white/80 sm:flex sm:text-xl"
+                  aria-label="Ir para funções"
+                >
                   Spread
-                </span>
-              </a>
+                </a>
+              </div>
             )}
 
             {/* Desktop Navigation */}
