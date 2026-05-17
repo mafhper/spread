@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import { Download, History, Loader2, Zap } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
+import { LandingPage } from './landing/LandingPage'
 import { useCardStore } from '../store/cardStore'
 import { fetchMetadata } from '../services/metadata'
 import { urlToBase64 } from '../services/exportUtils'
@@ -15,9 +16,6 @@ import { useColorExtractor } from '../hooks/useColorExtractor'
 // Lazy load heavy components for code splitting
 const PreviewSection = lazy(() =>
   import('./preview/PreviewSection').then(m => ({ default: m.PreviewSection }))
-)
-const LandingPage = lazy(() =>
-  import('./landing/LandingPage').then(m => ({ default: m.LandingPage }))
 )
 const HistoryPanel = lazy(() =>
   import('./history/HistoryPanel').then(m => ({ default: m.HistoryPanel }))
@@ -55,6 +53,20 @@ export const SpreadEditor: React.FC = () => {
     resetToDefaults,
   } = useCardStore()
   const { extractColorsFromImage } = useColorExtractor()
+
+  useEffect(() => {
+    const shell = document.getElementById('hero-shell')
+    if (!shell) return
+
+    shell.dataset.hydrated = 'true'
+    shell.setAttribute('aria-hidden', 'true')
+
+    const removeShell = window.setTimeout(() => {
+      shell.remove()
+    }, 220)
+
+    return () => window.clearTimeout(removeShell)
+  }, [])
 
   const autoExtractColors = async (imageUrl: string) => {
     try {
@@ -246,15 +258,13 @@ export const SpreadEditor: React.FC = () => {
         >
           {/* LandingPage renders its own HeaderLanding internally */}
           <main className="flex-1">
-            <Suspense fallback={<LoadingFallback />}>
-              <LandingPage
-                inputUrl={inputUrl}
-                setInputUrl={setInputUrl}
-                onGenerate={handleGenerate}
-                isLoading={isLoadingMetadata}
-                hasDraft={hasDraft}
-              />
-            </Suspense>
+            <LandingPage
+              inputUrl={inputUrl}
+              setInputUrl={setInputUrl}
+              onGenerate={handleGenerate}
+              isLoading={isLoadingMetadata}
+              hasDraft={hasDraft}
+            />
           </main>
         </div>
 

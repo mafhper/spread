@@ -7,7 +7,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 ---
 
 <section
-  class="relative min-h-screen flex flex-col items-center justify-start sm:justify-center pt-24 pb-12 sm:py-0 px-4 sm:px-6 lg:px-8 overflow-hidden"
+  class="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-16 sm:min-h-screen sm:px-6 sm:py-0 lg:px-8"
   style="min-height: 100dvh"
 >
   <!-- Background Static Shell -->
@@ -29,10 +29,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
   <!-- Content Static Shell -->
   <div
-    class="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto w-full"
+    class="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center text-center"
   >
     <!-- Static Logo -->
-    <div class="relative mb-6 sm:mb-12">
+    <div class="relative mb-5 sm:mb-12">
       <div class="relative w-24 h-24 sm:w-36 sm:h-36">
         <div
           class="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-3xl rotate-6 opacity-80"
@@ -66,7 +66,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <!-- Static Tagline -->
     <p
-      class="text-base sm:text-xl md:text-2xl text-white/60 font-medium max-w-2xl mb-8 sm:mb-12 leading-relaxed px-4"
+      class="mb-6 max-w-2xl px-4 text-base font-medium leading-relaxed text-white/60 sm:mb-12 sm:text-xl md:text-2xl"
     >
       Crie visualizações <span class="text-white/90">elegantes</span> de links para
       compartilhar nas redes sociais

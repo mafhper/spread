@@ -25,7 +25,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   return (
     <section
-      className="relative min-h-screen sm:min-h-screen flex flex-col items-center justify-start sm:justify-center pt-24 pb-12 sm:py-0 px-4 sm:px-6 lg:px-8 overflow-hidden snap-start"
+      className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-4 py-16 sm:min-h-screen sm:px-6 sm:py-0 lg:px-8"
       style={{ minHeight: '100dvh' }}
     >
       {/* Animated Background - Geometric Mesh */}
@@ -67,9 +67,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto w-full">
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center text-center">
         {/* Animated Logo */}
-        <div className="relative mb-6 sm:mb-12">
+        <div className="relative mb-5 sm:mb-12">
           {/* Logo container */}
           <div className="relative w-24 h-24 sm:w-36 sm:h-36 transition-transform duration-500 hover:scale-[1.04]">
             <div
@@ -109,7 +109,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Tagline */}
-        <p className="text-base sm:text-xl md:text-2xl text-white/60 font-medium max-w-2xl mb-8 sm:mb-12 leading-relaxed px-4">
+        <p className="mb-6 max-w-2xl px-4 text-base font-medium leading-relaxed text-white/60 sm:mb-12 sm:text-xl md:text-2xl">
           Crie visualizações <span className="text-white/90">elegantes</span> de
           links para compartilhar nas redes sociais
         </p>
@@ -126,11 +126,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               className="flex-1 bg-transparent px-4 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-white placeholder:text-white/30 focus:outline-none min-w-0"
               aria-label="URL"
               onFocus={e => {
-                // Ensure input is visible on mobile when keyboard appears
-                e.target.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'center',
-                })
+                if (window.innerWidth >= 768) return
+
+                const input = e.currentTarget
+                window.setTimeout(() => {
+                  input.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                  })
+                }, 120)
               }}
             />
             <button
@@ -153,14 +157,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
 
           {/* Draft indicator and hint text */}
-          <div className="flex items-center justify-center gap-3 mt-4">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 px-2">
             {hasDraft && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-xs font-medium animate-pulse">
                 <Save size={12} />
                 Rascunho salvo
               </span>
             )}
-            <p className="text-white/30 text-sm">
+            <p className="text-sm text-white/30">
               YouTube, Spotify, artigos, qualquer link com metadados Open Graph
             </p>
           </div>
