@@ -7,7 +7,7 @@
       "dependencies": {
         "@astrojs/react": "^4.4.2",
         "@astrojs/sitemap": "^3.7.2",
-        "astro": "6.1.10",
+        "astro": "^6.1.10",
         "clsx": "^2.1.1",
         "colorthief": "^2.7.0",
         "downloadjs": "^1.4.7",
@@ -71,7 +71,7 @@
     "lodash": "^4.18.1",
     "lodash-es": "^4.18.1",
     "path-to-regexp": "0.1.13",
-    "tmp": "0.2.5",
+    "tmp": "0.2.6",
     "uuid": "14.0.0",
     "yaml": "^2.8.3",
   },
@@ -2148,7 +2148,7 @@
 
     "tldts-icann": ["tldts-icann@7.0.28", "", { "dependencies": { "tldts-core": "^7.0.28" } }, "sha512-brkN3yIgYTzBpSxB71XYBwUMDgutmKmA+6TWzgGD/EPcvCc6LHMTRaYj9ik1u3BxhSW53qIK/7cgjA2rF7BgbA=="],
 
-    "tmp": ["tmp@0.2.5", "", {}, "sha512-voyz6MApa1rQGUxT3E+BK7/ROe8itEx7vD8/HEvt4xwXucvQ5G5oeEiHkmHZJuBO21RpOf+YYm9MOivj709jow=="],
+    "tmp": ["tmp@0.2.6", "", {}, "sha512-5sJPdPjfI5Kx+qbrDesxkglRBxW//g7hCsqspEjwkewGvBMGIKMOTKzLt1hFVJzyadba3lDUN20O9qhvbQUSTA=="],
 
     "to-regex-range": ["to-regex-range@5.0.1", "", { "dependencies": { "is-number": "^7.0.0" } }, "sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ=="],
 
