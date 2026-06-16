@@ -12,12 +12,5 @@
     }
   },
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": [
-    "dist",
-    "node_modules",
-    "_dev",
-    "_dev/*",
-    "_dev/**/*",
-    "quality-core/dashboard"
-  ]
+  "exclude": ["dist", "node_modules", "_dev", "_dev/*", "_dev/**/*"]
 }

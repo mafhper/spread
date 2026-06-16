@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { Download, History, Loader2, Zap } from 'lucide-react'
 import { Sidebar } from './toolbar/Sidebar'
 import { LandingPage } from './landing/LandingPage'
@@ -33,6 +33,7 @@ export const SpreadEditor: React.FC = () => {
   const [inputUrl, setInputUrl] = useState('')
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   const [hasDraft, setHasDraft] = useState(false)
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isCompactToolbar, setIsCompactToolbar] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -84,21 +85,6 @@ export const SpreadEditor: React.FC = () => {
     }
   }
 
-  // Debounce function for localStorage persistence
-  const debounce = useCallback(
-    <F extends (...args: Parameters<F>) => ReturnType<F>>(
-      func: F,
-      wait: number
-    ) => {
-      let timeoutId: ReturnType<typeof setTimeout> | null = null
-      return (...args: Parameters<F>) => {
-        if (timeoutId) clearTimeout(timeoutId)
-        timeoutId = setTimeout(() => func(...args), wait)
-      }
-    },
-    []
-  )
-
   // Restore saved URL from localStorage on mount
   useEffect(() => {
     try {
@@ -128,15 +114,24 @@ export const SpreadEditor: React.FC = () => {
     }
   }, [])
 
-  const debouncedPersistUrl = useCallback(debounce(persistUrl, 300), [
-    debounce,
-    persistUrl,
-  ])
-
   // Watch inputUrl changes and persist with debounce
   useEffect(() => {
-    debouncedPersistUrl(inputUrl)
-  }, [inputUrl, debouncedPersistUrl])
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current)
+    }
+
+    persistTimeoutRef.current = setTimeout(() => {
+      persistUrl(inputUrl)
+      persistTimeoutRef.current = null
+    }, 300)
+
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current)
+        persistTimeoutRef.current = null
+      }
+    }
+  }, [inputUrl, persistUrl])
 
   useEffect(() => {
     const syncViewport = () => {
@@ -208,6 +203,10 @@ export const SpreadEditor: React.FC = () => {
         })
 
         // Clear saved URL after successful generation
+        if (persistTimeoutRef.current) {
+          clearTimeout(persistTimeoutRef.current)
+          persistTimeoutRef.current = null
+        }
         removePendingUrl()
         setHasDraft(false)
         console.log('[SpreadEditor - INFO] URL salva removida apos geracao')
