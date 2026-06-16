@@ -44,7 +44,7 @@ Spread usa un flujo compacto de validación basado en los scripts raíz del proy
 - **Gate local**: `bun run check` ejecuta ESLint, TypeScript, Prettier y Vitest.
 - **Preflight de CI**: `bun run preflight:github` agrega cobertura y auditoría npm para severidad alta.
 - **Hooks Git**: Husky ejecuta `check` antes de commits y `preflight:github` antes de pushes.
-- **Automatización GitHub**: `quality.yml` valida PRs y pushes, `dependency-guard.yml` revisa cambios de dependencias, `deploy.yml` publica GitHub Pages desde `main`, y Dependabot sigue el manifiesto npm raíz y GitHub Actions.
+- **Automatización GitHub**: `quality.yml` valida PRs y pushes, `dependency-guard.yml` revisa cambios de dependencias, `deploy.yml` publica GitHub Pages desde `main`, y Dependabot sigue actualizaciones de GitHub Actions.
 
 ---
 
