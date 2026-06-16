@@ -1,7 +1,0 @@
-{
-  "target": "spa-static",
-  "basePath": "/spread/",
-  "routing": "history-fallback",
-  "network": "slow-4g",
-  "device": "mobile"
-}

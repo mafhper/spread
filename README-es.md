@@ -37,15 +37,13 @@ El despliegue de producción está disponible para pruebas y evaluación en vivo
 
 ---
 
-## Garantía de Calidad y Gobernanza
+## Garantía de Calidad
 
-Spread integra **Quality Core**, un sistema de gobernanza modular diseñado para imponer estándares rigurosos de ingeniería de software mediante auditoría automatizada.
+Spread usa un flujo compacto de validación basado en los scripts estándar del proyecto.
 
-- **Quality Gate**: Orquestador pre-commit que impone protocolos de integridad, internacionalización (i18n), seguridad y rendimiento.
-- **Panel de Telemetría**: Una interfaz analítica estilo Bento para el monitoreo en tiempo real de la salud del proyecto, tendencias históricas y snapshots de auditoría.
-- **Seguridad y Rendimiento**: Integración nativa con métricas de Lighthouse y escáneres especializados de dependencias y secretos.
-
-La documentación técnica está disponible en el [Módulo Quality Core](quality-core/README.md).
+- **Chequeos estáticos**: TypeScript, ESLint y Prettier se ejecutan de forma independiente.
+- **Pruebas y cobertura**: Vitest valida la superficie React/Astro y puede emitir cobertura para CI.
+- **Auditoría de seguridad**: npm audit bloquea vulnerabilidades altas y críticas.
 
 ---
 
@@ -88,8 +86,8 @@ El proyecto soporta un **flujo cross-platform** (Windows, macOS, Linux) y puede 
 ### Requisitos Previos
 
 - [Node.js](https://nodejs.org) >= 20 (obligatorio)
-- [npm](https://www.npmjs.com) >= 10 (obligatorio para auditorías/updates del dashboard)
-- [Bun Runtime](https://bun.sh) >= 1.1 (recomendado; usado por utilidades TS de Quality Core)
+- [npm](https://www.npmjs.com) >= 10
+- [Bun Runtime](https://bun.sh) >= 1.1 (recomendado)
 
 ### Flujo Universal (Bun o Node)
 
@@ -110,14 +108,14 @@ bun run build
 npm run build
 ```
 
-### Calidad y Reportes
+### Validación
 
 ```bash
-# Quality gate completo (cross-platform)
-bun run quality:full
+# Chequeos locales rápidos
+bun run check
 
-# Reportes (Lighthouse + snapshots; requiere Bun para scripts TS)
-bun run quality:reports:all
+# Preflight de CI con cobertura y auditoría de seguridad
+bun run preflight:github
 ```
 
 ---
@@ -131,7 +129,6 @@ spread/
 │   ├── store/           # Sincronización de estado mediante Zustand
 │   ├── services/        # Utilidades lógicas y abstracción de API
 │   └── styles/          # Configuración de PostCSS y Tailwind 4
-├── quality-core/        # Sistema de garantía de calidad y gobernanza
 ├── public/              # Activos estáticos y recursos de distribución
 └── Astro.config.mjs     # Orquestación del framework
 ```

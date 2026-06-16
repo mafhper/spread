@@ -7,13 +7,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './quality-core/tests/unit/setup.ts',
+    setupFiles: './tests/unit/setup.ts',
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 30000,
     include: [
-      'quality-core/tests/**/*.{test,spec}.{js,ts,jsx,tsx}',
       'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/**/*.{test,spec}.{js,ts,jsx,tsx}',
     ],
     exclude: [
       '**/node_modules/**',
@@ -33,7 +33,6 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         '**/tests/**',
-        'quality-core/**',
         'src/components/icons/**',
         'src/components/landing/**',
         'src/components/toolbar/tabs/**',

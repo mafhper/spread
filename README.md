@@ -38,15 +38,13 @@ The production deployment is available for live testing and evaluation.
 
 ---
 
-## Quality Assurance & Governance
+## Quality Assurance
 
-Spread integrates **Quality Core**, a modular governance system designed to enforce rigorous software engineering standards through automated auditing.
+Spread uses a compact validation flow built from standard project scripts.
 
-- **Quality Gate**: Pre-commit orchestrator enforcing integrity, internationalization (i18n), security, and performance protocols.
-- **Telemetry Dashboard**: A Bento-grid analytical interface for real-time monitoring of project health, historical trends, and audit snapshots.
-- **Security & Performance**: Native integration with Lighthouse metrics and specialized dependency/secret scanners.
-
-Technical documentation is available in the [Quality Core Module](quality-core/README.md).
+- **Static checks**: TypeScript, ESLint, and Prettier run independently.
+- **Tests and coverage**: Vitest validates the React/Astro surface and can emit coverage for CI.
+- **Security audit**: npm audit blocks high and critical vulnerabilities.
 
 ---
 
@@ -89,8 +87,8 @@ The project supports a **cross-platform workflow** (Windows, macOS, Linux) and c
 ### Prerequisites
 
 - [Node.js](https://nodejs.org) >= 20 (required)
-- [npm](https://www.npmjs.com) >= 10 (required for dashboard audits/updates)
-- [Bun Runtime](https://bun.sh) >= 1.1 (recommended; used by Quality Core TS utilities)
+- [npm](https://www.npmjs.com) >= 10
+- [Bun Runtime](https://bun.sh) >= 1.1 (recommended)
 
 ### Universal Flow (Bun or Node)
 
@@ -111,14 +109,14 @@ bun run build
 npm run build
 ```
 
-### Quality & Reports
+### Validation
 
 ```bash
-# Full quality gate (cross-platform)
-bun run quality:full
+# Fast local checks
+bun run check
 
-# Reports (Lighthouse + snapshots; requires Bun for TS scripts)
-bun run quality:reports:all
+# CI preflight with coverage and security audit
+bun run preflight:github
 ```
 
 ---
@@ -132,7 +130,6 @@ spread/
 │   ├── store/           # State synchronization via Zustand
 │   ├── services/        # Logic utilities and API abstraction
 │   └── styles/          # PostCSS and Tailwind 4 configuration
-├── quality-core/        # Quality assurance and governance system
 ├── public/              # Static assets and distribution resources
 └── Astro.config.mjs     # Framework orchestration
 ```
