@@ -22,7 +22,7 @@ Spread is a high-fidelity web utility engineered for the generation of aesthetic
 - **Heuristic Color Engine**: Leverages a specialized analysis module to derive dominant color palettes from source media, generating balanced chromatic gradients.
 - **Adaptive Layout Templates**: Features a suite of specialized configurations optimized for varying content types, including music, photography, and journalism.
 - **Layout Stability & UX**: Implements skeleton-based progressive loading and anchor-aware navigation to eliminate Cumulative Layout Shift (CLS) during content hydration.
-- **High-Resolution Rendering**: Built on Astro 5 and React 19, delivering a low-latency interface with support for 2x pixel-ratio PNG asset exports.
+- **High-Resolution Rendering**: Built on Astro 6 and React 19, delivering a low-latency interface with support for 2x pixel-ratio PNG asset exports.
 
 ---
 
@@ -40,11 +40,12 @@ The production deployment is available for live testing and evaluation.
 
 ## Quality Assurance
 
-Spread uses a compact validation flow built from standard project scripts.
+Spread uses a compact validation flow built from root project scripts and GitHub Actions.
 
-- **Static checks**: TypeScript, ESLint, and Prettier run independently.
-- **Tests and coverage**: Vitest validates the React/Astro surface and can emit coverage for CI.
-- **Security audit**: npm audit blocks high and critical vulnerabilities.
+- **Local gate**: `bun run check` runs ESLint, TypeScript, Prettier, and Vitest.
+- **CI preflight**: `bun run preflight:github` adds coverage and an npm high-severity audit.
+- **Git hooks**: Husky runs `check` before commits and `preflight:github` before pushes.
+- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, and Dependabot tracks the root npm manifest plus GitHub Actions.
 
 ---
 
@@ -86,20 +87,25 @@ The project supports a **cross-platform workflow** (Windows, macOS, Linux) and c
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) >= 20 (required)
+- [Node.js](https://nodejs.org) >= 22.13.0 (required)
 - [npm](https://www.npmjs.com) >= 10
 - [Bun Runtime](https://bun.sh) >= 1.1 (recommended)
 
 ### Universal Flow (Bun or Node)
 
 ```bash
-# Dependency synchronization (choose one)
+# Dependency synchronization for local development (choose one)
 bun install
 # or
 npm install
 
+# Deterministic install for CI-style validation (choose one)
+bun install --frozen-lockfile
+# or
+npm ci
+
 # Development server
-bun dev
+bun run dev
 # or
 npm run dev
 
@@ -117,6 +123,9 @@ bun run check
 
 # CI preflight with coverage and security audit
 bun run preflight:github
+
+# Build plus local checks and security audit
+bun run validate
 ```
 
 ---
@@ -125,13 +134,15 @@ bun run preflight:github
 
 ```text
 spread/
+├── .github/workflows/  # CI validation and GitHub Pages deployment
 ├── src/
 │   ├── components/      # React interface architecture
 │   ├── store/           # State synchronization via Zustand
 │   ├── services/        # Logic utilities and API abstraction
 │   └── styles/          # PostCSS and Tailwind 4 configuration
+├── tests/               # Vitest unit coverage for product behavior
 ├── public/              # Static assets and distribution resources
-└── Astro.config.mjs     # Framework orchestration
+└── astro.config.mjs     # Framework orchestration
 ```
 
 ---

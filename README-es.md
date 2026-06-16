@@ -21,7 +21,7 @@ Spread es una utilidad web de alta fidelidad diseñada para la generación de ac
 - **Orquestación de Metadatos**: Implementa la extracción automatizada mediante protocolos Open Graph para la recuperación de títulos canónicos, descripciones e iconografía de alta calidad.
 - **Motor de Color Heurístico**: Utiliza un módulo de análisis especializado para derivar paletas de colores dominantes de los medios de origen, generando degradados cromáticos equilibrados.
 - **Plantillas de Diseño Adaptativas**: Presenta un conjunto de configuraciones especializadas optimizadas para diversos tipos de contenido, incluyendo música, fotografía y periodismo.
-- **Renderizado de Alta Resolución**: Desarrollado sobre Astro 5 y React 19, ofreciendo una interfaz de baja latencia con soporte para la exportación de activos PNG en una proporción de píxeles de 2x.
+- **Renderizado de Alta Resolución**: Desarrollado sobre Astro 6 y React 19, ofreciendo una interfaz de baja latencia con soporte para la exportación de activos PNG en una proporción de píxeles de 2x.
 
 ---
 
@@ -39,11 +39,12 @@ El despliegue de producción está disponible para pruebas y evaluación en vivo
 
 ## Garantía de Calidad
 
-Spread usa un flujo compacto de validación basado en los scripts estándar del proyecto.
+Spread usa un flujo compacto de validación basado en los scripts raíz del proyecto y en GitHub Actions.
 
-- **Chequeos estáticos**: TypeScript, ESLint y Prettier se ejecutan de forma independiente.
-- **Pruebas y cobertura**: Vitest valida la superficie React/Astro y puede emitir cobertura para CI.
-- **Auditoría de seguridad**: npm audit bloquea vulnerabilidades altas y críticas.
+- **Gate local**: `bun run check` ejecuta ESLint, TypeScript, Prettier y Vitest.
+- **Preflight de CI**: `bun run preflight:github` agrega cobertura y auditoría npm para severidad alta.
+- **Hooks Git**: Husky ejecuta `check` antes de commits y `preflight:github` antes de pushes.
+- **Automatización GitHub**: `quality.yml` valida PRs y pushes, `dependency-guard.yml` revisa cambios de dependencias, `deploy.yml` publica GitHub Pages desde `main`, y Dependabot sigue el manifiesto npm raíz y GitHub Actions.
 
 ---
 
@@ -85,20 +86,25 @@ El proyecto soporta un **flujo cross-platform** (Windows, macOS, Linux) y puede 
 
 ### Requisitos Previos
 
-- [Node.js](https://nodejs.org) >= 20 (obligatorio)
+- [Node.js](https://nodejs.org) >= 22.13.0 (obligatorio)
 - [npm](https://www.npmjs.com) >= 10
 - [Bun Runtime](https://bun.sh) >= 1.1 (recomendado)
 
 ### Flujo Universal (Bun o Node)
 
 ```bash
-# Sincronización de dependencias (elige uno)
+# Sincronización de dependencias para desarrollo local (elige uno)
 bun install
 # o
 npm install
 
+# Instalación determinística para validación estilo CI (elige uno)
+bun install --frozen-lockfile
+# o
+npm ci
+
 # Servidor de desarrollo
-bun dev
+bun run dev
 # o
 npm run dev
 
@@ -116,6 +122,9 @@ bun run check
 
 # Preflight de CI con cobertura y auditoría de seguridad
 bun run preflight:github
+
+# Build con chequeos locales y auditoría de seguridad
+bun run validate
 ```
 
 ---
@@ -124,13 +133,15 @@ bun run preflight:github
 
 ```text
 spread/
+├── .github/workflows/  # Validación de CI y despliegue en GitHub Pages
 ├── src/
 │   ├── components/      # Arquitectura de interfaz React
 │   ├── store/           # Sincronización de estado mediante Zustand
 │   ├── services/        # Utilidades lógicas y abstracción de API
 │   └── styles/          # Configuración de PostCSS y Tailwind 4
+├── tests/               # Cobertura unitaria Vitest para comportamiento del producto
 ├── public/              # Activos estáticos y recursos de distribución
-└── Astro.config.mjs     # Orquestación del framework
+└── astro.config.mjs     # Orquestación del framework
 ```
 
 ---

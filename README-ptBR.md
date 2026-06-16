@@ -21,7 +21,7 @@ Spread é um utilitário web de alta fidelidade projetado para a geração de at
 - **Orquestração de Metadados**: Implementa a extração automatizada via protocolos Open Graph para recuperação de títulos canônicos, descrições e iconografia de alta qualidade.
 - **Motor de Cores Heurístico**: Utiliza um módulo de análise especializado para derivar paletas de cores dominantes da mídia de origem, gerando gradientes cromáticos equilibrados.
 - **Templates de Layout Adaptativos**: Apresenta um conjunto de configurações especializadas otimizadas para diversos tipos de conteúdo, incluindo música, fotografia e jornalismo.
-- **Renderização de Alta Resolução**: Desenvolvido sobre Astro 5 e React 19, entregando uma interface de baixa latência com suporte para exportação de ativos PNG em proporção de pixels de 2x.
+- **Renderização de Alta Resolução**: Desenvolvido sobre Astro 6 e React 19, entregando uma interface de baixa latência com suporte para exportação de ativos PNG em proporção de pixels de 2x.
 
 ---
 
@@ -39,11 +39,12 @@ A implantação de produção está disponível para testes e avaliação em tem
 
 ## Garantia de Qualidade
 
-O Spread usa um fluxo compacto de validação baseado nos scripts padrão do projeto.
+O Spread usa um fluxo compacto de validação baseado nos scripts raiz do projeto e no GitHub Actions.
 
-- **Checagens estáticas**: TypeScript, ESLint e Prettier rodam de forma independente.
-- **Testes e cobertura**: Vitest valida a superfície React/Astro e pode emitir cobertura para CI.
-- **Auditoria de segurança**: npm audit bloqueia vulnerabilidades altas e críticas.
+- **Gate local**: `bun run check` executa ESLint, TypeScript, Prettier e Vitest.
+- **Preflight de CI**: `bun run preflight:github` adiciona cobertura e auditoria npm para severidade alta.
+- **Hooks Git**: Husky executa `check` antes de commits e `preflight:github` antes de pushes.
+- **Automação GitHub**: `quality.yml` valida PRs e pushes, `dependency-guard.yml` revisa mudanças de dependências, `deploy.yml` publica o GitHub Pages a partir da `main`, e o Dependabot acompanha o manifest npm raiz e GitHub Actions.
 
 ---
 
@@ -85,20 +86,25 @@ O projeto suporta um **fluxo cross-platform** (Windows, macOS, Linux) e pode ser
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org) >= 20 (obrigatório)
+- [Node.js](https://nodejs.org) >= 22.13.0 (obrigatório)
 - [npm](https://www.npmjs.com) >= 10
 - [Bun Runtime](https://bun.sh) >= 1.1 (recomendado)
 
 ### Fluxo Universal (Bun ou Node)
 
 ```bash
-# Sincronização de dependências (escolha um)
+# Sincronização de dependências para desenvolvimento local (escolha um)
 bun install
 # ou
 npm install
 
+# Instalação determinística para validação estilo CI (escolha um)
+bun install --frozen-lockfile
+# ou
+npm ci
+
 # Servidor de desenvolvimento
-bun dev
+bun run dev
 # ou
 npm run dev
 
@@ -116,6 +122,9 @@ bun run check
 
 # Preflight de CI com cobertura e auditoria de segurança
 bun run preflight:github
+
+# Build com checagens locais e auditoria de segurança
+bun run validate
 ```
 
 ---
@@ -124,13 +133,15 @@ bun run preflight:github
 
 ```text
 spread/
+├── .github/workflows/  # Validação de CI e deploy no GitHub Pages
 ├── src/
 │   ├── components/      # Arquitetura de interface React
 │   ├── store/           # Sincronização de estado via Zustand
 │   ├── services/        # Utilitários de lógica e abstração de API
 │   └── styles/          # Configuração PostCSS e Tailwind 4
+├── tests/               # Cobertura unitária Vitest para comportamento do produto
 ├── public/              # Ativos estáticos e recursos de distribuição
-└── Astro.config.mjs     # Orquestração do framework
+└── astro.config.mjs     # Orquestração do framework
 ```
 
 ---
