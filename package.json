@@ -52,9 +52,9 @@
     "validate": "run-s clean:dist build check security:audit"
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/sitemap": "^3.7.2",
-    "astro": "^6.4.7",
+    "@astrojs/react": "^6.0.0",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^7.0.3",
     "clsx": "^2.1.1",
     "colorthief": "^2.7.0",
     "downloadjs": "^1.4.7",
