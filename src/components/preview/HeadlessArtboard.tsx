@@ -171,12 +171,12 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
             : 'artboard-root relative overflow-visible'
         }
         style={{
-          width: isAutoCanvas
-            ? canvasWidth * finalScale + 160 // scaled width + p-20 (80px on each side)
-            : canvasWidth,
-          height: isAutoCanvas
-            ? canvasHeight * finalScale + 160 // scaled height + p-20
-            : canvasHeight,
+          // Em auto, dimensiona como o preview (PreviewSection usa w-fit h-fit):
+          // a caixa capturada acompanha a altura REAL do card + o p-20 interno,
+          // em vez da estimativa fixa canvasHeight*finalScale + 160, que ficava
+          // curta quando o card renderizava mais alto e cortava o topo (logo).
+          width: isAutoCanvas ? 'fit-content' : canvasWidth,
+          height: isAutoCanvas ? 'fit-content' : canvasHeight,
           ...backgroundStyle,
           borderRadius: `${canvasSize.roundness ?? 0}px`,
         }}
