@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { useCardStore } from '../../store/cardStore'
 import { computeUnifiedExportScale } from '../../utils/exportScale'
@@ -135,6 +135,32 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
       : 64
     : (layout?.padding ?? 0)
 
+  // Mede o tamanho NATURAL (sem escala) do card para reservar a caixa já
+  // escalada no export. html-to-image aplica scale a partir do top-left e
+  // ignora transform-origin: center, então sem essa reserva o card escalado
+  // fica deslocado e corta o topo (logo). O elemento medido é posicionado
+  // de forma absoluta, então não é constrangido em largura nem entra em loop.
+  const cardMeasureRef = useRef<HTMLDivElement>(null)
+  const [naturalCardSize, setNaturalCardSize] = useState({ w: 640, h: 360 })
+
+  useEffect(() => {
+    const el = cardMeasureRef.current
+    if (!el) return
+    const measure = () => {
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      if (w > 0 && h > 0) {
+        setNaturalCardSize(prev =>
+          Math.abs(prev.w - w) > 1 || Math.abs(prev.h - h) > 1 ? { w, h } : prev
+        )
+      }
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    measure()
+    return () => observer.disconnect()
+  }, [])
+
   const autoScale = getAutoScale()
   // Unified final transform scale (export uses exportScale * cardScale * autoScale)
   const finalScale = computeUnifiedExportScale({
@@ -194,19 +220,37 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
               : 'relative z-10 flex items-center justify-center h-full w-full'
           }
         >
+          {/* Placeholder com o tamanho JÁ ESCALADO: é o item que o flex
+              centraliza. O card real é absoluto e escalado a partir do
+              top-left, de modo que html-to-image o posicione igual ao
+              preview (centralizado, sem cortar o logo). */}
           <div
             style={{
-              transform: `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${finalScale})`,
-              transformOrigin: 'center',
-              width: 'fit-content',
-              minWidth: '640px',
+              position: 'relative',
+              width: naturalCardSize.w * finalScale,
+              height: naturalCardSize.h * finalScale,
             }}
           >
-            <PreviewCard
-              canvasWidth={canvasWidth}
-              canvasHeight={canvasHeight}
-              padding={cardPadding}
-            />
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                transform: `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${finalScale})`,
+                transformOrigin: 'top left',
+              }}
+            >
+              <div
+                ref={cardMeasureRef}
+                style={{ width: 'fit-content', minWidth: '640px' }}
+              >
+                <PreviewCard
+                  canvasWidth={canvasWidth}
+                  canvasHeight={canvasHeight}
+                  padding={cardPadding}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
