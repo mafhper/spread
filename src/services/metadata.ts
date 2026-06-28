@@ -13,6 +13,24 @@ export interface LinkMetadata {
   template: 'default' | 'music' | 'news'
 }
 
+// Microlink scrapes the page server-side and can be slow (or hang) for
+// JS-heavy pages like YouTube Music. Cap it so the link processing never
+// blocks indefinitely; when it times out we fall back to oEmbed data.
+const MICROLINK_TIMEOUT_MS = 9000
+
+async function fetchWithTimeout(
+  url: string,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 // YouTube oEmbed for better music data
 async function fetchYouTubeData(
   url: string
@@ -112,26 +130,39 @@ export async function fetchMetadata(url: string): Promise<LinkMetadata | null> {
       youtubeData = await fetchYouTubeData(targetUrl)
     }
 
-    // Fallback to Microlink for other metadata
-    const encodedUrl = encodeURIComponent(targetUrl)
-    const response = await fetch(`https://api.microlink.io?url=${encodedUrl}`)
-    const json = await response.json()
-
     let title = ''
     let description = ''
     let image: string | null = null
     let author = ''
-    let favicon: string | null = null
+    let favicon: string | null =
+      `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
 
-    if (json.status === 'success') {
-      const data = json.data
-      title = data.title || ''
-      description = data.description || ''
-      image = data.image?.url || null
-      favicon =
-        data.logo?.url ||
-        `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
-      author = data.author || data.publisher || ''
+    // Fallback to Microlink for other metadata (timed out so it can't hang)
+    const encodedUrl = encodeURIComponent(targetUrl)
+    try {
+      const response = await fetchWithTimeout(
+        `https://api.microlink.io?url=${encodedUrl}`,
+        MICROLINK_TIMEOUT_MS
+      )
+      const json = await response.json()
+
+      if (json.status === 'success') {
+        const data = json.data
+        title = data.title || ''
+        description = data.description || ''
+        image = data.image?.url || null
+        favicon = data.logo?.url || favicon
+        author = data.author || data.publisher || ''
+      }
+    } catch (microlinkError) {
+      // Microlink slow/aborted/failed: if oEmbed already gave us usable data
+      // (YouTube), proceed with it; otherwise propagate so the caller can show
+      // a load error instead of an empty card.
+      if (!youtubeData) throw microlinkError
+      console.warn(
+        'Microlink failed, falling back to YouTube oEmbed only:',
+        microlinkError
+      )
     }
 
     // Override with YouTube data if available (better for music)

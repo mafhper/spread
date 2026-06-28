@@ -298,6 +298,32 @@ describe('metadata service', () => {
       expect(result?.author).toBe('Channel Name')
     })
 
+    it('should fall back to YouTube oEmbed when Microlink fails', async () => {
+      const mockYouTubeResponse = {
+        title: 'Karma Police',
+        author_name: 'Radiohead',
+        thumbnail_url: 'https://i.ytimg.com/hqdefault.jpg',
+      }
+
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockYouTubeResponse),
+        } as Response)
+        // Microlink hangs/aborts/fails — must not discard the oEmbed data
+        .mockRejectedValueOnce(new Error('Microlink timeout'))
+
+      const result = await fetchMetadata(
+        'https://music.youtube.com/watch?v=123'
+      )
+
+      expect(result).not.toBeNull()
+      expect(result?.title).toBe('Karma Police')
+      expect(result?.author).toBe('Radiohead')
+      expect(result?.image).toBe('https://i.ytimg.com/hqdefault.jpg')
+      expect(result?.favicon).toContain('google.com/s2/favicons')
+    })
+
     it('should clean YouTube author name by removing " - Topic"', async () => {
       const mockYouTubeResponse = {
         title: 'Track Name',
