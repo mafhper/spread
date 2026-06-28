@@ -22,6 +22,9 @@ vi.mock('downloadjs')
 vi.mock('@/services/exportUtils', () => ({
   urlToBase64: vi.fn(),
   getEmbeddedFontCSS: vi.fn().mockResolvedValue(''),
+  waitForImages: vi.fn().mockResolvedValue(undefined),
+  waitForStableLayout: vi.fn().mockResolvedValue(undefined),
+  nextAnimationFrame: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('PreviewSection Component', () => {

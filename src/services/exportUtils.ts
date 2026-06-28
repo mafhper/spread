@@ -97,6 +97,62 @@ export async function urlToBase64(url: string): Promise<string | null> {
 }
 
 /**
+ * Aguarda o próximo frame de animação (resolve imediatamente fora do browser).
+ */
+export function nextAnimationFrame(): Promise<void> {
+  return new Promise(resolve => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve())
+    } else {
+      resolve()
+    }
+  })
+}
+
+/**
+ * Aguarda todas as <img> dentro de `target` ficarem decodificadas antes da
+ * rasterização. Usa img.decode() quando disponível e cai em onload/onerror.
+ * É best-effort: um decode que falha (ex.: imagem via proxy) não bloqueia o
+ * export — apenas garante que não capturamos imagens ainda não prontas.
+ */
+export async function waitForImages(target: HTMLElement): Promise<void> {
+  const images = Array.from(target.querySelectorAll('img'))
+  await Promise.all(
+    images.map(async img => {
+      try {
+        if (typeof img.decode === 'function') {
+          await img.decode()
+        } else if (!img.complete) {
+          await new Promise<void>(resolve => {
+            img.addEventListener('load', () => resolve(), { once: true })
+            img.addEventListener('error', () => resolve(), { once: true })
+          })
+        }
+      } catch {
+        // decode falhou (CORS/proxy): seguimos com fallback do pipeline
+      }
+    })
+  )
+}
+
+/**
+ * Confirma que as dimensões do alvo estão estáveis entre frames consecutivos,
+ * evitando capturar durante um reflow (fontes/imagens alterando a geometria).
+ */
+export async function waitForStableLayout(
+  target: HTMLElement,
+  maxFrames = 5
+): Promise<void> {
+  let prev = `${target.offsetWidth}x${target.offsetHeight}`
+  for (let i = 0; i < maxFrames; i++) {
+    await nextAnimationFrame()
+    const current = `${target.offsetWidth}x${target.offsetHeight}`
+    if (current === prev) return
+    prev = current
+  }
+}
+
+/**
  * Embeds Google Fonts as Base64
  * 1. Fetches the CSS
  * 2. Parses the WOFF2 URLs

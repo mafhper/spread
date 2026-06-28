@@ -25,7 +25,13 @@ import { HeadlessArtboard } from './HeadlessArtboard'
 import { useHistory } from '../../hooks/useHistory'
 import { fetchMetadata } from '../../services/metadata'
 import { useColorExtractor } from '../../hooks/useColorExtractor'
-import { urlToBase64, getEmbeddedFontCSS } from '../../services/exportUtils'
+import {
+  urlToBase64,
+  getEmbeddedFontCSS,
+  waitForImages,
+  waitForStableLayout,
+  nextAnimationFrame,
+} from '../../services/exportUtils'
 import { useAutoScale } from '../../hooks/useAutoScale'
 
 export interface PreviewSectionHandle {
@@ -468,9 +474,13 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       try {
         // Dynamic imports for bundle optimization
         const download = (await import('downloadjs')).default
-        // Give a moment for the DOM to update styles (fallback colors)
-        await new Promise(r => setTimeout(r, 100))
+        // Aguarda recursos antes de rasterizar: fontes prontas, imagens
+        // decodificadas e layout estável (evita PNG com imagem em branco ou
+        // capturada durante reflow). Substitui o antigo setTimeout(100).
         await document.fonts.ready
+        await waitForImages(target)
+        await waitForStableLayout(target)
+        await nextAnimationFrame()
 
         let dataUrl: string
         let thumbnailUrl: string
