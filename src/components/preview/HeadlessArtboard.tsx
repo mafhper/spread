@@ -57,7 +57,9 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
               ? 'repeating-linear-gradient(45deg, #ffffff 0, #ffffff 1px, transparent 0, transparent 50%)'
               : pattern === 'noise'
                 ? `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")`
-                : 'none',
+                : pattern === 'mesh'
+                  ? `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0 L20 10 L10 20 L0 10 Z' fill='none' stroke='white' stroke-width='0.5' opacity='0.2'/%3E%3C/svg%3E")`
+                  : 'none',
     backgroundSize: getPatternSize(),
     opacity: pattern === 'none' ? 0 : patternOpacity,
     mixBlendMode: 'overlay',
@@ -124,6 +126,14 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
 
     return s
   }
+
+  // Padding do card resolvido para o export — espelha PreviewSection.paddingValue()
+  // (ramo não-mobile) para que o headless e o preview produzam a mesma caixa.
+  const cardPadding = layout?.paddingAuto
+    ? typeof window !== 'undefined' && window.innerWidth < 640
+      ? 32
+      : 64
+    : (layout?.padding ?? 0)
 
   const autoScale = getAutoScale()
   // Unified final transform scale (export uses exportScale * cardScale * autoScale)
@@ -195,6 +205,7 @@ export const HeadlessArtboard = React.forwardRef<HTMLDivElement>((_, ref) => {
             <PreviewCard
               canvasWidth={canvasWidth}
               canvasHeight={canvasHeight}
+              padding={cardPadding}
             />
           </div>
         </div>

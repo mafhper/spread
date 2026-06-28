@@ -547,22 +547,17 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
             },
           }
 
-          const unifiedExportScale = computeUnifiedExportScale({
-            exportScale,
-            cardScale: layout.cardScale,
-            autoScale,
-            preset: canvasSize.preset,
-          })
+          // A escala efetiva já está embutida no transform do DOM headless
+          // (HeadlessArtboard.finalScale); aqui só logamos as dimensões do alvo.
           console.log(
-            '[SPREAD-DEBUG] Starting export details (unified):',
+            '[SPREAD-DEBUG] Starting export details:',
             JSON.stringify(
               {
                 type: 'EXPORT',
                 width: target.offsetWidth,
                 height: target.offsetHeight,
                 preset: canvasSize.preset,
-                autoScale: autoScale,
-                exportScale: unifiedExportScale,
+                autoScale,
               },
               null,
               2

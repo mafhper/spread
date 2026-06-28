@@ -12,6 +12,7 @@ import {
   removePendingUrl,
 } from '../utils/persistence'
 import { useColorExtractor } from '../hooks/useColorExtractor'
+import { resolvePublicAsset } from '../utils/resolvePublicAsset'
 
 // Lazy load heavy components for code splitting
 const PreviewSection = lazy(() =>
@@ -309,7 +310,7 @@ export const SpreadEditor: React.FC = () => {
               >
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 sm:p-1.5 shadow-xl">
                   <img
-                    src="/spread/logo.svg"
+                    src={resolvePublicAsset('logo.svg')}
                     alt=""
                     className="w-full h-full opacity-95 invert brightness-0"
                   />
@@ -374,7 +375,7 @@ export const SpreadEditor: React.FC = () => {
                   >
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 flex items-center justify-center p-1 sm:p-1.5 shadow-xl">
                       <img
-                        src="/spread/logo.svg"
+                        src={resolvePublicAsset('logo.svg')}
                         alt=""
                         className="w-full h-full opacity-95 invert brightness-0"
                       />

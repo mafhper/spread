@@ -18,6 +18,7 @@ import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { useCardStore } from '../../store/cardStore'
 import { getServiceIcon } from '../../services/iconLibrary'
+import { resolvePublicAsset } from '../../utils/resolvePublicAsset'
 // import { FrameOverlay } from './FrameOverlay'
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -238,7 +239,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
                   <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
                     <img
-                      src="/spread/logo.svg"
+                      src={resolvePublicAsset('logo.svg')}
                       alt=""
                       className="w-full h-full p-0.5 opacity-95 invert brightness-0"
                     />
@@ -266,7 +267,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               {/* Animated SVG Graphic */}
               <div className="relative z-10 w-28 h-28 transform transition-transform duration-700 hover:scale-110">
                 <img
-                  src="/spread/logo.svg"
+                  src={resolvePublicAsset('logo.svg')}
                   alt="Spread Logo"
                   className="w-full h-full opacity-90 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] animate-color-shift"
                   style={{ filter: 'brightness(1.5) contrast(1.1)' }}
