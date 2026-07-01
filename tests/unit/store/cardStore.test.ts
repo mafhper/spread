@@ -39,10 +39,8 @@ describe('cardStore', () => {
       description:
         'Gere cards lindos para suas redes sociais a partir de qualquer link. Cole a URL e veja a magica acontecer.',
       author: 'Spread App',
-      image:
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200',
-      favicon:
-        'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg',
+      image: '/spread/assets/social-preview.png',
+      favicon: '/spread/logo.svg',
       domain: 'spread.app',
       template: 'default',
       isWelcomeState: true,

@@ -14,13 +14,10 @@ import {
   Maximize,
   RotateCcw,
 } from 'lucide-react'
-import { computeUnifiedExportScale } from '../../utils/exportScale'
 import { useCardStore } from '../../store/cardStore'
-import { PreviewCard } from './PreviewCard'
-import { isDevMode } from '../../utils/env'
+import { CompositionArtboard } from '../../features/composition/CompositionArtboard'
 import { log } from '../../utils/logger'
 import { WelcomeCard } from './WelcomeCard'
-import { HeadlessArtboard } from './HeadlessArtboard'
 
 import { useHistory } from '../../hooks/useHistory'
 import { fetchMetadata } from '../../services/metadata'
@@ -46,10 +43,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       canvasSize,
       cardPosition,
       gradientStyle,
-      pattern,
       customBgImage,
-      patternOpacity,
-      patternScale,
       updateLayout,
       updateField,
       setFullState,
@@ -57,16 +51,12 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       isWelcomeState,
       isSidebarOpen,
       layout,
-      frame,
     } = useCardStore()
     const currentState = useCardStore()
-    const { exportScale } = currentState
     const { saveToHistory, history, loadFromHistory } = useHistory()
     const { extractColorsFromImage } = useColorExtractor()
     const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
-    const exportOnlyRef = useRef<HTMLDivElement>(null)
     const cardRef = useRef<HTMLDivElement>(null)
-    const [diagnosticMode, setDiagnosticMode] = useState(false)
     const [isCompactViewport, setIsCompactViewport] = useState(false)
     const [isToolbarCompact, setIsToolbarCompact] = useState(false)
     const isMobileEditing =
@@ -205,55 +195,6 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
         finalCardSize: '640x', // fixed width reference in code
       })
     }, [cardPosition.x, cardPosition.y, layout.cardScale, viewScale])
-
-    // Diagnostic toggle (dev only) via Ctrl/Cmd+D
-    useEffect(() => {
-      if (!isDevMode()) return
-      const onKey = (e: KeyboardEvent) => {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
-          setDiagnosticMode(d => !d)
-          log('PreviewSection', 'Diagnostics toggled', {
-            enabled: !diagnosticMode,
-          })
-        }
-      }
-      window.addEventListener('keydown', onKey)
-      return () => window.removeEventListener('keydown', onKey)
-    }, [diagnosticMode])
-
-    // Dynamic Pattern Style
-    const getPatternSize = () => {
-      const base =
-        pattern === 'dots'
-          ? 20
-          : pattern === 'grid'
-            ? 40
-            : pattern === 'diagonal'
-              ? 10
-              : 20
-      const scale = patternScale || 1
-      return `${base * scale}px ${base * scale}px`
-    }
-
-    const patternStyle: React.CSSProperties = {
-      backgroundImage:
-        pattern === 'dots'
-          ? 'radial-gradient(#ffffff 1.5px, transparent 1.5px)'
-          : pattern === 'grid'
-            ? 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)'
-            : pattern === 'lines'
-              ? 'repeating-linear-gradient(0deg, transparent, transparent 19px, #ffffff 20px)'
-              : pattern === 'diagonal'
-                ? 'repeating-linear-gradient(45deg, #ffffff 0, #ffffff 1px, transparent 0, transparent 50%)'
-                : pattern === 'noise'
-                  ? `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E")`
-                  : pattern === 'mesh'
-                    ? `url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0 L20 10 L10 20 L0 10 Z' fill='none' stroke='white' stroke-width='0.5' opacity='0.2'/%3E%3C/svg%3E")`
-                    : 'none',
-      backgroundSize: getPatternSize(),
-      opacity: pattern === 'none' ? 0 : patternOpacity,
-      mixBlendMode: 'overlay',
-    }
 
     // Persist viewport size for Auto canvas sizing (useAutoScale gerencia a escala agora)
     useEffect(() => {
@@ -467,7 +408,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
     }
 
     const handleDownload = async () => {
-      const target = exportOnlyRef.current || exportRef.current
+      const target = exportRef.current
       if (!target) return
       updateField('isExporting', true)
 
@@ -485,51 +426,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
         let dataUrl: string
         let thumbnailUrl: string
 
-        // BIFURCATED EXPORT: Use SVG exporter for Frames, html-to-image for standard cards
-        if (frame.enabled) {
-          console.log('[SPREAD-DEBUG] Using SVG Exporter for Frame mode')
-          // Lazy load svg exporter
-          const { exportSvgToPng, getSvgContentFromContainer } =
-            await import('../../services/svgExporter')
-
-          const svgContainer = target.querySelector('.svg-frame-renderer__svg')
-          if (!svgContainer) {
-            throw new Error(
-              'Frame SVG container not found. Frame may not be rendered.'
-            )
-          }
-
-          const svgContent = getSvgContentFromContainer(
-            svgContainer as HTMLElement
-          )
-          if (!svgContent) {
-            throw new Error('Failed to extract SVG content from Frame.')
-          }
-
-          // Export High-Res
-          const pngBlob = await exportSvgToPng(svgContent, {
-            width: canvasSize.width,
-            pixelRatio: 2,
-          })
-          dataUrl = await new Promise<string>(resolve => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.readAsDataURL(pngBlob)
-          })
-
-          // Export Low-Res Thumbnail
-          const thumbBlob = await exportSvgToPng(svgContent, {
-            width: canvasSize.width,
-            pixelRatio: 0.15,
-          })
-          thumbnailUrl = await new Promise<string>(resolve => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.readAsDataURL(thumbBlob)
-          })
-        } else {
-          // Standard export path (html-to-image)
-          console.log('[SPREAD-DEBUG] Using html-to-image for standard card')
+        {
           const fontCss = await getEmbeddedFontCSS(currentState.fontFamily)
           const { toPng } = await import('html-to-image')
 
@@ -557,8 +454,8 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
             },
           }
 
-          // A escala efetiva já está embutida no transform do DOM headless
-          // (HeadlessArtboard.finalScale); aqui só logamos as dimensões do alvo.
+          // The captured node is the same node shown in the editor. Viewport
+          // zoom lives on its parent and never changes exported geometry.
           console.log(
             '[SPREAD-DEBUG] Starting export details:',
             JSON.stringify(
@@ -589,7 +486,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
         download(dataUrl, `spread-${Date.now()}.png`)
       } catch (e) {
         console.error('Download failed', e)
-        alert('Falha ao gerar imagem.')
+        throw e
       } finally {
         updateField('isExporting', false)
       }
@@ -683,49 +580,6 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
           </div>
         )}
 
-        {/* NEW RENDER/MEASURE ARCHITECTURE */}
-        {isDevMode() && !isCompactViewport && (
-          <button
-            onClick={() => setDiagnosticMode(d => !d)}
-            style={{
-              position: 'absolute',
-              top: 8,
-              left: 8,
-              zIndex: 60,
-              background: 'rgba(0,0,0,.6)',
-              color: '#fff',
-              border: '1px solid #fff',
-              padding: '6px 8px',
-              borderRadius: 4,
-            }}
-          >
-            Diagnostics: {diagnosticMode ? 'On' : 'Off'}
-          </button>
-        )}
-        {diagnosticMode && isDevMode() && !isCompactViewport && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              zIndex: 50,
-              padding: '6px 8px',
-              background: 'rgba(0,0,0,.6)',
-              color: '#fff',
-              borderRadius: 6,
-              fontFamily: 'monospace',
-              fontSize: 12,
-            }}
-          >
-            Canvas {canvasWidth}x{canvasHeight} • Card 640x
-            {cardRef.current?.offsetHeight ?? 360} • ViewScale{' '}
-            {viewScale.toFixed(2)} ({scalePercent}%) • CardScale{' '}
-            {layout.cardScale} • Padding {layout.padding}
-            {layout.paddingAuto ? ' (auto)' : ''} • AutoScale:{' '}
-            {isAutoScale ? 'ON' : 'OFF'}
-          </div>
-        )}
-
         {/* Indicador de escala para usuario */}
         {!isWelcomeState && !isToolbarCompact && (
           <div
@@ -784,63 +638,15 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
                 <WelcomeCard />
               </div>
             ) : (
-              <div
+              <CompositionArtboard
                 key="preview-artboard"
                 ref={exportRef}
-                className={
-                  isAutoCanvas
-                    ? 'artboard-root relative overflow-visible w-fit h-fit transition-all duration-300'
-                    : 'artboard-root relative overflow-visible transition-all duration-300'
-                }
-                style={{
-                  ...(!isAutoCanvas && {
-                    width: canvasWidth,
-                    height: canvasHeight,
-                  }),
-                  ...backgroundStyle,
-                  borderRadius: `${canvasSize.roundness ?? 0}px`,
-                  minWidth: isAutoCanvas ? 'min-content' : undefined,
-                }}
-              >
-                {/* Pattern Layer */}
-                <div
-                  className="absolute inset-0 pointer-events-none mix-blend-overlay z-0"
-                  style={patternStyle}
-                />
-
-                <div
-                  className={
-                    isAutoCanvas
-                      ? `relative z-10 flex flex-col items-center justify-center overflow-visible w-full h-full ${
-                          isToolbarCompact
-                            ? isMobileEditing
-                              ? 'px-3 py-2'
-                              : 'p-8 sm:p-12'
-                            : 'p-20'
-                        }`
-                      : 'relative z-10 flex items-center justify-center h-full w-full overflow-visible'
-                  }
-                >
-                  <div
-                    ref={cardRef}
-                    className="w-fit h-fit overflow-visible"
-                    style={{
-                      transform:
-                        frame.enabled && !isWelcomeState
-                          ? 'none'
-                          : `translate(${cardPosition.x}%, ${cardPosition.y}%) scale(${computeUnifiedExportScale({ exportScale, cardScale: layout.cardScale, autoScale, preset: canvasSize.preset })})`,
-                      transformOrigin: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <PreviewCard
-                      canvasWidth={canvasWidth}
-                      canvasHeight={canvasHeight}
-                      padding={paddingValue()}
-                    />
-                  </div>
-                </div>
-              </div>
+                canvasWidth={canvasWidth}
+                canvasHeight={canvasHeight}
+                autoScale={autoScale}
+                cardRef={cardRef}
+                cardPadding={paddingValue()}
+              />
             )}
           </div>
         </div>
@@ -883,9 +689,6 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
             </div>
           </div>
         )}
-
-        {/* Invisble Artboard for High-Fidelity Exports */}
-        <HeadlessArtboard ref={exportOnlyRef} />
       </div>
     )
   }

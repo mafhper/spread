@@ -1,19 +1,8 @@
 /**
- * PreviewCard Component - Card de Visualização com Frame Mode
- *
- * @version 2.0.0 - Frames como modos de exibição alternativos
- *
- * Quando frame.enabled === true:
- * - O frame renderiza OCUPANDO TODO O CANVAS
- * - O card padrão NÃO é renderizado
- * - Não há duplicação de imagem ou texto
- *
- * Quando frame.enabled === false:
- * - Renderiza o card padrão (template default/music/news)
+ * Canonical card renderer shared by preview and export.
  */
 
 import * as React from 'react'
-import { useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { useCardStore } from '../../store/cardStore'
@@ -26,10 +15,6 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 interface PreviewCardProps {
-  /** Largura do canvas em pixels (necessário para frames) */
-  canvasWidth?: number
-  /** Altura do canvas em pixels (necessário para frames) */
-  canvasHeight?: number
   /** Padding resolvido (em pixels) para o card */
   padding?: number
   /** Escala do card (para ajustes internos se necessario) */
@@ -37,8 +22,6 @@ interface PreviewCardProps {
 }
 
 export const PreviewCard: React.FC<PreviewCardProps> = ({
-  canvasWidth = 1200,
-  canvasHeight = 630,
   padding,
   // scale is available but not currently used within this component
 }) => {
@@ -58,21 +41,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
     subtitleSize,
     textAlign,
     isWelcomeState,
-    frame,
   } = state
-
-  // Injeção de fonte customizada
-  useEffect(() => {
-    const link = document.createElement('link')
-    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;700&display=swap`
-    link.rel = 'stylesheet'
-    document.head.appendChild(link)
-    return () => {
-      if (document.head.contains(link)) {
-        document.head.removeChild(link)
-      }
-    }
-  }, [fontFamily])
 
   const hexToRgba = (hex: string, alpha: number) => {
     if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) return hex
@@ -82,93 +51,6 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
   }
 
-  // ============================================================
-  // FRAME MODE: Frame substitui completamente o card padrão
-  // ============================================================
-  if (frame.enabled && !isWelcomeState) {
-    return (
-      <div
-        className="relative w-full h-full flex items-center justify-center overflow-visible"
-        style={{
-          width: canvasWidth,
-          height: canvasHeight,
-          filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.35))',
-        }}
-      >
-        {/* <FrameOverlay
-          image={image}
-          canvasWidth={canvasWidth}
-          canvasHeight={canvasHeight}
-          templateId={frame.templateId}
-          primaryColor={frame.primaryColor}
-          secondaryColor={frame.secondaryColor}
-        /> */}
-        <div />
-
-        {/* Overlay de Texto Otimizado para Frames */}
-        {frame.showText && (
-          <div
-            className={cn(
-              'absolute z-20 pointer-events-none flex flex-col gap-2 w-full px-8 py-6 transition-all duration-300',
-              frame.textStyle.position === 'overlay'
-                ? 'bottom-0 left-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-12'
-                : 'bottom-0 left-0 bg-zinc-950/90 border-t border-white/10 backdrop-blur-xl'
-            )}
-            style={{
-              color: frame.textStyle.color,
-              textAlign:
-                frame.textStyle.position === 'overlay' ? 'left' : 'center',
-              textShadow:
-                frame.textStyle.position === 'overlay'
-                  ? '0 2px 10px rgba(0,0,0,0.5)'
-                  : 'none',
-            }}
-          >
-            <div
-              className={cn(
-                'flex items-center gap-3',
-                frame.textStyle.position === 'overlay'
-                  ? 'justify-start'
-                  : 'justify-center'
-              )}
-            >
-              {frame.textStyle.showIcon && domain && (
-                <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center p-1.5 border border-white/10 shadow-lg">
-                  {(() => {
-                    const { Icon, color } = getServiceIcon(domain)
-                    return (
-                      <Icon
-                        className="w-full h-full"
-                        style={{ color: color || '#FFFFFF' }}
-                      />
-                    )
-                  })()}
-                </div>
-              )}
-              <div className="flex flex-col min-w-0">
-                <h2
-                  className="font-bold leading-none tracking-tight truncate w-full"
-                  style={{ fontSize: `${frame.textStyle.fontSize}px` }}
-                >
-                  {title}
-                </h2>
-                <p
-                  className="opacity-80 font-medium truncate w-full mt-1"
-                  style={{ fontSize: `${frame.textStyle.fontSize * 0.6}px` }}
-                >
-                  {author || domain}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ============================================================
-  // DEFAULT MODE: Card padrão (template default/music/news)
-  // ============================================================
   return (
     <div
       id="previewCard"

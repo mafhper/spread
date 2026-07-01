@@ -1,135 +1,24 @@
 ---
-/**
- * Página principal do Spread
- */
 import '../styles/global.css'
-import { SpreadEditor } from '../components/SpreadEditor'
-import StaticHero from '../components/landing/StaticHero.astro'
+import { LandingApp } from '../features/studio/LandingApp'
 
-const base = import.meta.env.BASE_URL
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 ---
 
 <!doctype html>
-<html lang="pt-br" class="dark">
+<html lang="pt-BR" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Spread - Crie e gerencie visualizações elegantes de links com customização completa, temas dinâmicos e exportação rápida."
+      content="Transforme links em cards visuais ajustáveis e exporte PNGs fiéis ao preview."
     />
-    <title>Spread - Crie Visualizações de Links</title>
-    <meta name="robots" content="index, follow" />
-    <link rel="sitemap" href="/spread/sitemap-index.xml" />
+    <title>Spread — Composição visual para links</title>
     <link rel="canonical" href="https://mafhper.github.io/spread/" />
-    <!-- Preconnect to Font domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href={`${base.replace(/\/$/, '')}/favicon-light.svg`}
-      media="(prefers-color-scheme: light)"
-    />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href={`${base.replace(/\/$/, '')}/favicon-dark.svg`}
-      media="(prefers-color-scheme: dark)"
-    />
-    <!-- Preload critical assets with high priority -->
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      as="style"
-      fetchpriority="high"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      media="print"
-      onload="this.media='all'"
-    />
-    <link
-      rel="preload"
-      href={`${base.replace(/\/$/, '')}/logo.svg`}
-      as="image"
-      fetchpriority="high"
-    />
-    <style is:inline>
-      :root {
-        --bg-main: #09090b;
-        --bg-sidebar: #18181b;
-        --bg-card: #27272a;
-        --bg-input: #3f3f46;
-        --border-color: #3f3f46;
-        --border-hover: #52525b;
-        --text-main: #f4f4f5;
-        --text-muted: #a1a1aa;
-        --accent-primary: #c084fc;
-        --accent-hover: #d8b4fe;
-        --accent-gradient: linear-gradient(135deg, #c084fc 0%, #f472b6 100%);
-      }
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--bg-main);
-        color: var(--text-main);
-        margin: 0;
-      }
-      #hero-shell {
-        pointer-events: none;
-        transition:
-          opacity 180ms ease,
-          visibility 180ms ease;
-      }
-      #hero-shell[data-hydrated='true'] {
-        opacity: 0;
-        visibility: hidden;
-      }
-    </style>
-    <style>
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 3px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: var(--border-hover);
-      }
-    </style>
-    <script>
-      // RUM Monitoring - Iniciado imediatamente para capturar métricas reais
-      import { onFCP, onLCP, onCLS, onINP } from 'web-vitals'
-
-      const logMetric = metric => {
-        const { name, value, rating, id } = metric
-        console.log(`[RUM] ${name}:`, { value, rating, id })
-      }
-
-      onFCP(logMetric)
-      onLCP(logMetric)
-      onCLS(logMetric)
-      onINP(logMetric)
-    </script>
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon-dark.svg`} />
   </head>
-  <body class="h-screen overflow-hidden bg-zinc-950">
-    <div
-      id="hero-shell"
-      class="absolute inset-0 z-0"
-      aria-hidden="true"
-      data-static-hero-shell
-    >
-      <StaticHero />
-    </div>
-    <div class="relative z-10 h-full w-full">
-      <SpreadEditor client:idle />
-    </div>
+  <body>
+    <LandingApp client:load />
   </body>
 </html>

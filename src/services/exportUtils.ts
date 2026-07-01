@@ -31,12 +31,17 @@ const PROXIES = [
 
 const PROXY_TIMEOUT_MS = 8000
 
-export async function urlToBase64(url: string): Promise<string | null> {
+export async function urlToBase64(
+  url: string,
+  options: { signal?: AbortSignal } = {}
+): Promise<string | null> {
   const fetchWithTimeout = async (
     targetUrl: string,
     timeoutMs: number
   ): Promise<Response> => {
     const controller = new AbortController()
+    const abortFromExternal = () => controller.abort(options.signal?.reason)
+    options.signal?.addEventListener('abort', abortFromExternal, { once: true })
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
     try {
       const response = await fetch(targetUrl, {
@@ -46,6 +51,7 @@ export async function urlToBase64(url: string): Promise<string | null> {
       return response
     } finally {
       clearTimeout(timeoutId)
+      options.signal?.removeEventListener('abort', abortFromExternal)
     }
   }
 
@@ -81,15 +87,21 @@ export async function urlToBase64(url: string): Promise<string | null> {
     }
   }
 
-  // 2. Try Proxies in order
-  for (const proxyFn of PROXIES) {
-    try {
-      return await fetchWithProxy(url, proxyFn)
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : 'Unknown error'
-      console.warn(`[Proxy] Failed (${errMsg})`)
-      continue
-    }
+  // 2. Race all proxy options. A slow endpoint can no longer multiply the
+  // timeout by the number of providers.
+  try {
+    return await Promise.any(
+      PROXIES.map(proxyFn =>
+        fetchWithProxy(url, proxyFn).catch(error => {
+          const message =
+            error instanceof Error ? error.message : 'Unknown error'
+          console.warn(`[Proxy] Failed (${message})`)
+          throw error
+        })
+      )
+    )
+  } catch {
+    // All providers failed.
   }
 
   console.error('[Proxy] All proxies failed for:', url.substring(0, 80))

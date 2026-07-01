@@ -32,7 +32,7 @@ describe('metadata service', () => {
       expect(result?.image).toBe('https://example.com/image.jpg')
       expect(result?.author).toBe('Test Author')
       expect(result?.domain).toBe('example.com')
-      expect(result?.template).toBe('news')
+      expect(result?.template).toBe('default')
     })
 
     it('should handle URLs without protocol', async () => {
@@ -209,9 +209,7 @@ describe('metadata service', () => {
 
       const result = await fetchMetadata('https://error.com')
 
-      expect(result).not.toBeNull()
-      expect(result?.title).toBe('')
-      expect(result?.description).toBe('')
+      expect(result).toBeNull()
     })
 
     it('should handle fetch error', async () => {
@@ -265,6 +263,63 @@ describe('metadata service', () => {
       const result = await fetchMetadata('https://example.com')
 
       expect(result?.author).toBe('Publisher Name')
+    })
+
+    it('keeps authored product pages on the default template', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'success',
+            data: {
+              title: 'mafhper/spread',
+              description: 'Link card composer',
+              author: 'mafhper',
+            },
+          }),
+      } as Response)
+
+      const result = await fetchMetadata('https://github.com/mafhper/spread')
+
+      expect(result?.template).toBe('default')
+    })
+
+    it('starts YouTube oEmbed and Microlink requests in parallel', async () => {
+      let resolveOEmbed: ((value: Response) => void) | undefined
+      let resolveMicrolink: ((value: Response) => void) | undefined
+      vi.mocked(global.fetch)
+        .mockImplementationOnce(
+          () =>
+            new Promise(resolve => {
+              resolveOEmbed = resolve
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise(resolve => {
+              resolveMicrolink = resolve
+            })
+        )
+
+      const pending = fetchMetadata('https://youtube.com/watch?v=parallel')
+
+      expect(global.fetch).toHaveBeenCalledTimes(2)
+
+      resolveOEmbed?.({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            title: 'Parallel',
+            author_name: 'Channel',
+            thumbnail_url: 'thumb.jpg',
+          }),
+      } as Response)
+      resolveMicrolink?.({
+        ok: true,
+        json: () => Promise.resolve({ status: 'success', data: {} }),
+      } as Response)
+
+      await expect(pending).resolves.toMatchObject({ title: 'Parallel' })
     })
 
     it('should handle YouTube oEmbed data when available', async () => {

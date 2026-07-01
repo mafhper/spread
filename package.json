@@ -38,6 +38,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:unit": "vitest run --testNamePattern=unit",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

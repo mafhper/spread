@@ -165,7 +165,7 @@ export const CanvasControls: React.FC = () => {
             : pattern === 'diagonal'
               ? 'Diagonal'
               : pattern === 'mesh'
-                ? 'Mesh'
+                ? 'Lattice'
                 : 'Sem textura'
 
   return (

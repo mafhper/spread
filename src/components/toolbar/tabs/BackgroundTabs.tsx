@@ -40,7 +40,7 @@ export const BackgroundTabs: React.FC = () => {
             { value: 'noise', label: 'Ruído' },
             { value: 'lines', label: 'Linhas' },
             { value: 'diagonal', label: 'Diag.' },
-            { value: 'mesh', label: 'Mesh' },
+            { value: 'mesh', label: 'Lattice' },
           ].map(p => (
             <button
               key={p.value}

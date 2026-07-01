@@ -20,6 +20,7 @@ export default defineConfig({
       '**/dist/**',
       '**/.astro/**',
       '**/coverage/**',
+      '**/tests/e2e/**',
     ],
     coverage: {
       provider: 'v8',
@@ -38,8 +39,6 @@ export default defineConfig({
         'src/components/toolbar/tabs/**',
         'src/types/**',
         'src/components/ui/**',
-        'src/services/svgExporter.ts',
-        'src/components/toolbar/ControlDock.tsx',
         'src/components/OptimizedImage.tsx',
       ],
     },

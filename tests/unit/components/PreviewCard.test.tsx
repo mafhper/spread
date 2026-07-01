@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PreviewCard } from '@/components/preview/PreviewCard'
 import { useCardStore } from '@/store/cardStore'
+import { getServiceIcon } from '@/services/iconLibrary'
 import { createMockCardStore } from '../mocks/useCardStore'
 
 vi.mock('@/store/cardStore')
@@ -11,43 +12,35 @@ vi.mock('@/services/iconLibrary')
 describe('PreviewCard component', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getServiceIcon).mockReturnValue({
+      Icon: () => <svg data-testid="service-icon" />,
+      color: '#ffffff',
+      hasIcon: true,
+    })
     Object.defineProperty(document, 'fonts', {
       value: { ready: Promise.resolve() },
       writable: true,
     })
   })
 
-  it('renders frame mode with overlay text and icon', async () => {
+  it('ignores persisted legacy frame flags and renders the canonical card', () => {
     const mockStore = createMockCardStore()
     mockStore.isWelcomeState = false
     mockStore.title = 'Frame Title'
-    mockStore.domain = 'youtube.com'
+    mockStore.description = 'Canonical description'
     mockStore.frame = {
       ...mockStore.frame,
       enabled: true,
       showText: true,
-      textStyle: {
-        position: 'overlay',
-        color: '#fff',
-        fontSize: 16,
-        showIcon: true,
-      },
     }
 
     vi.mocked(useCardStore).mockReturnValue(mockStore)
 
-    const mockIcon = () => <svg data-testid="service-icon" />
-    const { getServiceIcon } = await import('@/services/iconLibrary')
-    vi.mocked(getServiceIcon).mockReturnValue({
-      Icon: mockIcon,
-      color: '#fff',
-      hasIcon: true,
-    })
-
-    render(<PreviewCard />)
+    const { container } = render(<PreviewCard />)
 
     expect(screen.getByText('Frame Title')).toBeInTheDocument()
-    expect(screen.getByTestId('service-icon')).toBeInTheDocument()
+    expect(screen.getByText('Canonical description')).toBeInTheDocument()
+    expect(container.querySelector('#previewCard')).toBeInTheDocument()
   })
 
   it('renders welcome state graphic', () => {

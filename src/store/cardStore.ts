@@ -12,6 +12,7 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { resolvePublicAsset } from '../utils/resolvePublicAsset'
 // import type { FrameState, TemplateId } from '../types/frame'
 // import { DEFAULT_FRAME_STATE } from '../types/frame'
 
@@ -150,10 +151,8 @@ const DEFAULT_STATE = {
   description:
     'Gere cards lindos para suas redes sociais a partir de qualquer link. Cole a URL e veja a magica acontecer.',
   author: 'Spread App',
-  image:
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200',
-  favicon:
-    'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg',
+  image: resolvePublicAsset('assets/social-preview.png'),
+  favicon: resolvePublicAsset('logo.svg'),
   domain: 'spread.app',
   template: 'default' as const,
   isWelcomeState: true,
@@ -467,37 +466,27 @@ export const useCardStore = create<CardState>()(
     }),
     {
       name: 'spread-preferences-v4', // VERSAO ATUALIZADA - Sistema SVG unificado
-      partialize: state => ({
-        // Persiste APENAS preferencias de design, NAO conteudo ou modo de frame
-        colors: state.colors,
-        gradientStyle: state.gradientStyle,
-        pattern: state.pattern,
-        patternOpacity: state.patternOpacity,
-        patternScale: state.patternScale,
-        fontFamily: state.fontFamily,
-        titleSize: state.titleSize,
-        subtitleSize: state.subtitleSize,
-        textAlign: state.textAlign,
-        layout: state.layout,
-        viewport: state.viewport,
-        canvasSize: state.canvasSize,
-        cardPosition: state.cardPosition,
-        exportScale: state.exportScale,
-        uiScale: state.uiScale,
-        // Frame: persist ONLY style preferences, NOT enabled state or templateId
-        frame: state.frame
-          ? {
-              primaryColor: state.frame.primaryColor,
-              secondaryColor: state.frame.secondaryColor,
-              textStyle: state.frame.textStyle,
-            }
-          : {
-              primaryColor: '#6366f1',
-              secondaryColor: '#a855f7',
-              textStyle: 'modern',
-            },
-        // isExporting is EXCLUDED from persistence
-      }),
+      partialize: state => {
+        const persistentLayout = { ...state.layout }
+        delete persistentLayout.measuredCardHeight
+        return {
+          // Keep v4 for one rollback window, but only persist document style.
+          colors: state.colors,
+          gradientStyle: state.gradientStyle,
+          pattern: state.pattern,
+          patternOpacity: state.patternOpacity,
+          patternScale: state.patternScale,
+          fontFamily: state.fontFamily,
+          titleSize: state.titleSize,
+          subtitleSize: state.subtitleSize,
+          textAlign: state.textAlign,
+          layout: persistentLayout,
+          canvasSize: state.canvasSize,
+          cardPosition: state.cardPosition,
+          exportScale: state.exportScale,
+          uiScale: state.uiScale,
+        }
+      },
       merge: (persistedStateValue: unknown, currentState) => {
         const persistedState = persistedStateValue as Partial<CardState> | null
 
@@ -514,6 +503,8 @@ export const useCardStore = create<CardState>()(
           template,
           isWelcomeState,
           activeTab,
+          viewport,
+          frame,
           /* eslint-enable @typescript-eslint/no-unused-vars */
           ...sanitizedPersistedState
         } = (persistedState || {}) as Record<string, unknown>
