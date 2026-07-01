@@ -129,10 +129,16 @@ export const CompositionArtboard = forwardRef<
         ref={cardRef}
         className="absolute z-10 w-fit h-fit"
         style={{
-          left: geometry.cardCenterX,
-          top: geometry.cardCenterY,
-          transform: `translate(-50%, -50%) scale(${finalScale})`,
-          transformOrigin: 'center',
+          // Posiciona o canto superior-esquerdo do card JÁ ESCALADO e escala a
+          // partir do top-left. html-to-image aplica o scale de um filho a
+          // partir do top-left e ignora transform-origin: center; com center o
+          // card fica deslocado e corta o topo (logo) sempre que finalScale
+          // difere de 1 (formatos fixos que reduzem o card). Escalando do
+          // top-left, preview e exportação concordam.
+          left: geometry.cardCenterX - (CARD_WIDTH * finalScale) / 2,
+          top: geometry.cardCenterY - (naturalHeight * finalScale) / 2,
+          transform: `scale(${finalScale})`,
+          transformOrigin: 'top left',
         }}
       >
         <PreviewCard padding={cardPadding} />
