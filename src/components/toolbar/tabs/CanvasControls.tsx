@@ -10,6 +10,15 @@ import {
   Upload,
   Trash2,
   RotateCcw,
+  ArrowUp,
+  ArrowUpRight,
+  ArrowRight,
+  ArrowDownRight,
+  ArrowDown,
+  ArrowDownLeft,
+  ArrowLeft,
+  ArrowUpLeft,
+  CircleDot,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCardStore } from '../../../store/cardStore'
@@ -69,15 +78,17 @@ const CANVAS_PRESETS: CanvasPreset[] = [
   },
 ]
 
+// Bússola 3x3: cada botão na posição visual da direção do gradiente; centro = radial.
 const GRADIENT_ANGLES = [
-  { label: '↗', value: '45deg' },
-  { label: '→', value: '90deg' },
-  { label: '↘', value: '135deg' },
-  { label: '↓', value: '180deg' },
-  { label: '↙', value: '225deg' },
-  { label: '←', value: '270deg' },
-  { label: '↖', value: '315deg' },
-  { label: '○', value: 'circle at center' },
+  { value: '315deg', Icon: ArrowUpLeft, label: 'Superior esquerda' },
+  { value: '0deg', Icon: ArrowUp, label: 'Cima' },
+  { value: '45deg', Icon: ArrowUpRight, label: 'Superior direita' },
+  { value: '270deg', Icon: ArrowLeft, label: 'Esquerda' },
+  { value: 'circle at center', Icon: CircleDot, label: 'Radial' },
+  { value: '90deg', Icon: ArrowRight, label: 'Direita' },
+  { value: '225deg', Icon: ArrowDownLeft, label: 'Inferior esquerda' },
+  { value: '180deg', Icon: ArrowDown, label: 'Baixo' },
+  { value: '135deg', Icon: ArrowDownRight, label: 'Inferior direita' },
 ]
 
 export const CanvasControls: React.FC = () => {
@@ -272,22 +283,26 @@ export const CanvasControls: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-1.5">
-                {GRADIENT_ANGLES.map(angle => (
-                  <button
-                    key={angle.value}
-                    onClick={() => updateField('gradientStyle', angle.value)}
-                    className={`flex min-h-[34px] items-center justify-center rounded-lg text-[12px] font-bold transition-all ${
-                      gradientStyle === angle.value
-                        ? 'bg-white text-black scale-[1.02]'
-                        : 'bg-white/5 hover:bg-white/10 text-white/40'
-                    }`}
-                    title={angle.value}
-                    aria-label={`Ângulo do gradiente: ${angle.value}`}
-                  >
-                    {angle.label}
-                  </button>
-                ))}
+              <div className="grid w-fit grid-cols-3 gap-1.5">
+                {GRADIENT_ANGLES.map(({ value, Icon, label }) => {
+                  const active = gradientStyle === value
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => updateField('gradientStyle', value)}
+                      className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
+                        active
+                          ? 'bg-white text-black'
+                          : 'bg-white/5 text-white/55 hover:bg-white/10 hover:text-white'
+                      }`}
+                      title={value}
+                      aria-label={`Gradiente: ${label} (${value})`}
+                      aria-pressed={active}
+                    >
+                      <Icon size={15} strokeWidth={active ? 2.4 : 2} />
+                    </button>
+                  )
+                })}
               </div>
             </div>
           ),

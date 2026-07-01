@@ -41,7 +41,7 @@ describe('ColorTabs Component', () => {
 
   it('handles gradient angle selection', () => {
     render(<ColorTabs />)
-    const angleButton = screen.getByLabelText('Ângulo do gradiente: 90deg')
+    const angleButton = screen.getByLabelText('Gradiente: Direita (90deg)')
     fireEvent.click(angleButton)
     expect(mockStore.updateField).toHaveBeenCalledWith('gradientStyle', '90deg')
   })

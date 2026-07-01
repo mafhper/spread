@@ -66,7 +66,7 @@ describe('CanvasControls Component', () => {
 
   it('handles gradient angle change', () => {
     render(<CanvasControls />)
-    const angleButton = screen.getByLabelText('Ângulo do gradiente: 90deg')
+    const angleButton = screen.getByLabelText('Gradiente: Direita (90deg)')
     fireEvent.click(angleButton)
 
     expect(mockStore.updateField).toHaveBeenCalledWith('gradientStyle', '90deg')
@@ -194,13 +194,13 @@ describe('CanvasControls Component', () => {
     render(<CanvasControls />)
 
     expect(
-      screen.queryByLabelText('Ângulo do gradiente: 90deg')
+      screen.queryByLabelText('Gradiente: Direita (90deg)')
     ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cores do Fundo' }))
 
     expect(
-      screen.getByLabelText('Ângulo do gradiente: 90deg')
+      screen.getByLabelText('Gradiente: Direita (90deg)')
     ).toBeInTheDocument()
   })
 })

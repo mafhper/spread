@@ -1,18 +1,33 @@
 import React from 'react'
-import { Wand2, Loader2 } from 'lucide-react'
+import {
+  Wand2,
+  Loader2,
+  ArrowUp,
+  ArrowUpRight,
+  ArrowRight,
+  ArrowDownRight,
+  ArrowDown,
+  ArrowDownLeft,
+  ArrowLeft,
+  ArrowUpLeft,
+  CircleDot,
+} from 'lucide-react'
 import { useCardStore } from '../../../store/cardStore'
 import { useColorExtractor } from '../../../hooks/useColorExtractor'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
 
+// Layout espacial de bússola 3x3: cada botão fica na posição visual da direção
+// para onde o gradiente aponta; o centro é o gradiente radial.
 const GRADIENT_ANGLES = [
-  { label: '↗', value: '45deg' },
-  { label: '→', value: '90deg' },
-  { label: '↘', value: '135deg' },
-  { label: '↓', value: '180deg' },
-  { label: '↙', value: '225deg' },
-  { label: '←', value: '270deg' },
-  { label: '↖', value: '315deg' },
-  { label: '○', value: 'circle at center' },
+  { value: '315deg', Icon: ArrowUpLeft, label: 'Superior esquerda' },
+  { value: '0deg', Icon: ArrowUp, label: 'Cima' },
+  { value: '45deg', Icon: ArrowUpRight, label: 'Superior direita' },
+  { value: '270deg', Icon: ArrowLeft, label: 'Esquerda' },
+  { value: 'circle at center', Icon: CircleDot, label: 'Radial' },
+  { value: '90deg', Icon: ArrowRight, label: 'Direita' },
+  { value: '225deg', Icon: ArrowDownLeft, label: 'Inferior esquerda' },
+  { value: '180deg', Icon: ArrowDown, label: 'Baixo' },
+  { value: '135deg', Icon: ArrowDownRight, label: 'Inferior direita' },
 ]
 
 const COLOR_PRESETS = [
@@ -137,22 +152,26 @@ export const ColorTabs: React.FC = () => {
           title: 'Direção do Gradiente',
           summary: gradientStyle,
           content: (
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
-              {GRADIENT_ANGLES.map(angle => (
-                <button
-                  key={angle.value}
-                  onClick={() => updateField('gradientStyle', angle.value)}
-                  className={`aspect-square min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
-                    gradientStyle === angle.value
-                      ? 'bg-white text-black scale-105'
-                      : 'bg-white/10 hover:bg-white/20'
-                  }`}
-                  title={angle.value}
-                  aria-label={`Ângulo do gradiente: ${angle.value}`}
-                >
-                  {angle.label}
-                </button>
-              ))}
+            <div className="grid w-fit grid-cols-3 gap-1.5">
+              {GRADIENT_ANGLES.map(({ value, Icon, label }) => {
+                const active = gradientStyle === value
+                return (
+                  <button
+                    key={value}
+                    onClick={() => updateField('gradientStyle', value)}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
+                      active
+                        ? 'bg-white text-black'
+                        : 'bg-white/5 text-white/55 hover:bg-white/10 hover:text-white'
+                    }`}
+                    title={value}
+                    aria-label={`Gradiente: ${label} (${value})`}
+                    aria-pressed={active}
+                  >
+                    <Icon size={15} strokeWidth={active ? 2.4 : 2} />
+                  </button>
+                )
+              })}
             </div>
           ),
         },
