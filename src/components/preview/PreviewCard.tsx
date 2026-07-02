@@ -116,6 +116,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               const showTitle = mode === 'both' || mode === 'title'
               return (
                 <div
+                  data-testid="card-brand-header"
                   className={cn(
                     'flex-shrink-0 flex',
                     layout.headerPosition === 'right'
@@ -123,27 +124,30 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
                       : 'justify-start'
                   )}
                 >
-                  <div className="relative inline-flex items-center gap-2 group/header overflow-visible">
+                  <div
+                    className={cn(
+                      'inline-flex h-8 items-center border border-white/10 bg-zinc-950/80 text-white/80',
+                      showTitle
+                        ? 'gap-2 rounded-full px-2.5'
+                        : 'w-8 justify-center rounded-lg'
+                    )}
+                  >
                     {showLogo && (
-                      <div className="relative w-6 h-6 flex-shrink-0">
-                        {/* Premium Logo Composition */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
-                        <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
-                          <img
-                            src={resolvePublicAsset('logo.svg')}
-                            alt=""
-                            className="w-full h-full p-0.5 opacity-95 invert brightness-0"
-                          />
-                        </div>
-                      </div>
+                      <img
+                        data-testid="card-brand-logo"
+                        src={resolvePublicAsset('logo.svg')}
+                        alt=""
+                        className="h-[18px] w-[18px] flex-shrink-0 opacity-95 invert brightness-0"
+                      />
                     )}
 
                     {showTitle && (
-                      <div className="px-3 py-1.5 rounded-full bg-zinc-950/40 backdrop-blur-md border border-white/10 shadow-lg flex items-center">
-                        <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">
-                          Spread
-                        </span>
-                      </div>
+                      <span
+                        data-testid="card-brand-title"
+                        className="text-[10px] font-bold tracking-[0.2em]"
+                      >
+                        Spread
+                      </span>
                     )}
                   </div>
                 </div>

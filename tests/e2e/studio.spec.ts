@@ -13,6 +13,20 @@ test('landing presents the product and opens the editor', async ({
     })
   ).toBeVisible()
   await expect(page.getByTestId('composition-artboard')).toHaveCount(1)
+  await expect(
+    page.getByRole('button', { name: 'Psiu Liniker' })
+  ).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('#previewCard h2')).toHaveText('Psiu', {
+    timeout: 10_000,
+  })
+
+  await page
+    .getByRole('button', { name: 'Cold Little Heart Michael Kiwanuka' })
+    .click()
+  await expect(page.locator('#previewCard h2')).toHaveText('Cold Little Heart')
+  await expect(
+    page.getByTestId('composition-artboard').getByText('Michael Kiwanuka')
+  ).toBeVisible()
 
   await page.screenshot({
     path: `output/playwright/landing-${testInfo.project.name}.png`,
@@ -98,17 +112,40 @@ test('PNG export uses the visible artboard dimensions without clipping the heade
 
   const artboard = page.getByTestId('composition-artboard')
   const brand = artboard.getByText('Spread', { exact: true })
-  const [artboardBox, brandBox] = await Promise.all([
-    artboard.boundingBox(),
-    brand.boundingBox(),
-  ])
+  const brandLogo = artboard.getByTestId('card-brand-logo')
+  const brandTitle = artboard.getByTestId('card-brand-title')
+  const [artboardBox, brandBox, brandLogoBox, brandTitleBox] =
+    await Promise.all([
+      artboard.boundingBox(),
+      brand.boundingBox(),
+      brandLogo.boundingBox(),
+      brandTitle.boundingBox(),
+    ])
   expect(artboardBox).not.toBeNull()
   expect(brandBox).not.toBeNull()
+  expect(brandLogoBox).not.toBeNull()
+  expect(brandTitleBox).not.toBeNull()
   expect(brandBox!.x).toBeGreaterThanOrEqual(artboardBox!.x)
   expect(brandBox!.y).toBeGreaterThanOrEqual(artboardBox!.y)
   expect(brandBox!.x + brandBox!.width).toBeLessThanOrEqual(
     artboardBox!.x + artboardBox!.width
   )
+  expect(brandLogoBox!.x + brandLogoBox!.width).toBeLessThanOrEqual(
+    brandTitleBox!.x
+  )
+
+  const exportSafeStyles = await artboard
+    .getByTestId('card-brand-header')
+    .locator('div')
+    .evaluate(element => {
+      const styles = getComputedStyle(element)
+      return {
+        backdropFilter: styles.backdropFilter,
+        transform: styles.transform,
+      }
+    })
+  expect(exportSafeStyles.backdropFilter).toBe('none')
+  expect(exportSafeStyles.transform).toBe('none')
 
   const expected = await artboard.evaluate((element: HTMLElement) => ({
     width: element.offsetWidth * 2,

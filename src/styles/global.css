@@ -428,6 +428,54 @@ html {
   gap: 7px;
 }
 
+.landing-examples {
+  margin-top: 20px;
+}
+
+.landing-examples > p {
+  margin: 0 0 8px;
+  color: var(--studio-subdued);
+  font-family: 'IBM Plex Mono', 'Cascadia Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-example-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.landing-example-list button {
+  display: grid;
+  min-height: 44px;
+  border: 1px solid var(--studio-border);
+  border-radius: 10px;
+  background: var(--studio-panel);
+  color: var(--studio-muted);
+  cursor: pointer;
+  gap: 1px;
+  padding: 7px 11px;
+  text-align: left;
+}
+
+.landing-example-list button:hover {
+  border-color: var(--studio-border-strong);
+  color: var(--studio-text);
+}
+
+.landing-example-list button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--studio-lime) 68%, transparent);
+  background: color-mix(in srgb, var(--studio-lime) 8%, var(--studio-panel));
+  color: var(--studio-text);
+}
+
+.landing-example-list small {
+  color: var(--studio-subdued);
+  font-size: 11px;
+}
+
 .landing-proof {
   min-width: 0;
   overflow: hidden;
@@ -1043,6 +1091,11 @@ html {
 
   .landing-url-form button {
     grid-column: 1 / -1;
+  }
+
+  .landing-example-list {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .landing-proof-stage {
