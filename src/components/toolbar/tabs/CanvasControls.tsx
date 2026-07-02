@@ -1,20 +1,14 @@
-import React, { useRef } from 'react'
+import React from 'react'
 import {
   Smartphone,
   Square,
   Monitor,
   Image as ImageIcon,
   Maximize,
-  Wand2,
-  Loader2,
-  Upload,
-  Trash2,
   RotateCcw,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCardStore } from '../../../store/cardStore'
-import { useColorExtractor } from '../../../hooks/useColorExtractor'
-import { GradientDirectionPicker } from './GradientDirectionPicker'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
 
 interface CanvasPreset {
@@ -70,21 +64,12 @@ const CANVAS_PRESETS: CanvasPreset[] = [
   },
 ]
 
+// Inspector › Canvas: cuida apenas do formato/dimensão e da posição do card.
+// Cores, gradiente e textura do fundo vivem no painel Fundos (ColorTabs /
+// BackgroundTabs) — não devem ser duplicados aqui.
 export const CanvasControls: React.FC = () => {
-  const {
-    canvasSize,
-    cardPosition,
-    colors,
-    pattern,
-    customBgImage,
-    image,
-    updateNestedField,
-    updateField,
-  } = useCardStore()
-  const { extractColorsFromImage } = useColorExtractor()
-  const [isExtracting, setIsExtracting] = React.useState(false)
+  const { canvasSize, cardPosition, updateNestedField } = useCardStore()
   const [isCompactViewport, setIsCompactViewport] = React.useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     const syncViewportMode = () => setIsCompactViewport(window.innerWidth < 768)
@@ -101,38 +86,6 @@ export const CanvasControls: React.FC = () => {
     updateNestedField('canvasSize', 'preset', preset.name)
   }
 
-  const handleColorChange = (key: 'bg1' | 'bg2', val: string) => {
-    updateNestedField('colors', key, val)
-  }
-
-  const handleAutoColors = async () => {
-    if (!image) return
-    setIsExtracting(true)
-    try {
-      const extracted = await extractColorsFromImage(image)
-      if (extracted) {
-        updateNestedField('colors', 'bg1', extracted.primary)
-        updateNestedField('colors', 'bg2', extracted.secondary)
-      }
-    } catch (error) {
-      console.error('[CanvasControls] Erro ao extrair cores:', error)
-    } finally {
-      setIsExtracting(false)
-    }
-  }
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = event => {
-      const result = event.target?.result as string
-      updateField('customBgImage', result)
-    }
-    reader.readAsDataURL(file)
-  }
-
   const activePreset =
     CANVAS_PRESETS.find(preset => preset.name === canvasSize.preset) ??
     CANVAS_PRESETS[0]
@@ -140,22 +93,6 @@ export const CanvasControls: React.FC = () => {
     activePreset.width > 0 && activePreset.height > 0
       ? `${activePreset.width}x${activePreset.height}`
       : 'Escala livre'
-
-  const textureSummary = customBgImage
-    ? 'Imagem customizada'
-    : pattern === 'dots'
-      ? 'Pontos'
-      : pattern === 'grid'
-        ? 'Grid'
-        : pattern === 'noise'
-          ? 'Ruído'
-          : pattern === 'lines'
-            ? 'Linhas'
-            : pattern === 'diagonal'
-              ? 'Diagonal'
-              : pattern === 'mesh'
-                ? 'Lattice'
-                : 'Sem textura'
 
   return (
     <ResponsiveSectionDeck
@@ -204,132 +141,6 @@ export const CanvasControls: React.FC = () => {
                   </button>
                 ))}
               </div>
-            </div>
-          ),
-        },
-        {
-          id: 'colors',
-          title: 'Cores do Fundo',
-          summary: `${colors.bg1.toUpperCase()} → ${colors.bg2.toUpperCase()}`,
-          action: (
-            <button
-              onClick={handleAutoColors}
-              disabled={isExtracting || !image}
-              className="flex items-center gap-1 rounded-md bg-white/5 px-3 py-1.5 min-h-[32px] text-[10px] font-bold transition-all hover:bg-white/10 disabled:opacity-30"
-              aria-label="Extrair cores automaticamente"
-            >
-              {isExtracting ? (
-                <Loader2 className="animate-spin" size={14} />
-              ) : (
-                <Wand2 size={14} />
-              )}
-              Auto
-            </button>
-          ),
-          content: (
-            <div
-              className={clsx('space-y-2.5', isCompactViewport && 'space-y-2')}
-            >
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-                  <input
-                    type="color"
-                    value={colors.bg1}
-                    onChange={e => handleColorChange('bg1', e.target.value)}
-                    className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={colors.bg1}
-                    onChange={e => handleColorChange('bg1', e.target.value)}
-                    className="w-full bg-transparent text-[10px] font-mono uppercase text-white/80 focus:outline-none"
-                  />
-                </div>
-                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5">
-                  <input
-                    type="color"
-                    value={colors.bg2}
-                    onChange={e => handleColorChange('bg2', e.target.value)}
-                    className="w-6 h-6 rounded cursor-pointer border-none p-0 bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={colors.bg2}
-                    onChange={e => handleColorChange('bg2', e.target.value)}
-                    className="w-full bg-transparent text-[10px] font-mono uppercase text-white/80 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <GradientDirectionPicker />
-            </div>
-          ),
-        },
-        {
-          id: 'texture',
-          title: 'Textura e Imagem',
-          summary: textureSummary,
-          content: (
-            <div className="space-y-2.5">
-              <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { value: 'none', label: 'Nenhum' },
-                    { value: 'dots', label: 'Pontos' },
-                    { value: 'grid', label: 'Grid' },
-                    { value: 'noise', label: 'Ruído' },
-                    { value: 'lines', label: 'Linhas' },
-                    { value: 'diagonal', label: 'Diag.' },
-                  ] as const
-                )
-                  .slice(0, 6)
-                  .map(p => (
-                    <button
-                      key={p.value}
-                      onClick={() => updateField('pattern', p.value)}
-                      className={`min-h-[38px] rounded-xl px-3 py-1.5 text-[10px] font-medium transition-all ${
-                        pattern === p.value
-                          ? 'bg-white text-black'
-                          : 'bg-white/5 hover:bg-white/10 text-white/50'
-                      }`}
-                      aria-label={`Selecionar padrão: ${p.label}`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-              </div>
-
-              {!customBgImage ? (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full min-h-[40px] items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 py-2.5 text-[10px] text-white/50 transition-all hover:border-white/40 hover:text-white"
-                  aria-label="Fazer upload de imagem customizada para o fundo"
-                >
-                  <Upload size={14} /> Imagem Customizada
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </button>
-              ) : (
-                <div className="relative group rounded-xl overflow-hidden border border-white/10">
-                  <img
-                    src={customBgImage}
-                    alt="Custom Background"
-                    className="w-full h-16 object-cover"
-                  />
-                  <button
-                    onClick={() => updateField('customBgImage', null)}
-                    className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity min-h-[44px]"
-                    aria-label="Remover imagem customizada"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              )}
             </div>
           ),
         },
