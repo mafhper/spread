@@ -80,6 +80,7 @@ export interface CardState {
     imageOffsetY: number
     cardAspectRatio: string
     showHeader: boolean
+    headerMode: 'both' | 'logo' | 'title' | 'none'
     headerPosition: 'left' | 'right'
     measuredCardHeight?: number
   }
@@ -194,6 +195,7 @@ const DEFAULT_STATE = {
     imageOffsetY: 0,
     cardAspectRatio: 'aspect-auto',
     showHeader: true,
+    headerMode: 'both' as const,
     headerPosition: 'right' as const,
     measuredCardHeight: 360,
   },
@@ -329,6 +331,7 @@ export const useCardStore = create<CardState>()(
             cardAspectRatio: 'aspect-auto',
             aspectRatio: 'aspect-auto',
             showHeader: true,
+            headerMode: 'both',
             headerPosition: 'right',
           },
           // Reset canvas to auto
@@ -431,6 +434,7 @@ export const useCardStore = create<CardState>()(
             cardScale: DEFAULT_STATE.layout.cardScale,
             cardAspectRatio: DEFAULT_STATE.layout.cardAspectRatio,
             showHeader: DEFAULT_STATE.layout.showHeader,
+            headerMode: DEFAULT_STATE.layout.headerMode,
             headerPosition: DEFAULT_STATE.layout.headerPosition,
           },
         })),

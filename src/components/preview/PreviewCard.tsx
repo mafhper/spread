@@ -105,37 +105,50 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               layout.cardAspectRatio !== 'aspect-auto' ? '100%' : 'auto',
           }}
         >
-          {/* Header: Logo Spread - Oculto apenas no Welcome State */}
-          {!isWelcomeState && layout.showHeader && (
-            <div
-              className={cn(
-                'flex-shrink-0 flex',
-                layout.headerPosition === 'right'
-                  ? 'justify-end'
-                  : 'justify-start'
-              )}
-            >
-              <div className="relative inline-flex items-center gap-2 group/header overflow-visible">
-                <div className="relative w-6 h-6 flex-shrink-0">
-                  {/* Premium Logo Composition */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
-                  <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
-                    <img
-                      src={resolvePublicAsset('logo.svg')}
-                      alt=""
-                      className="w-full h-full p-0.5 opacity-95 invert brightness-0"
-                    />
+          {/* Header: Logo/Título Spread - modo configurável (oculto no Welcome) */}
+          {!isWelcomeState &&
+            (() => {
+              // Compat: estado persistido antigo tem só showHeader (boolean).
+              const mode =
+                layout.headerMode ?? (layout.showHeader ? 'both' : 'none')
+              if (mode === 'none') return null
+              const showLogo = mode === 'both' || mode === 'logo'
+              const showTitle = mode === 'both' || mode === 'title'
+              return (
+                <div
+                  className={cn(
+                    'flex-shrink-0 flex',
+                    layout.headerPosition === 'right'
+                      ? 'justify-end'
+                      : 'justify-start'
+                  )}
+                >
+                  <div className="relative inline-flex items-center gap-2 group/header overflow-visible">
+                    {showLogo && (
+                      <div className="relative w-6 h-6 flex-shrink-0">
+                        {/* Premium Logo Composition */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
+                        <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
+                          <img
+                            src={resolvePublicAsset('logo.svg')}
+                            alt=""
+                            className="w-full h-full p-0.5 opacity-95 invert brightness-0"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {showTitle && (
+                      <div className="px-3 py-1.5 rounded-full bg-zinc-950/40 backdrop-blur-md border border-white/10 shadow-lg flex items-center">
+                        <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">
+                          Spread
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <div className="px-3 py-1.5 rounded-full bg-zinc-950/40 backdrop-blur-md border border-white/10 shadow-lg flex items-center">
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">
-                    Spread
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+              )
+            })()}
 
           {/* Seção de Imagem / Welcome Graphic */}
           {isWelcomeState ? (

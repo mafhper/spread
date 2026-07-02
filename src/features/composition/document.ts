@@ -48,6 +48,7 @@ export interface SpreadDocumentV1 {
     auto: boolean
     aspectRatio: string
     showHeader: boolean
+    headerMode?: 'both' | 'logo' | 'title' | 'none'
     headerPosition: 'left' | 'right'
   }
   typography: {
@@ -159,6 +160,7 @@ export function documentFromCardState(
       auto: state.layout.cardAuto,
       aspectRatio: state.layout.cardAspectRatio,
       showHeader: state.layout.showHeader,
+      headerMode: state.layout.headerMode,
       headerPosition: state.layout.headerPosition,
     },
     typography: {
@@ -243,6 +245,7 @@ export function cardStatePatchFromDocument(
       imageOffsetY: document.media.offsetY,
       cardAspectRatio: document.card.aspectRatio,
       showHeader: document.card.showHeader,
+      headerMode: document.card.headerMode ?? 'both',
       headerPosition: document.card.headerPosition,
     },
   }

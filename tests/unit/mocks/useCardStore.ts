@@ -62,6 +62,7 @@ const createBaseState = (): CardState => ({
     imageOffsetY: 0,
     cardAspectRatio: 'aspect-auto',
     showHeader: true,
+    headerMode: 'both',
     headerPosition: 'right',
     measuredCardHeight: 360,
   },
