@@ -1,8 +1,10 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Link2, Play } from 'lucide-react'
 
-import { CompositionArtboard } from '../composition/CompositionArtboard'
-import { useCardStore } from '../../store/cardStore'
+import {
+  CompositionArtboard,
+  type CompositionArtboardState,
+} from '../composition/CompositionArtboard'
 import { setPendingUrl } from '../../utils/persistence'
 import { studioRepository } from './repository'
 
@@ -39,9 +41,11 @@ function getExampleUrl(example: PlaylistExample) {
   return `https://www.youtube.com/watch?v=${example.id}&list=${playlistId}`
 }
 
-function getExampleState(example: PlaylistExample) {
+function getExampleState(
+  example: PlaylistExample,
+  measuredCardHeight: number
+): CompositionArtboardState {
   return {
-    url: getExampleUrl(example),
     title: example.title,
     description: 'Seleção da playlist Mp3.',
     author: example.artist,
@@ -93,7 +97,7 @@ function getExampleState(example: PlaylistExample) {
       showHeader: true,
       headerMode: 'both' as const,
       headerPosition: 'right' as const,
-      measuredCardHeight: 590,
+      measuredCardHeight,
     },
   }
 }
@@ -101,28 +105,19 @@ function getExampleState(example: PlaylistExample) {
 export const LandingApp: React.FC = () => {
   const [inputUrl, setInputUrl] = useState('')
   const [hasDraft, setHasDraft] = useState(false)
+  const [isInteractive, setIsInteractive] = useState(false)
   const [selectedExampleId, setSelectedExampleId] = useState<string>(
     playlistExamples[0].id
   )
+  const [measuredCardHeight, setMeasuredCardHeight] = useState(590)
   const cardRef = useRef<HTMLDivElement>(null)
-  const { setFullState, updateNestedField } = useCardStore()
   const selectedExample =
     playlistExamples.find(example => example.id === selectedExampleId) ||
     playlistExamples[0]
-
-  useLayoutEffect(() => {
-    const initializeExample = () => {
-      setFullState(getExampleState(playlistExamples[0]))
-    }
-    const unsubscribe =
-      useCardStore.persist.onFinishHydration(initializeExample)
-    initializeExample()
-    if (useCardStore.persist.hasHydrated()) initializeExample()
-
-    return unsubscribe
-  }, [setFullState])
+  const previewState = getExampleState(selectedExample, measuredCardHeight)
 
   useEffect(() => {
+    setIsInteractive(true)
     studioRepository
       .loadDraft()
       .then(draft => setHasDraft(Boolean(draft)))
@@ -135,17 +130,20 @@ export const LandingApp: React.FC = () => {
 
     const updateMeasuredHeight = () => {
       const height = Math.ceil(card.offsetHeight)
-      if (height > 0) updateNestedField('layout', 'measuredCardHeight', height)
+      if (height > 0) {
+        setMeasuredCardHeight(current =>
+          current === height ? current : height
+        )
+      }
     }
     const observer = new ResizeObserver(updateMeasuredHeight)
     observer.observe(card)
     updateMeasuredHeight()
     return () => observer.disconnect()
-  }, [selectedExampleId, updateNestedField])
+  }, [selectedExampleId])
 
   const selectExample = (example: PlaylistExample) => {
     setSelectedExampleId(example.id)
-    setFullState(getExampleState(example))
   }
 
   const openEditor = (url?: string) => {
@@ -212,6 +210,7 @@ export const LandingApp: React.FC = () => {
                 <button
                   key={example.id}
                   type="button"
+                  disabled={!isInteractive}
                   aria-pressed={selectedExample.id === example.id}
                   onClick={() => selectExample(example)}
                 >
@@ -223,7 +222,10 @@ export const LandingApp: React.FC = () => {
           </div>
 
           <div className="landing-quick-actions">
-            <button onClick={() => openEditor(getExampleUrl(selectedExample))}>
+            <button
+              disabled={!isInteractive}
+              onClick={() => openEditor(getExampleUrl(selectedExample))}
+            >
               <Play size={15} aria-hidden="true" /> Editar este exemplo
             </button>
             {hasDraft && (
@@ -251,6 +253,7 @@ export const LandingApp: React.FC = () => {
                 autoScale={1}
                 cardRef={cardRef}
                 cardPadding={64}
+                state={previewState}
               />
             </div>
           </div>

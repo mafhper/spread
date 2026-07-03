@@ -89,8 +89,8 @@ export function resolveCompositionGeometry({
     width: Math.max(1, Math.ceil(bounds.right - bounds.left + padding * 2)),
     height: Math.max(1, Math.ceil(bounds.bottom - bounds.top + padding * 2)),
     clip: false,
-    cardCenterX: padding - bounds.left,
-    cardCenterY: padding - bounds.top,
+    cardCenterX: card.x - bounds.left + padding,
+    cardCenterY: card.y - bounds.top + padding,
   }
 }
 

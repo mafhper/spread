@@ -33,8 +33,8 @@ describe('resolveCompositionGeometry', () => {
       width: 900,
       height: 620,
       clip: false,
-      cardCenterX: 382,
-      cardCenterY: 304,
+      cardCenterX: 430,
+      cardCenterY: 280,
     })
   })
 

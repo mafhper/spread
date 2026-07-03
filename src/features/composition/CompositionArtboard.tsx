@@ -1,7 +1,10 @@
 import React, { forwardRef } from 'react'
 
-import { PreviewCard } from '../../components/preview/PreviewCard'
-import { useCardStore } from '../../store/cardStore'
+import {
+  PreviewCard,
+  type PreviewCardState,
+} from '../../components/preview/PreviewCard'
+import { type CardState, useCardStore } from '../../store/cardStore'
 import { computeUnifiedExportScale } from '../../utils/exportScale'
 import {
   migrateLegacyCardPosition,
@@ -28,15 +31,30 @@ export interface CompositionArtboardProps {
   autoScale: number
   cardRef: React.RefObject<HTMLDivElement | null>
   cardPadding: number
+  state?: CompositionArtboardState
 }
+
+export type CompositionArtboardState = PreviewCardState &
+  Pick<
+    CardState,
+    | 'canvasSize'
+    | 'gradientStyle'
+    | 'pattern'
+    | 'customBgImage'
+    | 'patternOpacity'
+    | 'patternScale'
+    | 'cardPosition'
+    | 'exportScale'
+  >
 
 export const CompositionArtboard = forwardRef<
   HTMLDivElement,
   CompositionArtboardProps
 >(function CompositionArtboard(
-  { canvasWidth, canvasHeight, autoScale, cardRef, cardPadding },
+  { canvasWidth, canvasHeight, autoScale, cardRef, cardPadding, state },
   ref
 ) {
+  const storeState = useCardStore()
   const {
     colors,
     canvasSize,
@@ -48,7 +66,7 @@ export const CompositionArtboard = forwardRef<
     cardPosition,
     layout,
     exportScale,
-  } = useCardStore()
+  } = state ?? storeState
 
   const isAutoCanvas = canvasSize.preset === 'auto'
   const finalScale = computeUnifiedExportScale({
@@ -141,7 +159,7 @@ export const CompositionArtboard = forwardRef<
           transformOrigin: 'top left',
         }}
       >
-        <PreviewCard padding={cardPadding} />
+        <PreviewCard padding={cardPadding} cardState={state} />
       </div>
     </div>
   )

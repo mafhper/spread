@@ -38,6 +38,40 @@ test('landing presents the product and opens the editor', async ({
   await expect(page.getByRole('main')).toHaveClass(/studio-shell/)
 })
 
+test('landing examples preserve persisted editor preferences', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop')
+  const savedColors = {
+    bg1: '#112233',
+    bg2: '#445566',
+    text: '#fefefe',
+  }
+  await page.addInitScript(colors => {
+    localStorage.setItem(
+      'spread-preferences-v4',
+      JSON.stringify({ state: { colors }, version: 0 })
+    )
+  }, savedColors)
+
+  await page.goto('./')
+  await expect(page.locator('#previewCard h2')).toHaveText('Psiu', {
+    timeout: 10_000,
+  })
+  await page
+    .getByRole('button', { name: 'Cold Little Heart Michael Kiwanuka' })
+    .click()
+  await expect(page.locator('#previewCard h2')).toHaveText('Cold Little Heart')
+
+  const persistedColors = await page.evaluate(() => {
+    const persisted = JSON.parse(
+      localStorage.getItem('spread-preferences-v4') || '{}'
+    )
+    return persisted.state?.colors
+  })
+  expect(persistedColors).toEqual(savedColors)
+})
+
 test('editor renders one canonical artboard and responsive controls', async ({
   page,
 }, testInfo) => {

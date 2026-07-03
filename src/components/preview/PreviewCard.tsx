@@ -5,7 +5,7 @@
 import * as React from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { useCardStore } from '../../store/cardStore'
+import { type CardState, useCardStore } from '../../store/cardStore'
 import { getServiceIcon } from '../../services/iconLibrary'
 import { resolvePublicAsset } from '../../utils/resolvePublicAsset'
 // import { FrameOverlay } from './FrameOverlay'
@@ -14,18 +14,40 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs))
 }
 
+export type PreviewCardState = Pick<
+  CardState,
+  | 'title'
+  | 'description'
+  | 'image'
+  | 'favicon'
+  | 'domain'
+  | 'author'
+  | 'template'
+  | 'colors'
+  | 'layout'
+  | 'fontFamily'
+  | 'titleSize'
+  | 'subtitleSize'
+  | 'textAlign'
+  | 'isWelcomeState'
+>
+
 interface PreviewCardProps {
   /** Padding resolvido (em pixels) para o card */
   padding?: number
   /** Escala do card (para ajustes internos se necessario) */
   scale?: number
+  /** Estado isolado para superfícies que não devem persistir no editor. */
+  cardState?: PreviewCardState
 }
 
 export const PreviewCard: React.FC<PreviewCardProps> = ({
   padding,
+  cardState,
   // scale is available but not currently used within this component
 }) => {
-  const state = useCardStore()
+  const storeState = useCardStore()
+  const state = cardState ?? storeState
   const {
     title,
     description,
