@@ -7,6 +7,7 @@
 
 import React from 'react'
 import { Zap, Loader2, Save } from 'lucide-react'
+import { resolvePublicAsset } from '../../utils/resolvePublicAsset'
 
 interface HeroSectionProps {
   inputUrl: string
@@ -90,7 +91,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="absolute inset-[4px] rounded-[1.35rem] bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.05),transparent_48%),linear-gradient(180deg,rgba(24,24,27,0.98),rgba(9,9,11,0.98))]" />
             <div className="absolute inset-0 flex items-center justify-center">
               <img
-                src="/spread/logo.svg"
+                src={resolvePublicAsset('logo.svg')}
                 alt="Spread"
                 className="w-12 h-12 sm:w-20 sm:h-20 opacity-95 drop-shadow-[0_0_18px_rgba(217,70,239,0.2)]"
                 style={{ filter: 'brightness(1.16) contrast(1.06)' }}

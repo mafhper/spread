@@ -3,6 +3,9 @@ import {
   blobToBase64,
   urlToBase64,
   getEmbeddedFontCSS,
+  nextAnimationFrame,
+  waitForImages,
+  waitForStableLayout,
 } from '@/services/exportUtils'
 
 describe('exportUtils', () => {
@@ -181,6 +184,60 @@ describe('exportUtils', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('Open+Sans')
       )
+    })
+  })
+
+  describe('nextAnimationFrame', () => {
+    it('should resolve without throwing', async () => {
+      await expect(nextAnimationFrame()).resolves.toBeUndefined()
+    })
+  })
+
+  describe('waitForImages', () => {
+    it('should resolve immediately when there are no images', async () => {
+      const target = document.createElement('div')
+      await expect(waitForImages(target)).resolves.toBeUndefined()
+    })
+
+    it('should await img.decode() for each image', async () => {
+      const target = document.createElement('div')
+      const img = document.createElement('img')
+      const decode = vi.fn().mockResolvedValue(undefined)
+      ;(img as unknown as { decode: () => Promise<void> }).decode = decode
+      target.appendChild(img)
+
+      await waitForImages(target)
+      expect(decode).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not reject when decode fails (best-effort)', async () => {
+      const target = document.createElement('div')
+      const img = document.createElement('img')
+      ;(img as unknown as { decode: () => Promise<void> }).decode = vi
+        .fn()
+        .mockRejectedValue(new Error('decode failed'))
+      target.appendChild(img)
+
+      await expect(waitForImages(target)).resolves.toBeUndefined()
+    })
+
+    it('should fall back to load/error events when decode is absent', async () => {
+      const target = document.createElement('div')
+      const img = document.createElement('img')
+      ;(img as unknown as { decode?: unknown }).decode = undefined
+      Object.defineProperty(img, 'complete', { value: false })
+      target.appendChild(img)
+
+      const promise = waitForImages(target)
+      img.dispatchEvent(new Event('load'))
+      await expect(promise).resolves.toBeUndefined()
+    })
+  })
+
+  describe('waitForStableLayout', () => {
+    it('should resolve once dimensions are stable across frames', async () => {
+      const target = document.createElement('div')
+      await expect(waitForStableLayout(target, 3)).resolves.toBeUndefined()
     })
   })
 })

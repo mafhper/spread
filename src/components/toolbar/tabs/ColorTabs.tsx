@@ -3,17 +3,7 @@ import { Wand2, Loader2 } from 'lucide-react'
 import { useCardStore } from '../../../store/cardStore'
 import { useColorExtractor } from '../../../hooks/useColorExtractor'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
-
-const GRADIENT_ANGLES = [
-  { label: '↗', value: '45deg' },
-  { label: '→', value: '90deg' },
-  { label: '↘', value: '135deg' },
-  { label: '↓', value: '180deg' },
-  { label: '↙', value: '225deg' },
-  { label: '←', value: '270deg' },
-  { label: '↖', value: '315deg' },
-  { label: '○', value: 'circle at center' },
-]
+import { GradientDirectionPicker } from './GradientDirectionPicker'
 
 const COLOR_PRESETS = [
   ['#09090b', '#27272a'], // Zinc
@@ -81,7 +71,7 @@ export const ColorTabs: React.FC = () => {
             </button>
           ),
           content: (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-2.5">
               <div>
                 <label
                   htmlFor="bg-color-1"
@@ -136,25 +126,7 @@ export const ColorTabs: React.FC = () => {
           id: 'gradient',
           title: 'Direção do Gradiente',
           summary: gradientStyle,
-          content: (
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
-              {GRADIENT_ANGLES.map(angle => (
-                <button
-                  key={angle.value}
-                  onClick={() => updateField('gradientStyle', angle.value)}
-                  className={`aspect-square min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-sm font-bold transition-all ${
-                    gradientStyle === angle.value
-                      ? 'bg-white text-black scale-105'
-                      : 'bg-white/10 hover:bg-white/20'
-                  }`}
-                  title={angle.value}
-                  aria-label={`Ângulo do gradiente: ${angle.value}`}
-                >
-                  {angle.label}
-                </button>
-              ))}
-            </div>
-          ),
+          content: <GradientDirectionPicker />,
         },
         {
           id: 'presets',

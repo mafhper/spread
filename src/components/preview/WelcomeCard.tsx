@@ -1,4 +1,5 @@
 import React from 'react'
+import { resolvePublicAsset } from '../../utils/resolvePublicAsset'
 
 export const WelcomeCard: React.FC = () => {
   return (
@@ -27,7 +28,7 @@ export const WelcomeCard: React.FC = () => {
               {/* Animated SVG Graphic */}
               <div className="relative z-10 w-28 h-28 transform transition-transform duration-700 hover:scale-110">
                 <img
-                  src="/spread/logo.svg"
+                  src={resolvePublicAsset('logo.svg')}
                   alt="Spread Logo"
                   className="w-full h-full opacity-90 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] animate-color-shift"
                   style={{ filter: 'brightness(1.5) contrast(1.1)' }}

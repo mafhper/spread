@@ -32,7 +32,7 @@ export const BackgroundTabs: React.FC = () => {
         <span className="block text-xs font-medium mb-2 text-white/50">
           Padrão / Textura
         </span>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {[
             { value: 'none', label: 'Nenhum' },
             { value: 'dots', label: 'Pontos' },
@@ -40,12 +40,12 @@ export const BackgroundTabs: React.FC = () => {
             { value: 'noise', label: 'Ruído' },
             { value: 'lines', label: 'Linhas' },
             { value: 'diagonal', label: 'Diag.' },
-            { value: 'mesh', label: 'Mesh' },
+            { value: 'mesh', label: 'Lattice' },
           ].map(p => (
             <button
               key={p.value}
               onClick={() => updateField('pattern', p.value)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all min-w-[44px] min-h-[44px] ${
+              className={`px-2 py-2 rounded-lg text-xs font-medium transition-all min-h-[44px] ${
                 pattern === p.value
                   ? 'bg-white text-black'
                   : 'bg-white/10 hover:bg-white/20'

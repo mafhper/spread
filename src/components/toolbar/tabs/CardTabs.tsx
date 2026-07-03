@@ -7,9 +7,22 @@ export const CardTabs: React.FC = () => {
   const { layout, updateNestedField } = useCardStore()
   const updateLayout = (field: string, val: unknown) =>
     updateNestedField('layout', field, val)
-  const brandingSummary = layout.showHeader
-    ? `Header visível · ${layout.headerPosition === 'left' ? 'Esquerda' : 'Direita'}`
-    : 'Header oculto'
+  // Compat: estado antigo tem só showHeader (boolean).
+  const headerMode = layout.headerMode ?? (layout.showHeader ? 'both' : 'none')
+  const setHeaderMode = (mode: 'both' | 'logo' | 'title' | 'none') => {
+    updateLayout('headerMode', mode)
+    updateLayout('showHeader', mode !== 'none')
+  }
+  const HEADER_LABELS: Record<string, string> = {
+    both: 'Logo e título',
+    logo: 'Só logo',
+    title: 'Só título',
+    none: 'Oculto',
+  }
+  const brandingSummary =
+    headerMode === 'none'
+      ? 'Header oculto'
+      : `${HEADER_LABELS[headerMode]} · ${layout.headerPosition === 'left' ? 'Esquerda' : 'Direita'}`
 
   return (
     <ResponsiveSectionDeck
@@ -124,30 +137,36 @@ export const CardTabs: React.FC = () => {
           summary: brandingSummary,
           content: (
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <label
-                  htmlFor="show-header-toggle"
-                  className="text-xs font-medium text-[var(--text-muted)]"
-                >
-                  Exibir Logo/Título
-                </label>
-                <button
-                  id="show-header-toggle"
-                  onClick={() => updateLayout('showHeader', !layout.showHeader)}
-                  className={`w-12 h-7 rounded-full transition-colors relative min-w-[44px] min-h-[28px] ${layout.showHeader ? 'bg-white' : 'bg-white/10'}`}
-                  aria-label={
-                    layout.showHeader
-                      ? 'Ocultar logo e título'
-                      : 'Exibir logo e título'
-                  }
-                >
-                  <div
-                    className={`absolute top-1 w-5 h-5 rounded-full transition-all ${layout.showHeader ? 'left-6 bg-black' : 'left-1 bg-white/40'}`}
-                  />
-                </button>
+              <div>
+                <span className="block text-[10px] text-[var(--text-muted)] mb-1.5 uppercase tracking-wider">
+                  Cabeçalho
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { label: 'Logo e título', value: 'both' },
+                      { label: 'Só logo', value: 'logo' },
+                      { label: 'Só título', value: 'title' },
+                      { label: 'Nada', value: 'none' },
+                    ] as const
+                  ).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setHeaderMode(opt.value)}
+                      aria-pressed={headerMode === opt.value}
+                      className={`px-2 py-1.5 rounded text-[10px] font-medium border transition-colors ${
+                        headerMode === opt.value
+                          ? 'bg-white text-black border-transparent'
+                          : 'bg-white/5 text-[var(--text-muted)] border-white/10 hover:border-white/30'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {layout.showHeader && (
+              {headerMode !== 'none' && (
                 <div>
                   <label
                     htmlFor="header-position"

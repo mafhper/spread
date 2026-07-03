@@ -22,6 +22,9 @@ vi.mock('downloadjs')
 vi.mock('@/services/exportUtils', () => ({
   urlToBase64: vi.fn(),
   getEmbeddedFontCSS: vi.fn().mockResolvedValue(''),
+  waitForImages: vi.fn().mockResolvedValue(undefined),
+  waitForStableLayout: vi.fn().mockResolvedValue(undefined),
+  nextAnimationFrame: vi.fn().mockResolvedValue(undefined),
 }))
 
 describe('PreviewSection Component', () => {
@@ -96,7 +99,12 @@ describe('PreviewSection Component', () => {
     })
 
     await waitFor(() => {
-      expect(toPng).toHaveBeenCalled()
+      const artboard = screen.getByTestId('composition-artboard')
+      expect(screen.getAllByTestId('composition-artboard')).toHaveLength(1)
+      expect(toPng).toHaveBeenCalledWith(
+        artboard,
+        expect.objectContaining({ pixelRatio: 2 })
+      )
       expect(download).toHaveBeenCalledWith(mockBase64, expect.any(String))
     })
   })

@@ -182,7 +182,6 @@ export const useAutoScale = (
     if (!enabled) return
 
     const container = containerRef.current
-    const content = contentRef.current
     if (!container) return
 
     // Recalcula inicial
@@ -196,9 +195,24 @@ export const useAutoScale = (
     })
 
     resizeObserver.observe(container)
-    if (content) {
-      resizeObserver.observe(content)
+    let observedContent: HTMLDivElement | null = null
+    let contentFrameId = 0
+    let contentAttempts = 0
+    const observeContentWhenReady = () => {
+      const content = contentRef.current
+      if (content && content !== observedContent) {
+        if (observedContent) resizeObserver.unobserve(observedContent)
+        observedContent = content
+        resizeObserver.observe(content)
+        recalculate()
+        return
+      }
+      if (!content && contentAttempts < 120) {
+        contentAttempts += 1
+        contentFrameId = requestAnimationFrame(observeContentWhenReady)
+      }
     }
+    observeContentWhenReady()
 
     // Observa redimensionamento da janela
     const handleWindowResize = () => {
@@ -209,6 +223,7 @@ export const useAutoScale = (
 
     return () => {
       clearTimeout(timeoutId)
+      cancelAnimationFrame(contentFrameId)
       resizeObserver.disconnect()
       window.removeEventListener('resize', handleWindowResize)
     }

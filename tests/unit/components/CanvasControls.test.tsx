@@ -1,33 +1,25 @@
-import { act, render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { CanvasControls } from '@/components/toolbar/tabs/CanvasControls'
 import { useCardStore } from '@/store/cardStore'
-import { useColorExtractor } from '@/hooks/useColorExtractor'
 import { createMockCardStore } from '../mocks/useCardStore'
 
 vi.mock('@/store/cardStore')
-vi.mock('@/hooks/useColorExtractor')
 
 describe('CanvasControls Component', () => {
   const mockStore = createMockCardStore()
-  const mockExtractColors = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(useCardStore).mockReturnValue(mockStore)
-    vi.mocked(useColorExtractor).mockReturnValue({
-      extractColorsFromImage: mockExtractColors,
-      isExtracting: false,
-      error: null,
-    })
     window.innerWidth = 1024
     window.dispatchEvent(new Event('resize'))
   })
 
-  it('renders correctly', () => {
+  it('renders the canvas and position sections', () => {
     render(<CanvasControls />)
     expect(screen.getByText('Área de Trabalho (Canvas)')).toBeDefined()
-    expect(screen.getByText('Cores do Fundo')).toBeDefined()
+    expect(screen.getByText('Posição do Card')).toBeDefined()
   })
 
   it('handles preset selection', () => {
@@ -52,34 +44,6 @@ describe('CanvasControls Component', () => {
     )
   })
 
-  it('handles color changes', () => {
-    render(<CanvasControls />)
-    const colorInputs = screen.getAllByRole('textbox') // Hex inputs
-    fireEvent.change(colorInputs[0], { target: { value: '#ff0000' } })
-
-    expect(mockStore.updateNestedField).toHaveBeenCalledWith(
-      'colors',
-      'bg1',
-      '#ff0000'
-    )
-  })
-
-  it('handles gradient angle change', () => {
-    render(<CanvasControls />)
-    const angleButton = screen.getByLabelText('Ângulo do gradiente: 90deg')
-    fireEvent.click(angleButton)
-
-    expect(mockStore.updateField).toHaveBeenCalledWith('gradientStyle', '90deg')
-  })
-
-  it('handles pattern change', () => {
-    render(<CanvasControls />)
-    const dotsButton = screen.getByLabelText('Selecionar padrão: Pontos')
-    fireEvent.click(dotsButton)
-
-    expect(mockStore.updateField).toHaveBeenCalledWith('pattern', 'dots')
-  })
-
   it('handles position reset', () => {
     render(<CanvasControls />)
     const resetX = screen.getByLabelText('Resetar posição X')
@@ -90,69 +54,6 @@ describe('CanvasControls Component', () => {
       'x',
       0
     )
-  })
-
-  it('handles auto color extraction', async () => {
-    // Configura store com imagem para habilitar o botao
-    vi.mocked(useCardStore).mockReturnValue({
-      ...mockStore,
-      image: 'test-image.jpg',
-    })
-
-    mockExtractColors.mockResolvedValue({
-      primary: '#111111',
-      secondary: '#222222',
-    })
-
-    render(<CanvasControls />)
-    const autoButton = screen.getByLabelText('Extrair cores automaticamente')
-    await act(async () => {
-      fireEvent.click(autoButton)
-    })
-
-    expect(mockExtractColors).toHaveBeenCalledWith('test-image.jpg')
-
-    // Aguarda as promessas serem resolvidas
-    await vi.waitFor(() => {
-      expect(mockStore.updateNestedField).toHaveBeenCalledWith(
-        'colors',
-        'bg1',
-        '#111111'
-      )
-      expect(mockStore.updateNestedField).toHaveBeenCalledWith(
-        'colors',
-        'bg2',
-        '#222222'
-      )
-    })
-  })
-
-  it('handles color extraction error', async () => {
-    vi.mocked(useCardStore).mockReturnValue({
-      ...mockStore,
-      image: 'test-image.jpg',
-    })
-    const extractionError = new Error('Extraction failed')
-    vi.mocked(useColorExtractor).mockReturnValue({
-      extractColorsFromImage: vi.fn().mockRejectedValue(extractionError),
-      isExtracting: false,
-      error: null,
-    })
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    render(<CanvasControls />)
-    const autoButton = screen.getByLabelText('Extrair cores automaticamente')
-
-    // Fire and wait for the async chain to complete
-    fireEvent.click(autoButton)
-
-    await vi.waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Erro ao extrair'),
-        extractionError
-      )
-    })
-    consoleSpy.mockRestore()
   })
 
   it('handles range input changes for card position', () => {
@@ -174,33 +75,16 @@ describe('CanvasControls Component', () => {
     )
   })
 
-  it('handles custom background image removal', () => {
-    vi.mocked(useCardStore).mockReturnValue({
-      ...mockStore,
-      customBgImage: 'test-bg.jpg',
-    })
-
-    render(<CanvasControls />)
-    const removeButton = screen.getByLabelText('Remover imagem customizada')
-    fireEvent.click(removeButton)
-
-    expect(mockStore.updateField).toHaveBeenCalledWith('customBgImage', null)
-  })
-
-  it('collapses secondary sections on mobile until the user expands them', () => {
+  it('collapses the position section on mobile until the user expands it', () => {
     window.innerWidth = 375
     window.dispatchEvent(new Event('resize'))
 
     render(<CanvasControls />)
 
-    expect(
-      screen.queryByLabelText('Ângulo do gradiente: 90deg')
-    ).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Resetar posição X')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cores do Fundo' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Posição do Card' }))
 
-    expect(
-      screen.getByLabelText('Ângulo do gradiente: 90deg')
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Resetar posição X')).toBeInTheDocument()
   })
 })

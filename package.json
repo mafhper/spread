@@ -38,6 +38,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:unit": "vitest run --testNamePattern=unit",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -52,9 +53,9 @@
     "validate": "run-s clean:dist build check security:audit"
   },
   "dependencies": {
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/sitemap": "^3.7.2",
-    "astro": "^6.4.7",
+    "@astrojs/react": "^6.0.0",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^7.0.3",
     "clsx": "^2.1.1",
     "colorthief": "^2.7.0",
     "downloadjs": "^1.4.7",
@@ -132,6 +133,8 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",
     "@vitest/coverage-istanbul": "^4.1.4",
@@ -154,6 +157,7 @@
     "rimraf": "^6.1.3",
     "rollup-plugin-visualizer": "^5.14.0",
     "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.58.1",
     "vitest": "^4.1.4"
   }

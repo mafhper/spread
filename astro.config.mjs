@@ -72,6 +72,7 @@ export default defineConfig({
   site: 'https://mafhp.github.io',
   base: '/spread',
   output: 'static',
+  devToolbar: { enabled: false },
 
   integrations: [react(), sitemap()],
 

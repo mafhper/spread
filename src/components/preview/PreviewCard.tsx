@@ -1,47 +1,53 @@
 /**
- * PreviewCard Component - Card de Visualização com Frame Mode
- *
- * @version 2.0.0 - Frames como modos de exibição alternativos
- *
- * Quando frame.enabled === true:
- * - O frame renderiza OCUPANDO TODO O CANVAS
- * - O card padrão NÃO é renderizado
- * - Não há duplicação de imagem ou texto
- *
- * Quando frame.enabled === false:
- * - Renderiza o card padrão (template default/music/news)
+ * Canonical card renderer shared by preview and export.
  */
 
 import * as React from 'react'
-import { useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { useCardStore } from '../../store/cardStore'
+import { type CardState, useCardStore } from '../../store/cardStore'
 import { getServiceIcon } from '../../services/iconLibrary'
+import { resolvePublicAsset } from '../../utils/resolvePublicAsset'
 // import { FrameOverlay } from './FrameOverlay'
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs))
 }
 
+export type PreviewCardState = Pick<
+  CardState,
+  | 'title'
+  | 'description'
+  | 'image'
+  | 'favicon'
+  | 'domain'
+  | 'author'
+  | 'template'
+  | 'colors'
+  | 'layout'
+  | 'fontFamily'
+  | 'titleSize'
+  | 'subtitleSize'
+  | 'textAlign'
+  | 'isWelcomeState'
+>
+
 interface PreviewCardProps {
-  /** Largura do canvas em pixels (necessário para frames) */
-  canvasWidth?: number
-  /** Altura do canvas em pixels (necessário para frames) */
-  canvasHeight?: number
   /** Padding resolvido (em pixels) para o card */
   padding?: number
   /** Escala do card (para ajustes internos se necessario) */
   scale?: number
+  /** Estado isolado para superfícies que não devem persistir no editor. */
+  cardState?: PreviewCardState
 }
 
 export const PreviewCard: React.FC<PreviewCardProps> = ({
-  canvasWidth = 1200,
-  canvasHeight = 630,
   padding,
+  cardState,
   // scale is available but not currently used within this component
 }) => {
-  const state = useCardStore()
+  const storeState = useCardStore()
+  const state = cardState ?? storeState
   const {
     title,
     description,
@@ -57,21 +63,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
     subtitleSize,
     textAlign,
     isWelcomeState,
-    frame,
   } = state
-
-  // Injeção de fonte customizada
-  useEffect(() => {
-    const link = document.createElement('link')
-    link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;700&display=swap`
-    link.rel = 'stylesheet'
-    document.head.appendChild(link)
-    return () => {
-      if (document.head.contains(link)) {
-        document.head.removeChild(link)
-      }
-    }
-  }, [fontFamily])
 
   const hexToRgba = (hex: string, alpha: number) => {
     if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(hex)) return hex
@@ -81,93 +73,6 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
   }
 
-  // ============================================================
-  // FRAME MODE: Frame substitui completamente o card padrão
-  // ============================================================
-  if (frame.enabled && !isWelcomeState) {
-    return (
-      <div
-        className="relative w-full h-full flex items-center justify-center overflow-visible"
-        style={{
-          width: canvasWidth,
-          height: canvasHeight,
-          filter: 'drop-shadow(0 25px 40px rgba(0,0,0,0.35))',
-        }}
-      >
-        {/* <FrameOverlay
-          image={image}
-          canvasWidth={canvasWidth}
-          canvasHeight={canvasHeight}
-          templateId={frame.templateId}
-          primaryColor={frame.primaryColor}
-          secondaryColor={frame.secondaryColor}
-        /> */}
-        <div />
-
-        {/* Overlay de Texto Otimizado para Frames */}
-        {frame.showText && (
-          <div
-            className={cn(
-              'absolute z-20 pointer-events-none flex flex-col gap-2 w-full px-8 py-6 transition-all duration-300',
-              frame.textStyle.position === 'overlay'
-                ? 'bottom-0 left-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-12'
-                : 'bottom-0 left-0 bg-zinc-950/90 border-t border-white/10 backdrop-blur-xl'
-            )}
-            style={{
-              color: frame.textStyle.color,
-              textAlign:
-                frame.textStyle.position === 'overlay' ? 'left' : 'center',
-              textShadow:
-                frame.textStyle.position === 'overlay'
-                  ? '0 2px 10px rgba(0,0,0,0.5)'
-                  : 'none',
-            }}
-          >
-            <div
-              className={cn(
-                'flex items-center gap-3',
-                frame.textStyle.position === 'overlay'
-                  ? 'justify-start'
-                  : 'justify-center'
-              )}
-            >
-              {frame.textStyle.showIcon && domain && (
-                <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center p-1.5 border border-white/10 shadow-lg">
-                  {(() => {
-                    const { Icon, color } = getServiceIcon(domain)
-                    return (
-                      <Icon
-                        className="w-full h-full"
-                        style={{ color: color || '#FFFFFF' }}
-                      />
-                    )
-                  })()}
-                </div>
-              )}
-              <div className="flex flex-col min-w-0">
-                <h2
-                  className="font-bold leading-none tracking-tight truncate w-full"
-                  style={{ fontSize: `${frame.textStyle.fontSize}px` }}
-                >
-                  {title}
-                </h2>
-                <p
-                  className="opacity-80 font-medium truncate w-full mt-1"
-                  style={{ fontSize: `${frame.textStyle.fontSize * 0.6}px` }}
-                >
-                  {author || domain}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ============================================================
-  // DEFAULT MODE: Card padrão (template default/music/news)
-  // ============================================================
   return (
     <div
       id="previewCard"
@@ -222,37 +127,54 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               layout.cardAspectRatio !== 'aspect-auto' ? '100%' : 'auto',
           }}
         >
-          {/* Header: Logo Spread - Oculto apenas no Welcome State */}
-          {!isWelcomeState && layout.showHeader && (
-            <div
-              className={cn(
-                'flex-shrink-0 flex',
-                layout.headerPosition === 'right'
-                  ? 'justify-end'
-                  : 'justify-start'
-              )}
-            >
-              <div className="relative inline-flex items-center gap-2 group/header overflow-visible">
-                <div className="relative w-6 h-6 flex-shrink-0">
-                  {/* Premium Logo Composition */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-pink-500 rounded-lg rotate-6 opacity-90 group-hover/header:rotate-12 transition-transform duration-300" />
-                  <div className="absolute inset-[2.5px] bg-zinc-950 rounded-lg flex items-center justify-center">
-                    <img
-                      src="/spread/logo.svg"
-                      alt=""
-                      className="w-full h-full p-0.5 opacity-95 invert brightness-0"
-                    />
+          {/* Header: Logo/Título Spread - modo configurável (oculto no Welcome) */}
+          {!isWelcomeState &&
+            (() => {
+              // Compat: estado persistido antigo tem só showHeader (boolean).
+              const mode =
+                layout.headerMode ?? (layout.showHeader ? 'both' : 'none')
+              if (mode === 'none') return null
+              const showLogo = mode === 'both' || mode === 'logo'
+              const showTitle = mode === 'both' || mode === 'title'
+              return (
+                <div
+                  data-testid="card-brand-header"
+                  className={cn(
+                    'flex-shrink-0 flex',
+                    layout.headerPosition === 'right'
+                      ? 'justify-end'
+                      : 'justify-start'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'inline-flex h-8 items-center border border-white/10 bg-zinc-950/80 text-white/80',
+                      showTitle
+                        ? 'gap-2 rounded-full px-2.5'
+                        : 'w-8 justify-center rounded-lg'
+                    )}
+                  >
+                    {showLogo && (
+                      <img
+                        data-testid="card-brand-logo"
+                        src={resolvePublicAsset('logo.svg')}
+                        alt=""
+                        className="h-[18px] w-[18px] flex-shrink-0 opacity-95 invert brightness-0"
+                      />
+                    )}
+
+                    {showTitle && (
+                      <span
+                        data-testid="card-brand-title"
+                        className="text-[10px] font-bold tracking-[0.2em]"
+                      >
+                        Spread
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                <div className="px-3 py-1.5 rounded-full bg-zinc-950/40 backdrop-blur-md border border-white/10 shadow-lg flex items-center">
-                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">
-                    Spread
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+              )
+            })()}
 
           {/* Seção de Imagem / Welcome Graphic */}
           {isWelcomeState ? (
@@ -266,7 +188,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               {/* Animated SVG Graphic */}
               <div className="relative z-10 w-28 h-28 transform transition-transform duration-700 hover:scale-110">
                 <img
-                  src="/spread/logo.svg"
+                  src={resolvePublicAsset('logo.svg')}
                   alt="Spread Logo"
                   className="w-full h-full opacity-90 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] animate-color-shift"
                   style={{ filter: 'brightness(1.5) contrast(1.1)' }}
