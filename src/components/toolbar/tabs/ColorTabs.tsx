@@ -23,13 +23,42 @@ const COLOR_PRESETS = [
   ['#f093fb', '#f5576c'], // Pink
 ]
 
+type BackgroundColorKey = 'bg1' | 'bg2'
+
+const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value)
+
 export const ColorTabs: React.FC = () => {
   const { colors, gradientStyle, image, updateNestedField, updateField } =
     useCardStore()
   const { extractColorsFromImage, isExtracting } = useColorExtractor()
+  const [colorDrafts, setColorDrafts] = React.useState<
+    Record<BackgroundColorKey, string>
+  >({
+    bg1: colors.bg1,
+    bg2: colors.bg2,
+  })
+
+  React.useEffect(() => {
+    setColorDrafts({ bg1: colors.bg1, bg2: colors.bg2 })
+  }, [colors.bg1, colors.bg2])
 
   const handleColorChange = (key: 'bg1' | 'bg2' | 'text', val: string) => {
     updateNestedField('colors', key, val)
+  }
+
+  const commitColorDraft = (key: BackgroundColorKey) => {
+    const value = key === 'bg1' ? colorDrafts.bg1 : colorDrafts.bg2
+    const savedValue = key === 'bg1' ? colors.bg1 : colors.bg2
+    if (!isHexColor(value)) {
+      setColorDrafts(drafts =>
+        key === 'bg1'
+          ? { ...drafts, bg1: savedValue }
+          : { ...drafts, bg2: savedValue }
+      )
+      return
+    }
+
+    handleColorChange(key, value)
   }
 
   const handleAutoColor = async () => {
@@ -80,17 +109,42 @@ export const ColorTabs: React.FC = () => {
                   Cor 1
                 </label>
                 <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
-                  <input
-                    id="bg-color-1"
-                    type="color"
-                    value={colors.bg1}
-                    onChange={e => handleColorChange('bg1', e.target.value)}
-                    className="w-8 h-8 rounded-lg cursor-pointer border-none p-0 bg-transparent"
+                  <button
+                    type="button"
+                    aria-label="Editar Cor 1"
+                    onClick={() =>
+                      document.getElementById('bg-color-1')?.focus()
+                    }
+                    className="w-8 h-8 rounded-lg border border-white/20 shrink-0"
+                    style={{
+                      backgroundColor: isHexColor(colorDrafts.bg1)
+                        ? colorDrafts.bg1
+                        : colors.bg1,
+                    }}
                   />
                   <input
+                    id="bg-color-1"
                     type="text"
-                    value={colors.bg1}
-                    onChange={e => handleColorChange('bg1', e.target.value)}
+                    value={colorDrafts.bg1}
+                    onChange={e =>
+                      setColorDrafts(drafts => ({
+                        ...drafts,
+                        bg1: e.target.value,
+                      }))
+                    }
+                    onBlur={() => commitColorDraft('bg1')}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') e.currentTarget.blur()
+                      if (e.key === 'Escape') {
+                        setColorDrafts(drafts => ({
+                          ...drafts,
+                          bg1: colors.bg1,
+                        }))
+                        e.currentTarget.blur()
+                      }
+                    }}
+                    inputMode="text"
+                    spellCheck={false}
                     className="w-full bg-transparent text-xs font-mono uppercase focus:outline-none"
                   />
                 </div>
@@ -104,17 +158,42 @@ export const ColorTabs: React.FC = () => {
                   Cor 2
                 </label>
                 <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
-                  <input
-                    id="bg-color-2"
-                    type="color"
-                    value={colors.bg2}
-                    onChange={e => handleColorChange('bg2', e.target.value)}
-                    className="w-8 h-8 rounded-lg cursor-pointer border-none p-0 bg-transparent"
+                  <button
+                    type="button"
+                    aria-label="Editar Cor 2"
+                    onClick={() =>
+                      document.getElementById('bg-color-2')?.focus()
+                    }
+                    className="w-8 h-8 rounded-lg border border-white/20 shrink-0"
+                    style={{
+                      backgroundColor: isHexColor(colorDrafts.bg2)
+                        ? colorDrafts.bg2
+                        : colors.bg2,
+                    }}
                   />
                   <input
+                    id="bg-color-2"
                     type="text"
-                    value={colors.bg2}
-                    onChange={e => handleColorChange('bg2', e.target.value)}
+                    value={colorDrafts.bg2}
+                    onChange={e =>
+                      setColorDrafts(drafts => ({
+                        ...drafts,
+                        bg2: e.target.value,
+                      }))
+                    }
+                    onBlur={() => commitColorDraft('bg2')}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') e.currentTarget.blur()
+                      if (e.key === 'Escape') {
+                        setColorDrafts(drafts => ({
+                          ...drafts,
+                          bg2: colors.bg2,
+                        }))
+                        e.currentTarget.blur()
+                      }
+                    }}
+                    inputMode="text"
+                    spellCheck={false}
                     className="w-full bg-transparent text-xs font-mono uppercase focus:outline-none"
                   />
                 </div>

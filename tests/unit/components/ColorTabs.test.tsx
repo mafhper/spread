@@ -32,10 +32,34 @@ describe('ColorTabs Component', () => {
     render(<ColorTabs />)
     const colorInput1 = screen.getByLabelText('Cor 1')
     fireEvent.change(colorInput1, { target: { value: '#ff0000' } })
+    fireEvent.blur(colorInput1)
     expect(mockStore.updateNestedField).toHaveBeenCalledWith(
       'colors',
       'bg1',
       '#ff0000'
+    )
+  })
+
+  it('does not expose the browser native color picker', () => {
+    const { container } = render(<ColorTabs />)
+
+    expect(container.querySelectorAll('input[type="color"]')).toHaveLength(0)
+  })
+
+  it('commits a manual color only when a valid hexadecimal value is confirmed', () => {
+    render(<ColorTabs />)
+    const hexInput1 = screen.getAllByRole('textbox')[0]
+
+    fireEvent.change(hexInput1, { target: { value: '#123' } })
+    expect(mockStore.updateNestedField).not.toHaveBeenCalled()
+
+    fireEvent.change(hexInput1, { target: { value: '#123456' } })
+    fireEvent.blur(hexInput1)
+    expect(mockStore.updateNestedField).toHaveBeenCalledTimes(1)
+    expect(mockStore.updateNestedField).toHaveBeenCalledWith(
+      'colors',
+      'bg1',
+      '#123456'
     )
   })
 
