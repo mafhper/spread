@@ -3,26 +3,50 @@ import { RotateCcw } from 'lucide-react'
 import { useCardStore } from '../../../store/cardStore'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
 
+type HeaderMode = 'both' | 'logo' | 'title' | 'none'
+
+const resolveHeaderMode = (
+  mode: unknown,
+  legacyShowHeader: boolean
+): HeaderMode => {
+  switch (mode) {
+    case 'both':
+    case 'logo':
+    case 'title':
+    case 'none':
+      return mode
+    default:
+      return legacyShowHeader ? 'both' : 'none'
+  }
+}
+
+const getHeaderModeLabel = (mode: HeaderMode) => {
+  switch (mode) {
+    case 'both':
+      return 'Logo e título'
+    case 'logo':
+      return 'Só logo'
+    case 'title':
+      return 'Só título'
+    case 'none':
+      return 'Oculto'
+  }
+}
+
 export const CardTabs: React.FC = () => {
   const { layout, updateNestedField } = useCardStore()
   const updateLayout = (field: string, val: unknown) =>
     updateNestedField('layout', field, val)
   // Compat: estado antigo tem só showHeader (boolean).
-  const headerMode = layout.headerMode ?? (layout.showHeader ? 'both' : 'none')
-  const setHeaderMode = (mode: 'both' | 'logo' | 'title' | 'none') => {
+  const headerMode = resolveHeaderMode(layout.headerMode, layout.showHeader)
+  const setHeaderMode = (mode: HeaderMode) => {
     updateLayout('headerMode', mode)
     updateLayout('showHeader', mode !== 'none')
-  }
-  const HEADER_LABELS: Record<string, string> = {
-    both: 'Logo e título',
-    logo: 'Só logo',
-    title: 'Só título',
-    none: 'Oculto',
   }
   const brandingSummary =
     headerMode === 'none'
       ? 'Header oculto'
-      : `${HEADER_LABELS[headerMode]} · ${layout.headerPosition === 'left' ? 'Esquerda' : 'Direita'}`
+      : `${getHeaderModeLabel(headerMode)} · ${layout.headerPosition === 'left' ? 'Esquerda' : 'Direita'}`
 
   return (
     <ResponsiveSectionDeck
