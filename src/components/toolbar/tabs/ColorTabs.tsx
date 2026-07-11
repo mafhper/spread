@@ -47,9 +47,14 @@ export const ColorTabs: React.FC = () => {
   }
 
   const commitColorDraft = (key: BackgroundColorKey) => {
-    const value = colorDrafts[key]
+    const value = key === 'bg1' ? colorDrafts.bg1 : colorDrafts.bg2
+    const savedValue = key === 'bg1' ? colors.bg1 : colors.bg2
     if (!isHexColor(value)) {
-      setColorDrafts(drafts => ({ ...drafts, [key]: colors[key] }))
+      setColorDrafts(drafts =>
+        key === 'bg1'
+          ? { ...drafts, bg1: savedValue }
+          : { ...drafts, bg2: savedValue }
+      )
       return
     }
 
