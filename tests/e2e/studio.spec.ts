@@ -303,7 +303,7 @@ test('local link fixtures cover metadata variants and preserve the document on f
   await expect(title).toHaveValue(preservedTitle)
 })
 
-test('background color editing after loading a link never opens a native picker', async ({
+test('background color editing after loading a link uses the in-app picker', async ({
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop')
@@ -336,6 +336,14 @@ test('background color editing after loading a link never opens a native picker'
   const color1 = page.getByRole('textbox', { name: 'Cor 1', exact: true })
   await expect(color1).toHaveAttribute('type', 'text')
   await expect(page.locator('input[type="color"]')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Abrir seletor Cor 1' }).click()
+  await expect(
+    page.getByRole('dialog', { name: 'Seletor Cor 1' })
+  ).toBeVisible()
+  await page
+    .getByRole('button', { name: 'Selecionar Cor 1' })
+    .click({ position: { x: 120, y: 48 } })
+  await expect(color1).not.toHaveValue('#0f172a')
   await color1.fill('#123456')
   await color1.press('Tab')
   await expect(color1).toHaveValue('#123456')

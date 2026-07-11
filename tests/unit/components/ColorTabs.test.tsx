@@ -40,10 +40,15 @@ describe('ColorTabs Component', () => {
     )
   })
 
-  it('does not expose the browser native color picker', () => {
+  it('uses an in-app color picker instead of the browser native picker', () => {
     const { container } = render(<ColorTabs />)
 
     expect(container.querySelectorAll('input[type="color"]')).toHaveLength(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir seletor Cor 1' }))
+    expect(screen.getByRole('dialog', { name: 'Seletor Cor 1' })).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Selecionar Cor 1' })
+    ).toBeVisible()
   })
 
   it('commits a manual color only when a valid hexadecimal value is confirmed', () => {
@@ -60,6 +65,37 @@ describe('ColorTabs Component', () => {
       'colors',
       'bg1',
       '#123456'
+    )
+  })
+
+  it('commits colors picked from the visual color area', () => {
+    render(<ColorTabs />)
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir seletor Cor 1' }))
+
+    const colorPlane = screen.getByRole('button', { name: 'Selecionar Cor 1' })
+    vi.spyOn(colorPlane, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      top: 0,
+      right: 100,
+      bottom: 100,
+      left: 0,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.pointerDown(colorPlane, {
+      clientX: 50,
+      clientY: 50,
+      pointerId: 1,
+    })
+    fireEvent.pointerUp(colorPlane, { clientX: 50, clientY: 50, pointerId: 1 })
+
+    expect(mockStore.updateNestedField).toHaveBeenCalledWith(
+      'colors',
+      'bg1',
+      expect.stringMatching(/^#[0-9a-f]{6}$/i)
     )
   })
 
