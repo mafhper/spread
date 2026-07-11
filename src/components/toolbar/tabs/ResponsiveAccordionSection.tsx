@@ -7,12 +7,20 @@ interface ResponsiveAccordionSectionProps {
   summary: string
   children: React.ReactNode
   action?: React.ReactNode
+  summaryClassName?: string
   defaultMobileOpen?: boolean
 }
 
 export const ResponsiveAccordionSection: React.FC<
   ResponsiveAccordionSectionProps
-> = ({ title, summary, children, action, defaultMobileOpen = false }) => {
+> = ({
+  title,
+  summary,
+  children,
+  action,
+  summaryClassName,
+  defaultMobileOpen = false,
+}) => {
   const [isCompactViewport, setIsCompactViewport] = React.useState(false)
   const [isOpen, setIsOpen] = React.useState(defaultMobileOpen)
 
@@ -39,7 +47,9 @@ export const ResponsiveAccordionSection: React.FC<
             <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">
               {title}
             </p>
-            <p className="mt-1 text-xs text-white/55">{summary}</p>
+            <p className={clsx('mt-1 text-xs text-white/55', summaryClassName)}>
+              {summary}
+            </p>
           </div>
           <ChevronDown
             size={16}
@@ -55,7 +65,9 @@ export const ResponsiveAccordionSection: React.FC<
             <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">
               {title}
             </h4>
-            <p className="mt-1 text-xs text-white/45">{summary}</p>
+            <p className={clsx('mt-1 text-xs text-white/45', summaryClassName)}>
+              {summary}
+            </p>
           </div>
           {action}
         </div>
