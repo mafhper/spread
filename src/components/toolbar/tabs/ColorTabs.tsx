@@ -1,5 +1,5 @@
 import React from 'react'
-import { Wand2, Loader2 } from 'lucide-react'
+import { Wand2, Loader2, Pipette } from 'lucide-react'
 import { useCardStore } from '../../../store/cardStore'
 import { useColorExtractor } from '../../../hooks/useColorExtractor'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
@@ -37,7 +37,26 @@ type RgbColor = {
   blue: number
 }
 
+type AppEyeDropperResult = {
+  sRGBHex: string
+}
+
+type AppEyeDropperConstructor = new () => {
+  open: () => Promise<AppEyeDropperResult>
+}
+
+type WindowWithEyeDropper = Window &
+  typeof globalThis & {
+    EyeDropper?: AppEyeDropperConstructor
+  }
+
 const isHexColor = (value: string) => /^#[0-9a-fA-F]{6}$/.test(value)
+
+const getEyeDropper = () => {
+  if (typeof window === 'undefined') return null
+
+  return (window as WindowWithEyeDropper).EyeDropper ?? null
+}
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
@@ -145,10 +164,13 @@ type ColorPickerFieldProps = {
   value: string
   draftValue: string
   isOpen: boolean
+  canPickFromPage: boolean
+  isPickingFromPage: boolean
   onOpen: () => void
   onClose: () => void
   onDraftChange: (value: string) => void
   onCommit: (value: string) => void
+  onPickFromPage: () => void
   onResetDraft: () => void
 }
 
@@ -157,10 +179,13 @@ const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
   value,
   draftValue,
   isOpen,
+  canPickFromPage,
+  isPickingFromPage,
   onOpen,
   onClose,
   onDraftChange,
   onCommit,
+  onPickFromPage,
   onResetDraft,
 }) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
@@ -250,6 +275,22 @@ const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
           className="w-8 h-8 rounded-lg border border-white/20 shrink-0 shadow-inner focus:outline-none focus:ring-2 focus:ring-white/30"
           style={{ backgroundColor: displayedColor }}
         />
+        {canPickFromPage ? (
+          <button
+            type="button"
+            aria-label={`Capturar ${label} da tela`}
+            title="Capturar cor da tela"
+            disabled={isPickingFromPage}
+            onClick={onPickFromPage}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/55 transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 disabled:cursor-wait disabled:opacity-50"
+          >
+            {isPickingFromPage ? (
+              <Loader2 className="animate-spin" size={14} />
+            ) : (
+              <Pipette size={14} />
+            )}
+          </button>
+        ) : null}
         <input
           id={`${label.toLowerCase().replace(' ', '-')}-hex`}
           type="text"
@@ -376,6 +417,9 @@ export const ColorTabs: React.FC = () => {
   const { extractColorsFromImage, isExtracting } = useColorExtractor()
   const [activePicker, setActivePicker] =
     React.useState<BackgroundColorKey | null>(null)
+  const [canPickFromPage, setCanPickFromPage] = React.useState(false)
+  const [pickingColor, setPickingColor] =
+    React.useState<BackgroundColorKey | null>(null)
   const [colorDrafts, setColorDrafts] = React.useState<
     Record<BackgroundColorKey, string>
   >({
@@ -386,6 +430,10 @@ export const ColorTabs: React.FC = () => {
   React.useEffect(() => {
     setColorDrafts({ bg1: colors.bg1, bg2: colors.bg2 })
   }, [colors.bg1, colors.bg2])
+
+  React.useEffect(() => {
+    setCanPickFromPage(getEyeDropper() !== null)
+  }, [])
 
   const handleColorChange = (key: 'bg1' | 'bg2' | 'text', val: string) => {
     updateNestedField('colors', key, val)
@@ -400,6 +448,32 @@ export const ColorTabs: React.FC = () => {
     }
 
     handleColorChange(key, value)
+  }
+
+  const pickColorFromPage = async (key: BackgroundColorKey) => {
+    const EyeDropper = getEyeDropper()
+
+    if (!EyeDropper) {
+      setActivePicker(key)
+      return
+    }
+
+    setActivePicker(null)
+    setPickingColor(key)
+
+    try {
+      const result = await new EyeDropper().open()
+      const pickedColor = normalizeHexColor(result.sRGBHex)
+
+      if (!pickedColor) return
+
+      setColorDrafts(drafts => setDraftColor(drafts, key, pickedColor))
+      commitColorDraft(key, pickedColor)
+    } catch {
+      // User cancellation is expected when leaving the eyedropper without a pick.
+    } finally {
+      setPickingColor(null)
+    }
   }
 
   const handleAutoColor = async () => {
@@ -425,6 +499,8 @@ export const ColorTabs: React.FC = () => {
           id: 'manual',
           title: 'Ajuste Manual',
           summary: `${colors.bg1.toUpperCase()} → ${colors.bg2.toUpperCase()}`,
+          summaryClassName:
+            'w-[18ch] whitespace-nowrap font-mono tabular-nums tracking-normal',
           defaultMobile: true,
           action: (
             <button
@@ -447,12 +523,15 @@ export const ColorTabs: React.FC = () => {
                 value={colors.bg1}
                 draftValue={colorDrafts.bg1}
                 isOpen={activePicker === 'bg1'}
+                canPickFromPage={canPickFromPage}
+                isPickingFromPage={pickingColor === 'bg1'}
                 onOpen={() => setActivePicker('bg1')}
                 onClose={() => setActivePicker(null)}
                 onDraftChange={value =>
                   setColorDrafts(drafts => setDraftColor(drafts, 'bg1', value))
                 }
                 onCommit={value => commitColorDraft('bg1', value)}
+                onPickFromPage={() => void pickColorFromPage('bg1')}
                 onResetDraft={() =>
                   setColorDrafts(drafts =>
                     setDraftColor(drafts, 'bg1', colors.bg1)
@@ -465,12 +544,15 @@ export const ColorTabs: React.FC = () => {
                 value={colors.bg2}
                 draftValue={colorDrafts.bg2}
                 isOpen={activePicker === 'bg2'}
+                canPickFromPage={canPickFromPage}
+                isPickingFromPage={pickingColor === 'bg2'}
                 onOpen={() => setActivePicker('bg2')}
                 onClose={() => setActivePicker(null)}
                 onDraftChange={value =>
                   setColorDrafts(drafts => setDraftColor(drafts, 'bg2', value))
                 }
                 onCommit={value => commitColorDraft('bg2', value)}
+                onPickFromPage={() => void pickColorFromPage('bg2')}
                 onResetDraft={() =>
                   setColorDrafts(drafts =>
                     setDraftColor(drafts, 'bg2', colors.bg2)

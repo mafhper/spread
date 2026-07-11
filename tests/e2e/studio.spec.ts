@@ -314,6 +314,16 @@ test('background color editing after loading a link uses the in-app picker', asy
   page.on('console', message => {
     if (message.type() === 'error') consoleErrors.push(message.text())
   })
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'EyeDropper', {
+      configurable: true,
+      value: class {
+        async open() {
+          return { sRGBHex: '#654321' }
+        }
+      },
+    })
+  })
   await page.route('https://api.microlink.io/**', async route => {
     await route.fulfill({
       json: {
@@ -337,6 +347,10 @@ test('background color editing after loading a link uses the in-app picker', asy
 
   await page.getByRole('tab', { name: 'Fundos' }).click()
   const color1 = page.getByRole('textbox', { name: 'Cor 1', exact: true })
+  const manualSummary = page.getByText(/^#[0-9A-F]{6} → #[0-9A-F]{6}$/).first()
+  const summaryWidthBefore = await manualSummary.evaluate(element =>
+    Math.round(element.getBoundingClientRect().width)
+  )
   await expect(color1).toHaveAttribute('type', 'text')
   await expect(page.locator('input[type="color"]')).toHaveCount(0)
   await page.getByRole('button', { name: 'Abrir seletor Cor 1' }).click()
@@ -347,6 +361,20 @@ test('background color editing after loading a link uses the in-app picker', asy
     .getByRole('button', { name: 'Selecionar Cor 1' })
     .click({ position: { x: 120, y: 48 } })
   await expect(color1).not.toHaveValue('#0f172a')
+  await page.getByRole('button', { name: 'Capturar Cor 1 da tela' }).click()
+  await expect(color1).toHaveValue('#654321')
+  await expect
+    .poll(async () =>
+      page
+        .getByText(/^#[0-9A-F]{6} → #[0-9A-F]{6}$/)
+        .first()
+        .evaluate(element => Math.round(element.getBoundingClientRect().width))
+    )
+    .toBe(summaryWidthBefore)
+  await expect(page.getByTestId('composition-artboard')).toHaveAttribute(
+    'style',
+    /rgb\(101, 67, 33\)/
+  )
   await color1.fill('#123456')
   await color1.press('Tab')
   await expect(color1).toHaveValue('#123456')

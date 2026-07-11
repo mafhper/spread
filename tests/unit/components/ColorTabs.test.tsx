@@ -8,12 +8,20 @@ import { createMockCardStore } from '../mocks/useCardStore'
 vi.mock('@/store/cardStore')
 vi.mock('@/hooks/useColorExtractor')
 
+type MockEyeDropperConstructor = new () => {
+  open: () => Promise<{ sRGBHex: string }>
+}
+
 describe('ColorTabs Component', () => {
   const mockStore = createMockCardStore()
   const mockExtractColors = vi.fn()
+  const browserWindow = window as Window & {
+    EyeDropper?: MockEyeDropperConstructor
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    delete browserWindow.EyeDropper
     vi.mocked(useCardStore).mockReturnValue(mockStore)
     vi.mocked(useColorExtractor).mockReturnValue({
       extractColorsFromImage: mockExtractColors,
@@ -26,6 +34,16 @@ describe('ColorTabs Component', () => {
     render(<ColorTabs />)
     expect(screen.getByLabelText('Cor 1')).toHaveValue('#0f172a')
     expect(screen.getByLabelText('Cor 2')).toHaveValue('#c084fc')
+  })
+
+  it('keeps the manual color summary width stable', () => {
+    render(<ColorTabs />)
+
+    expect(screen.getByText('#0F172A → #C084FC')).toHaveClass(
+      'w-[18ch]',
+      'whitespace-nowrap',
+      'font-mono'
+    )
   })
 
   it('handles manual color changes', () => {
@@ -97,6 +115,32 @@ describe('ColorTabs Component', () => {
       'bg1',
       expect.stringMatching(/^#[0-9a-f]{6}$/i)
     )
+  })
+
+  it('commits colors captured from the page eyedropper', async () => {
+    const open = vi.fn().mockResolvedValue({ sRGBHex: '#abcdef' })
+    class MockEyeDropper {
+      open() {
+        return open()
+      }
+    }
+    browserWindow.EyeDropper = MockEyeDropper
+
+    render(<ColorTabs />)
+
+    const eyedropperButton = await screen.findByRole('button', {
+      name: 'Capturar Cor 1 da tela',
+    })
+    fireEvent.click(eyedropperButton)
+
+    await waitFor(() => {
+      expect(open).toHaveBeenCalledTimes(1)
+      expect(mockStore.updateNestedField).toHaveBeenCalledWith(
+        'colors',
+        'bg1',
+        '#abcdef'
+      )
+    })
   })
 
   it('handles gradient angle selection', () => {

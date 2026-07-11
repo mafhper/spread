@@ -8,6 +8,7 @@ export interface ResponsiveSectionDeckItem {
   summary: string
   content: React.ReactNode
   action?: React.ReactNode
+  summaryClassName?: string
   defaultMobile?: boolean
 }
 
@@ -47,6 +48,7 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
             key={section.id}
             title={section.title}
             summary={section.summary}
+            summaryClassName={section.summaryClassName}
             action={section.action}
             defaultMobileOpen={section.defaultMobile}
           >
