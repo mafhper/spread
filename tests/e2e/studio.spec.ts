@@ -302,3 +302,46 @@ test('local link fixtures cover metadata variants and preserve the document on f
   await expect(page.getByText('Não foi possível ler este link.')).toBeVisible()
   await expect(title).toHaveValue(preservedTitle)
 })
+
+test('background color editing after loading a link never opens a native picker', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop')
+  const consoleErrors: string[] = []
+  page.on('console', message => {
+    if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+  await page.route('https://api.microlink.io/**', async route => {
+    await route.fulfill({
+      json: {
+        status: 'success',
+        data: {
+          title: 'Link carregado',
+          description: 'Descrição do link carregado',
+          author: '',
+          image: null,
+          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+        },
+      },
+    })
+  })
+
+  await page.goto('editor/')
+  await page.waitForLoadState('networkidle')
+  await page.getByLabel('URL do link').fill('https://example.com/card')
+  await page.getByRole('button', { name: 'Carregar link' }).click()
+  await expect(page.getByLabel('Título')).toHaveValue('Link carregado')
+
+  await page.getByRole('tab', { name: 'Fundos' }).click()
+  const color1 = page.getByRole('textbox', { name: 'Cor 1', exact: true })
+  await expect(color1).toHaveAttribute('type', 'text')
+  await expect(page.locator('input[type="color"]')).toHaveCount(0)
+  await color1.fill('#123456')
+  await color1.press('Tab')
+  await expect(color1).toHaveValue('#123456')
+  await expect(page.getByTestId('composition-artboard')).toHaveAttribute(
+    'style',
+    /rgb\(18, 52, 86\)/
+  )
+  expect(consoleErrors).toEqual([])
+})
