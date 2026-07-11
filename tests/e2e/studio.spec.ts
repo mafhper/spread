@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
 
 test('landing presents the product and opens the editor', async ({
@@ -188,9 +187,13 @@ test('PNG export uses the visible artboard dimensions without clipping the heade
   const downloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Exportar' }).click()
   const download = await downloadPromise
-  const path = await download.path()
-  expect(path).not.toBeNull()
-  const png = await readFile(path!)
+  const stream = await download.createReadStream()
+  expect(stream).not.toBeNull()
+  const chunks: Buffer[] = []
+  for await (const chunk of stream!) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+  const png = Buffer.concat(chunks)
 
   expect(png.subarray(1, 4).toString('ascii')).toBe('PNG')
   expect(png.readUInt32BE(16)).toBe(expected.width)
