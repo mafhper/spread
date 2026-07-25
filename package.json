@@ -70,7 +70,7 @@
   },
   "resolutions": {
     "@isaacs/brace-expansion": "5.0.1",
-    "shell-quote": "^1.8.4",
+    "shell-quote": "^1.10.0",
     "qs": "^6.15.2",
     "express": "^4.22.2",
     "body-parser": "^1.20.5",
@@ -93,7 +93,7 @@
   },
   "overrides": {
     "@isaacs/brace-expansion": "5.0.1",
-    "shell-quote": "^1.8.4",
+    "shell-quote": "^1.10.0",
     "qs": "^6.15.2",
     "express": "^4.22.2",
     "body-parser": "^1.20.5",
