@@ -10,6 +10,7 @@ import {
   migrateLegacyCardPosition,
   resolveCompositionGeometry,
 } from './geometry'
+import { PAGE_CAPTURE_VIEWPORTS } from '../../types/capture'
 
 const BASE_CARD_WIDTH = 640
 
@@ -95,8 +96,15 @@ export const CompositionArtboard = forwardRef<
   })
   const naturalHeight = Math.max(1, layout.measuredCardHeight || 360)
 
+  const isPageCapture = storeState.mediaSource === 'page'
+  const viewportWidth =
+    isPageCapture && isAutoCanvas
+      ? (PAGE_CAPTURE_VIEWPORTS[storeState.captureViewport]?.width ??
+        BASE_CARD_WIDTH)
+      : 0
+
   const cardWidth = isAutoCanvas
-    ? BASE_CARD_WIDTH
+    ? Math.max(BASE_CARD_WIDTH, viewportWidth)
     : Math.min(Math.max(BASE_CARD_WIDTH, canvasWidth * 0.55), canvasWidth - 80)
 
   const position = migrateLegacyCardPosition(cardPosition, {
