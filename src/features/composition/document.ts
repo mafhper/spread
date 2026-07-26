@@ -1,4 +1,9 @@
 import type { CardState } from '../../store/cardStore'
+import type {
+  LinkMediaSource,
+  PageCaptureArea,
+  PageCaptureViewport,
+} from '../../types/capture'
 import { migrateLegacyCardPosition } from './geometry'
 
 export type TemplateKind = 'default' | 'music' | 'news'
@@ -22,6 +27,11 @@ export interface SpreadDocumentV1 {
     favicon: string | null
     domain: string
     template: TemplateKind
+    mediaSource?: LinkMediaSource
+    capture?: {
+      viewport: PageCaptureViewport
+      area: PageCaptureArea
+    }
   }
   canvas: {
     width: number
@@ -99,6 +109,9 @@ type CardStateSnapshot = Pick<
   | 'favicon'
   | 'domain'
   | 'template'
+  | 'mediaSource'
+  | 'captureViewport'
+  | 'captureArea'
   | 'colors'
   | 'gradientStyle'
   | 'pattern'
@@ -130,6 +143,11 @@ export function documentFromCardState(
       favicon: state.favicon,
       domain: state.domain,
       template: state.template,
+      mediaSource: state.mediaSource,
+      capture: {
+        viewport: state.captureViewport,
+        area: state.captureArea,
+      },
     },
     canvas: {
       width: state.canvasSize.width,
@@ -193,8 +211,12 @@ export function documentFromCardState(
 export function cardStatePatchFromDocument(
   document: SpreadDocumentV1
 ): Partial<CardState> {
+  const { mediaSource, capture, ...content } = document.content
   return {
-    ...document.content,
+    ...content,
+    mediaSource: mediaSource ?? 'metadata',
+    captureViewport: capture?.viewport ?? 'desktop',
+    captureArea: capture?.area ?? 'viewport',
     colors: {
       bg1: document.background.color1,
       bg2: document.background.color2,

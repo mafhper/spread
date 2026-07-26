@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchMetadata } from '@/services/metadata'
+import { buildMicrolinkUrl, fetchMetadata } from '@/services/metadata'
 
 describe('metadata service', () => {
   beforeEach(() => {
@@ -8,6 +8,75 @@ describe('metadata service', () => {
   })
 
   describe('fetchMetadata', () => {
+    it('builds a stable browser capture for the chosen viewport', () => {
+      const requestUrl = new URL(
+        buildMicrolinkUrl('https://example.com/app', {
+          viewport: 'mobile',
+          area: 'viewport',
+        })
+      )
+
+      expect(requestUrl.searchParams.get('url')).toBe('https://example.com/app')
+      expect(requestUrl.searchParams.get('screenshot')).toBe('true')
+      expect(requestUrl.searchParams.get('prerender')).toBe('true')
+      expect(requestUrl.searchParams.get('waitUntil')).toBe('networkidle0')
+      expect(requestUrl.searchParams.get('force')).toBe('true')
+      expect(requestUrl.searchParams.get('viewport.width')).toBe('390')
+      expect(requestUrl.searchParams.get('viewport.height')).toBe('844')
+      expect(requestUrl.searchParams.get('viewport.isMobile')).toBe('true')
+      expect(requestUrl.searchParams.get('viewport.deviceScaleFactor')).toBe(
+        '1'
+      )
+    })
+
+    it('selects semantic main content or the full page capture area', () => {
+      const mainRequest = new URL(
+        buildMicrolinkUrl('https://example.com', {
+          viewport: 'desktop',
+          area: 'main',
+        })
+      )
+      const fullPageRequest = new URL(
+        buildMicrolinkUrl('https://example.com', {
+          viewport: 'tablet',
+          area: 'fullPage',
+        })
+      )
+
+      expect(mainRequest.searchParams.get('screenshot.element')).toBe('main')
+      expect(mainRequest.searchParams.has('screenshot.fullPage')).toBe(false)
+      expect(fullPageRequest.searchParams.get('screenshot.fullPage')).toBe(
+        'true'
+      )
+      expect(fullPageRequest.searchParams.has('screenshot.element')).toBe(false)
+    })
+
+    it('uses the rendered screenshot as the image in page mode', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'success',
+            data: {
+              title: 'Rendered app',
+              description: 'Ready',
+              image: { url: 'https://example.com/social.jpg' },
+              screenshot: { url: 'https://example.com/page.png' },
+            },
+          }),
+      } as Response)
+
+      const result = await fetchMetadata('https://example.com/app', {
+        capture: { viewport: 'desktop', area: 'viewport' },
+      })
+
+      expect(result?.image).toBe('https://example.com/page.png')
+      const requestUrl = new URL(
+        vi.mocked(global.fetch).mock.calls[0][0] as string
+      )
+      expect(requestUrl.searchParams.get('waitUntil')).toBe('networkidle0')
+    })
+
     it('should fetch metadata successfully', async () => {
       const mockResponse = {
         status: 'success',

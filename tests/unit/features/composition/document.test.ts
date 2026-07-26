@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   applyPresetToDocument,
+  cardStatePatchFromDocument,
   createPresetFromDocument,
   documentFromCardState,
 } from '@/features/composition/document'
@@ -13,6 +14,9 @@ describe('Spread document model', () => {
     const state = createMockCardStore({
       url: 'https://example.com/story',
       title: 'Story',
+      mediaSource: 'page',
+      captureViewport: 'mobile',
+      captureArea: 'fullPage',
       cardPosition: { x: 25, y: -10 },
       isSidebarOpen: true,
       isExporting: true,
@@ -22,10 +26,27 @@ describe('Spread document model', () => {
 
     expect(document.schema).toBe('spread-document@1')
     expect(document.content.url).toBe('https://example.com/story')
+    expect(document.content.mediaSource).toBe('page')
+    expect(document.content.capture).toEqual({
+      viewport: 'mobile',
+      area: 'fullPage',
+    })
     expect(document.canvas.cardPosition).toEqual({ x: 160, y: -36 })
     expect(document).not.toHaveProperty('isSidebarOpen')
     expect(document).not.toHaveProperty('isExporting')
     expect(() => JSON.stringify(document)).not.toThrow()
+  })
+
+  it('opens older documents with safe page capture defaults', () => {
+    const document = documentFromCardState(createMockCardStore())
+    delete document.content.mediaSource
+    delete document.content.capture
+
+    expect(cardStatePatchFromDocument(document)).toMatchObject({
+      mediaSource: 'metadata',
+      captureViewport: 'desktop',
+      captureArea: 'viewport',
+    })
   })
 
   it('stores style only in presets and preserves content when applying one', () => {

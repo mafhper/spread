@@ -3,6 +3,11 @@
  * Combines Microlink with YouTube oEmbed for better music metadata
  */
 
+import {
+  PAGE_CAPTURE_VIEWPORTS,
+  type PageCaptureSettings,
+} from '../types/capture'
+
 export interface LinkMetadata {
   title: string
   description: string
@@ -17,6 +22,10 @@ export interface LinkMetadata {
 // JS-heavy pages like YouTube Music. Cap it so the link processing never
 // blocks indefinitely; when it times out we fall back to oEmbed data.
 const MICROLINK_TIMEOUT_MS = 9000
+// Microlink can spend up to ~30s rendering before it starts returning the
+// screenshot payload. Keep a transfer margin so the client does not abort a
+// successful capture at the renderer's own deadline.
+const MICROLINK_PAGE_TIMEOUT_MS = 45000
 const OEMBED_TIMEOUT_MS = 5000
 
 async function fetchWithTimeout(
@@ -26,6 +35,7 @@ async function fetchWithTimeout(
 ): Promise<Response> {
   const controller = new AbortController()
   const abortFromExternal = () => controller.abort(externalSignal?.reason)
+  if (externalSignal?.aborted) abortFromExternal()
   externalSignal?.addEventListener('abort', abortFromExternal, { once: true })
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   try {
@@ -122,18 +132,46 @@ interface MicrolinkMetadata {
   title: string
   description: string
   image: string | null
+  screenshot: string | null
   favicon: string | null
   author: string
+}
+
+export function buildMicrolinkUrl(
+  targetUrl: string,
+  capture?: PageCaptureSettings
+): string {
+  const params = new URLSearchParams({ url: targetUrl })
+  if (!capture) return `https://api.microlink.io?${params.toString()}`
+
+  const viewport = PAGE_CAPTURE_VIEWPORTS[capture.viewport]
+  params.set('screenshot', 'true')
+  params.set('prerender', 'true')
+  params.set('waitUntil', 'networkidle0')
+  params.set('force', 'true')
+  params.set('viewport.width', String(viewport.width))
+  params.set('viewport.height', String(viewport.height))
+  params.set('viewport.deviceScaleFactor', '1')
+  params.set('viewport.isMobile', String(viewport.isMobile))
+
+  if (capture.area === 'main') {
+    params.set('screenshot.element', 'main')
+  } else if (capture.area === 'fullPage') {
+    params.set('screenshot.fullPage', 'true')
+  }
+
+  return `https://api.microlink.io?${params.toString()}`
 }
 
 async function fetchMicrolinkData(
   targetUrl: string,
   fallbackFavicon: string,
+  capture?: PageCaptureSettings,
   signal?: AbortSignal
 ): Promise<MicrolinkMetadata | null> {
   const response = await fetchWithTimeout(
-    `https://api.microlink.io?url=${encodeURIComponent(targetUrl)}`,
-    MICROLINK_TIMEOUT_MS,
+    buildMicrolinkUrl(targetUrl, capture),
+    capture ? MICROLINK_PAGE_TIMEOUT_MS : MICROLINK_TIMEOUT_MS,
     signal
   )
   if ('ok' in response && response.ok === false) return null
@@ -146,6 +184,7 @@ async function fetchMicrolinkData(
     title: data.title || '',
     description: data.description || '',
     image: data.image?.url || null,
+    screenshot: data.screenshot?.url || null,
     favicon: data.logo?.url || fallbackFavicon,
     author: data.author || data.publisher || '',
   }
@@ -153,7 +192,7 @@ async function fetchMicrolinkData(
 
 export async function fetchMetadata(
   url: string,
-  options: { signal?: AbortSignal } = {}
+  options: { signal?: AbortSignal; capture?: PageCaptureSettings } = {}
 ): Promise<LinkMetadata | null> {
   try {
     let targetUrl = url
@@ -172,6 +211,7 @@ export async function fetchMetadata(
     const microlinkRequest = fetchMicrolinkData(
       targetUrl,
       fallbackFavicon,
+      options.capture,
       options.signal
     ).catch(error => {
       if (!isYouTube) throw error
@@ -186,10 +226,13 @@ export async function fetchMetadata(
       microlinkRequest,
     ])
     if (!youtubeData && !microlinkData) return null
+    if (options.capture && !microlinkData?.screenshot) return null
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
-    let image: string | null = microlinkData?.image || null
+    let image: string | null = options.capture
+      ? microlinkData?.screenshot || null
+      : microlinkData?.image || null
     let author = microlinkData?.author || ''
     const favicon: string | null = microlinkData?.favicon || fallbackFavicon
 
@@ -197,7 +240,7 @@ export async function fetchMetadata(
     if (youtubeData) {
       title = youtubeData.title || title
       author = youtubeData.author || author
-      if (youtubeData.thumbnail) {
+      if (youtubeData.thumbnail && !options.capture) {
         image = youtubeData.thumbnail
       }
     }

@@ -23,6 +23,9 @@ const createBaseState = (): CardState => ({
   favicon: null,
   domain: '',
   template: 'default',
+  mediaSource: 'metadata',
+  captureViewport: 'desktop',
+  captureArea: 'viewport',
   isWelcomeState: false,
 
   // Colors
