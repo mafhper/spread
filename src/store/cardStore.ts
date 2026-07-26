@@ -431,7 +431,6 @@ export const useCardStore = create<CardState>()(
             imageOffsetY: DEFAULT_STATE.layout.imageOffsetY,
           },
         })),
-
     }),
     {
       name: 'spread-preferences-v4', // VERSAO ATUALIZADA - Sistema SVG unificado

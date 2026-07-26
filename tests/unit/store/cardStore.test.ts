@@ -1071,8 +1071,6 @@ describe('cardStore', () => {
     })
   })
 
-
-
   describe('complex state interactions', () => {
     it('should handle concurrent section updates', () => {
       const store = useCardStore.getState()
@@ -1216,8 +1214,6 @@ describe('cardStore', () => {
       store.updateField('isExporting', false)
       expect(useCardStore.getState().isExporting).toBe(false)
     })
-
-
 
     it('should handle localStorage getItem for rehydration', () => {
       // Pre-populate localStorage with persisted state
@@ -1560,8 +1556,6 @@ describe('cardStore', () => {
       expect(useCardStore.getState().layout.aspectRatio).toBe('aspect-video')
       expect(useCardStore.getState().layout.padding).toBe(12)
     })
-
-
   })
 
   describe('additional edge cases for complete coverage', () => {
@@ -1686,8 +1680,6 @@ describe('cardStore', () => {
       expect(useCardStore.getState().patternOpacity).toBe(0.123456789)
       expect(useCardStore.getState().layout.opacity).toBe(0.987654321)
     })
-
-
 
     it('should handle complete state transitions', () => {
       const store = useCardStore.getState()
