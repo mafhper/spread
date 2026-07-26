@@ -306,6 +306,65 @@ test('local link fixtures cover metadata variants and preserve the document on f
   await expect(title).toHaveValue(preservedTitle)
 })
 
+test('rendered page capture waits for the page and exposes visual framing controls', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop')
+  let captureRequest: URL | null = null
+
+  await page.route('https://api.microlink.io/**', async route => {
+    captureRequest = new URL(route.request().url())
+    await route.fulfill({
+      json: {
+        status: 'success',
+        data: {
+          title: 'Dynamic page ready',
+          description: 'Content loaded after the app became stable.',
+          image: {
+            url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+          },
+          screenshot: {
+            url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+          },
+          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+        },
+      },
+    })
+  })
+
+  await page.goto('editor/', { waitUntil: 'domcontentloaded' })
+  await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true')
+  await page
+    .locator('#studio-source-url')
+    .fill('https://example.com/dynamic-app')
+  await page.getByRole('button', { name: 'Usar captura da página' }).click()
+  await page.getByRole('button', { name: 'Capturar como Celular' }).click()
+  await page
+    .getByLabel('Área capturada')
+    .selectOption({ label: 'Conteúdo principal' })
+  await page.getByRole('button', { name: 'Carregar link' }).click()
+
+  await expect(page.getByLabel('Título')).toHaveValue('Dynamic page ready')
+  await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
+  expect(captureRequest).not.toBeNull()
+  expect(captureRequest!.searchParams.get('waitUntil')).toBe('networkidle0')
+  expect(captureRequest!.searchParams.get('viewport.width')).toBe('390')
+  expect(captureRequest!.searchParams.get('viewport.height')).toBe('844')
+  expect(captureRequest!.searchParams.get('screenshot.element')).toBe('main')
+
+  await page.getByRole('tab', { name: 'Imagem' }).click()
+  await page.getByRole('button', { name: 'Superior direito' }).click()
+  await expect(
+    page.getByRole('button', { name: 'Superior direito' })
+  ).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('slider', { name: 'Tamanho da imagem' }).fill('1.5')
+  await expect(
+    page.getByTestId('composition-artboard').getByRole('img', {
+      name: 'Preview',
+    })
+  ).toHaveAttribute('style', /scale\(1\.5\)/)
+})
+
 test('background color editing after loading a link uses the in-app picker', async ({
   page,
 }, testInfo) => {
