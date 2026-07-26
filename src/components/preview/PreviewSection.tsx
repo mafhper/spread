@@ -18,6 +18,7 @@ import { useCardStore } from '../../store/cardStore'
 import { CompositionArtboard } from '../../features/composition/CompositionArtboard'
 import { log } from '../../utils/logger'
 import { CANVAS_PRESETS } from '../../utils/canvasPresets'
+import { PAGE_CAPTURE_VIEWPORTS } from '../../types/capture'
 import { WelcomeCard } from './WelcomeCard'
 
 import { useHistory } from '../../hooks/useHistory'
@@ -52,6 +53,8 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       isWelcomeState,
       isSidebarOpen,
       layout,
+      mediaSource,
+      captureViewport,
     } = useCardStore()
     const currentState = useCardStore()
     const { saveToHistory, history, loadFromHistory } = useHistory()
@@ -234,17 +237,26 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
 
         // If Auto Canvas is on, update canvas dimensions
         if (isAutoCanvas) {
+          // For page captures, use viewport width instead of card DOM width
+          const isPage = mediaSource === 'page'
+          const targetWidth = isPage
+            ? (PAGE_CAPTURE_VIEWPORTS[captureViewport]?.width ?? newWidth)
+            : newWidth
+          const targetHeight = isPage
+            ? layout.measuredCardHeight || newHeight
+            : newHeight
+
           if (
-            (Math.abs(canvasSize.width - newWidth) > 1 ||
-              Math.abs(canvasSize.height - newHeight) > 1) &&
-            newWidth > 0 &&
-            newHeight > 0
+            (Math.abs(canvasSize.width - targetWidth) > 1 ||
+              Math.abs(canvasSize.height - targetHeight) > 1) &&
+            targetWidth > 0 &&
+            targetHeight > 0
           ) {
-            updateNestedField('canvasSize', 'width', newWidth)
-            updateNestedField('canvasSize', 'height', newHeight)
+            updateNestedField('canvasSize', 'width', targetWidth)
+            updateNestedField('canvasSize', 'height', targetHeight)
             console.log('[Layout] Auto Canvas dimensions updated:', {
-              newWidth,
-              newHeight,
+              targetWidth,
+              targetHeight,
             })
           }
         }
@@ -263,6 +275,8 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       canvasSize.width,
       canvasSize.height,
       layout.measuredCardHeight,
+      mediaSource,
+      captureViewport,
     ])
 
     // Auto Scale Card Logic (to fit inside canvas if needed) - mantido para compatibilidade com export

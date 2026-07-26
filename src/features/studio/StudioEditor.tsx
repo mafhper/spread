@@ -21,11 +21,7 @@ import { useCardStore } from '../../store/cardStore'
 import { fetchMetadata } from '../../services/metadata'
 import { urlToBase64 } from '../../services/exportUtils'
 import { getPendingUrl, removePendingUrl } from '../../utils/persistence'
-import {
-  CANVAS_PRESETS,
-  detectViewport,
-  VIEWPORT_TO_PRESET,
-} from '../../utils/canvasPresets'
+import { detectViewport } from '../../utils/canvasPresets'
 import type {
   LinkMediaSource,
   PageCaptureArea,
@@ -186,13 +182,9 @@ export const StudioEditor: React.FC = () => {
   ) => {
     if (field === 'mediaSource' && value === 'page') {
       const viewport = detectViewport()
-      const presetName = VIEWPORT_TO_PRESET[viewport]
-      const preset = CANVAS_PRESETS[presetName]
       state.updateField('mediaSource', value)
       state.updateField('captureViewport', viewport)
-      state.updateNestedField('canvasSize', 'width', preset.w)
-      state.updateNestedField('canvasSize', 'height', preset.h)
-      state.updateNestedField('canvasSize', 'preset', presetName)
+      state.updateNestedField('canvasSize', 'preset', 'auto')
       state.updateLayout('aspectRatio', 'aspect-auto')
       state.updateLayout('imageFit', 'contain')
       state.updateNestedField('cardPosition', 'x', 0)
