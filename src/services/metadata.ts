@@ -226,12 +226,13 @@ export async function fetchMetadata(
       microlinkRequest,
     ])
     if (!youtubeData && !microlinkData) return null
-    if (options.capture && !microlinkData?.screenshot) return null
+    if (options.capture && !microlinkData?.screenshot && !microlinkData?.image)
+      return null
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
     let image: string | null = options.capture
-      ? microlinkData?.screenshot || null
+      ? microlinkData?.screenshot || microlinkData?.image || null
       : microlinkData?.image || null
     let author = microlinkData?.author || ''
     const favicon: string | null = microlinkData?.favicon || fallbackFavicon

@@ -1,3 +1,5 @@
+import type { PageCaptureViewport } from '../types/capture'
+
 export interface CanvasPresetValue {
   w: number
   h: number
@@ -14,3 +16,17 @@ export const CANVAS_PRESETS: Record<string, CanvasPresetValue> = {
 }
 
 export type CanvasPresetName = keyof typeof CANVAS_PRESETS
+
+export const VIEWPORT_TO_PRESET: Record<PageCaptureViewport, CanvasPresetName> =
+  {
+    mobile: 'story',
+    tablet: 'post',
+    desktop: 'landscape',
+  }
+
+export const detectViewport = (): PageCaptureViewport => {
+  const width = window.innerWidth
+  if (width < 768) return 'mobile'
+  if (width < 1200) return 'tablet'
+  return 'desktop'
+}
