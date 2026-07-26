@@ -93,23 +93,6 @@ const createBaseState = (): CardState => ({
   // Flags
   isSidebarOpen: false,
 
-  // Frame Mode - Sistema SVG unificado
-  frame: {
-    enabled: false,
-    preset: 'none',
-    primaryColor: '#1a1a1a',
-    secondaryColor: '#d4af37',
-    showText: true,
-    textPosition: 'below',
-    textStyle: {
-      position: 'below',
-      color: '#ffffff',
-      fontSize: 16,
-      showIcon: true,
-    },
-    templateId: 'default',
-  },
-
   // Typography
   fontFamily: 'Inter',
   titleSize: 100,
@@ -136,12 +119,7 @@ const createBaseState = (): CardState => ({
   resetBackground: vi.fn(),
   resetTypography: vi.fn(),
   resetCanvas: vi.fn(),
-  updateFrame: vi.fn(),
-  resetFrame: vi.fn(),
   resetToDefaults: vi.fn(),
-
-  // Frame template action
-  setTemplate: vi.fn(),
 })
 
 /**
@@ -169,9 +147,6 @@ export const createMockCardStore = (
     cardPosition: overrides.cardPosition
       ? { ...baseState.cardPosition, ...overrides.cardPosition }
       : baseState.cardPosition,
-    frame: overrides.frame
-      ? { ...baseState.frame, ...overrides.frame }
-      : baseState.frame,
   }
 
   return mergedState
@@ -232,9 +207,6 @@ useCardStore.setState = vi.fn((partial: Partial<CardState>) => {
     cardPosition: partial.cardPosition
       ? { ...mockState.cardPosition, ...partial.cardPosition }
       : mockState.cardPosition,
-    frame: partial.frame
-      ? { ...mockState.frame, ...partial.frame }
-      : mockState.frame,
   }
 })
 

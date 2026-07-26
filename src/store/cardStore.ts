@@ -5,9 +5,8 @@
  * - Persistencia seletiva (apenas preferencias de design)
  * - Reset adequado para formato "Auto"
  * - Versionamento para invalidar cache antigo
- * - Frame Mode: presets visuais para cards personalizados
  *
- * @version 3.2.0 - Sistema SVG unificado
+ * @version 3.3.0 - Frame mode removed
  */
 
 import { create } from 'zustand'
@@ -18,21 +17,6 @@ import type {
   PageCaptureArea,
   PageCaptureViewport,
 } from '../types/capture'
-// import type { FrameState, TemplateId } from '../types/frame'
-// import { DEFAULT_FRAME_STATE } from '../types/frame'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type FrameState = any
-type TemplateId = string
-
-const DEFAULT_FRAME_STATE = {
-  enabled: false,
-  templateId: 'none',
-  primaryColor: '#6366f1',
-  secondaryColor: '#a855f7',
-  textStyle: 'modern',
-  showText: true,
-} as any // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export interface CardState {
   // Metadata
@@ -117,15 +101,12 @@ export interface CardState {
   subtitleSize: number
   textAlign: 'left' | 'center' | 'right'
 
-  activeTab: 'card' | 'photo' | 'canvas' | 'text' | 'frame'
+  activeTab: 'card' | 'photo' | 'canvas' | 'text'
   isExporting: boolean
   exportScale?: number
   uiScale?: number
   calculateExportScale?: (preset: string) => number
   isHydrated: boolean
-
-  // Frame Mode
-  frame: FrameState
 
   // Actions
   setHydrated: (state: boolean) => void
@@ -146,12 +127,7 @@ export interface CardState {
   resetBackground: () => void
   resetTypography: () => void
   resetCanvas: () => void
-  updateFrame: (field: string, value: unknown) => void
-  resetFrame: () => void
   resetToDefaults: () => void
-
-  // Frame template action
-  setTemplate: (templateId: TemplateId) => void
 }
 
 const DEFAULT_STATE = {
@@ -234,9 +210,6 @@ const DEFAULT_STATE = {
   activeTab: 'canvas' as const,
   isExporting: false,
   isHydrated: false,
-
-  // Frame Mode
-  frame: DEFAULT_FRAME_STATE,
 }
 
 export const useCardStore = create<CardState>()(
@@ -288,14 +261,6 @@ export const useCardStore = create<CardState>()(
         }))
       },
 
-      updateFrame: (field: string, value: unknown) => {
-        console.log(`[Store] Updating frame.${field}:`, value)
-        set(state => ({
-          ...state,
-          frame: { ...state.frame, [field]: value },
-        }))
-      },
-
       /**
        * HIERARQUIA DE TAMANHOS E ESCALAS (Spread Engine)
        * ---
@@ -327,7 +292,6 @@ export const useCardStore = create<CardState>()(
           captureViewport: DEFAULT_STATE.captureViewport,
           captureArea: DEFAULT_STATE.captureArea,
           activeTab: 'canvas',
-          frame: DEFAULT_FRAME_STATE, // Reset frame on new content
         }),
 
       resetToDefaults: () =>
@@ -353,8 +317,6 @@ export const useCardStore = create<CardState>()(
             ...state.canvasSize,
             preset: 'auto',
           },
-          // Reset frame mode
-          frame: DEFAULT_FRAME_STATE,
           // Reset typography scales
           titleSize: 100,
           subtitleSize: 100,
@@ -470,20 +432,6 @@ export const useCardStore = create<CardState>()(
           },
         })),
 
-      resetFrame: () =>
-        set(state => ({
-          ...state,
-          frame: DEFAULT_FRAME_STATE,
-        })),
-
-      // Frame template action
-      setTemplate: (templateId: TemplateId) => {
-        console.log(`[Store] Setting template: ${templateId}`)
-        set(state => ({
-          ...state,
-          frame: { ...state.frame, templateId },
-        }))
-      },
     }),
     {
       name: 'spread-preferences-v4', // VERSAO ATUALIZADA - Sistema SVG unificado
@@ -528,7 +476,6 @@ export const useCardStore = create<CardState>()(
           isWelcomeState,
           activeTab,
           viewport,
-          frame,
           /* eslint-enable @typescript-eslint/no-unused-vars */
           ...sanitizedPersistedState
         } = (persistedState || {}) as Record<string, unknown>
