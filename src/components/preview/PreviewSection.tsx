@@ -17,6 +17,7 @@ import {
 import { useCardStore } from '../../store/cardStore'
 import { CompositionArtboard } from '../../features/composition/CompositionArtboard'
 import { log } from '../../utils/logger'
+import { CANVAS_PRESETS } from '../../utils/canvasPresets'
 import { WelcomeCard } from './WelcomeCard'
 
 import { useHistory } from '../../hooks/useHistory'
@@ -136,14 +137,6 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       canvasSize,
       viewScale,
     })
-
-    const CANVAS_PRESETS: Record<string, { w: number; h: number }> = {
-      'ig-story': { w: 1080, h: 1920 },
-      'ig-post': { w: 1080, h: 1080 },
-      twitter: { w: 1200, h: 676 },
-      linkedin: { w: 1200, h: 627 },
-      auto: { w: 1080, h: 1080 }, // Fallback
-    }
 
     const canvasWidth =
       canvasSize.width > 0

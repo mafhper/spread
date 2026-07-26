@@ -571,7 +571,7 @@ html {
 .studio-topbar {
   display: grid;
   z-index: 70;
-  grid-template-columns: 272px minmax(0, 1fr) 296px;
+  grid-template-columns: 272px minmax(0, 1fr);
   align-items: center;
   border-bottom: 1px solid var(--studio-border);
   background: var(--studio-panel);
@@ -640,7 +640,7 @@ html {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  grid-template-columns: 272px minmax(0, 1fr) 296px;
+  grid-template-columns: 272px minmax(0, 1fr);
 }
 
 .studio-side-panel {
@@ -652,10 +652,6 @@ html {
 
 .studio-library {
   border-right: 1px solid var(--studio-border);
-}
-
-.studio-inspector {
-  border-left: 1px solid var(--studio-border);
 }
 
 .studio-stage {
@@ -1245,7 +1241,7 @@ html {
 @media (max-width: 1100px) {
   .studio-topbar,
   .studio-workspace {
-    grid-template-columns: 248px minmax(0, 1fr) 272px;
+    grid-template-columns: 248px minmax(0, 1fr);
   }
 }
 

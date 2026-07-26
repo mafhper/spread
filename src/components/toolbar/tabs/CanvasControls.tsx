@@ -10,6 +10,7 @@ import {
 import { clsx } from 'clsx'
 import { useCardStore } from '../../../store/cardStore'
 import { ResponsiveSectionDeck } from './ResponsiveSectionDeck'
+import { CANVAS_PRESETS } from '../../../utils/canvasPresets'
 
 interface CanvasPreset {
   name: string
@@ -19,50 +20,24 @@ interface CanvasPreset {
   icon: React.ReactNode
 }
 
-const CANVAS_PRESETS: CanvasPreset[] = [
-  {
-    name: 'auto',
-    label: 'Auto',
-    width: 0,
-    height: 0,
-    icon: <Maximize size={14} />,
-  },
-  {
-    name: 'story',
-    label: 'Story',
-    width: 1080,
-    height: 1920,
-    icon: <Smartphone size={14} />,
-  },
-  {
-    name: 'post',
-    label: 'Post',
-    width: 1080,
-    height: 1350,
-    icon: <ImageIcon size={14} />,
-  },
-  {
-    name: 'square',
-    label: 'Quadrado',
-    width: 1080,
-    height: 1080,
-    icon: <Square size={14} />,
-  },
-  {
-    name: 'landscape',
-    label: 'Paisagem',
-    width: 1920,
-    height: 1080,
-    icon: <Monitor size={14} />,
-  },
-  {
-    name: 'twitter',
-    label: 'Twitter',
-    width: 1200,
-    height: 676,
-    icon: <Monitor size={14} />,
-  },
-]
+const ICONS: Record<string, React.ReactNode> = {
+  auto: <Maximize size={14} />,
+  story: <Smartphone size={14} />,
+  post: <ImageIcon size={14} />,
+  square: <Square size={14} />,
+  landscape: <Monitor size={14} />,
+  twitter: <Monitor size={14} />,
+}
+
+const CANVAS_PRESET_LIST: CanvasPreset[] = Object.entries(CANVAS_PRESETS).map(
+  ([key, value]) => ({
+    name: key,
+    label: value.label,
+    width: value.w,
+    height: value.h,
+    icon: ICONS[key] ?? <Maximize size={14} />,
+  })
+)
 
 // Inspector › Canvas: cuida apenas do formato/dimensão e da posição do card.
 // Cores, gradiente e textura do fundo vivem no painel Fundos (ColorTabs /
@@ -87,8 +62,8 @@ export const CanvasControls: React.FC = () => {
   }
 
   const activePreset =
-    CANVAS_PRESETS.find(preset => preset.name === canvasSize.preset) ??
-    CANVAS_PRESETS[0]
+    CANVAS_PRESET_LIST.find(preset => preset.name === canvasSize.preset) ??
+    CANVAS_PRESET_LIST[0]
   const activePresetDimensions =
     activePreset.width > 0 && activePreset.height > 0
       ? `${activePreset.width}x${activePreset.height}`
@@ -119,7 +94,7 @@ export const CanvasControls: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                {CANVAS_PRESETS.map(preset => (
+                {CANVAS_PRESET_LIST.map(preset => (
                   <button
                     key={preset.name}
                     onClick={() => handlePresetSelect(preset)}
