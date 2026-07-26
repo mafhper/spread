@@ -13,6 +13,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { resolvePublicAsset } from '../utils/resolvePublicAsset'
+import type {
+  LinkMediaSource,
+  PageCaptureArea,
+  PageCaptureViewport,
+} from '../types/capture'
 // import type { FrameState, TemplateId } from '../types/frame'
 // import { DEFAULT_FRAME_STATE } from '../types/frame'
 
@@ -39,6 +44,9 @@ export interface CardState {
   favicon: string | null
   domain: string
   template: 'default' | 'music' | 'news'
+  mediaSource: LinkMediaSource
+  captureViewport: PageCaptureViewport
+  captureArea: PageCaptureArea
   isWelcomeState: boolean
 
   // Customization - Colors
@@ -156,6 +164,9 @@ const DEFAULT_STATE = {
   favicon: resolvePublicAsset('logo.svg'),
   domain: 'spread.app',
   template: 'default' as const,
+  mediaSource: 'metadata' as const,
+  captureViewport: 'desktop' as const,
+  captureArea: 'viewport' as const,
   isWelcomeState: true,
 
   colors: {
@@ -312,6 +323,9 @@ export const useCardStore = create<CardState>()(
           domain: DEFAULT_STATE.domain,
           isWelcomeState: true,
           template: 'default',
+          mediaSource: DEFAULT_STATE.mediaSource,
+          captureViewport: DEFAULT_STATE.captureViewport,
+          captureArea: DEFAULT_STATE.captureArea,
           activeTab: 'canvas',
           frame: DEFAULT_FRAME_STATE, // Reset frame on new content
         }),
@@ -376,6 +390,9 @@ export const useCardStore = create<CardState>()(
           image: state.image,
           favicon: state.favicon,
           domain: state.domain,
+          mediaSource: state.mediaSource,
+          captureViewport: state.captureViewport,
+          captureArea: state.captureArea,
         })),
 
       resetCanvas: () =>
@@ -505,6 +522,9 @@ export const useCardStore = create<CardState>()(
           favicon,
           domain,
           template,
+          mediaSource,
+          captureViewport,
+          captureArea,
           isWelcomeState,
           activeTab,
           viewport,

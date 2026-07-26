@@ -22,6 +22,11 @@ import { useCardStore } from '../../store/cardStore'
 import { fetchMetadata } from '../../services/metadata'
 import { urlToBase64 } from '../../services/exportUtils'
 import { getPendingUrl, removePendingUrl } from '../../utils/persistence'
+import type {
+  LinkMediaSource,
+  PageCaptureArea,
+  PageCaptureViewport,
+} from '../../types/capture'
 import {
   cardStatePatchFromDocument,
   documentFromCardState,
@@ -40,7 +45,7 @@ const PreviewSection = lazy(() =>
 const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
 
 type MobilePanel = 'library' | 'inspector' | null
-type LoadState = 'idle' | 'metadata' | 'assets' | 'ready' | 'error'
+type LoadState = 'idle' | 'metadata' | 'page' | 'assets' | 'ready' | 'error'
 type ExportState = 'idle' | 'running' | 'success' | 'error'
 
 export const StudioEditor: React.FC = () => {
@@ -112,13 +117,27 @@ export const StudioEditor: React.FC = () => {
       const controller = new AbortController()
       abortRef.current = controller
       setErrorMessage('')
-      setLoadState('metadata')
+      const currentState = useCardStore.getState()
+      const isPageCapture = currentState.mediaSource === 'page'
+      setLoadState(isPageCapture ? 'page' : 'metadata')
 
       try {
         const metadata = await fetchMetadata(sourceUrl, {
           signal: controller.signal,
+          capture: isPageCapture
+            ? {
+                viewport: currentState.captureViewport,
+                area: currentState.captureArea,
+              }
+            : undefined,
         })
-        if (!metadata) throw new Error('Não foi possível ler este link.')
+        if (!metadata) {
+          throw new Error(
+            isPageCapture
+              ? 'A página não concluiu a captura. Tente outra área ou dispositivo.'
+              : 'Não foi possível ler este link.'
+          )
+        }
         if (controller.signal.aborted) return
 
         setLoadState('assets')
@@ -132,7 +151,7 @@ export const StudioEditor: React.FC = () => {
         ])
         if (controller.signal.aborted) return
 
-        state.setFullState({
+        currentState.setFullState({
           url: sourceUrl,
           title: metadata.title || metadata.domain,
           description: metadata.description,
@@ -155,8 +174,17 @@ export const StudioEditor: React.FC = () => {
         setLoadState('error')
       }
     },
-    [inputUrl, state]
+    [inputUrl]
   )
+
+  const updateCaptureSetting = (
+    field: 'mediaSource' | 'captureViewport' | 'captureArea',
+    value: LinkMediaSource | PageCaptureViewport | PageCaptureArea
+  ) => {
+    state.updateField(field, value)
+    setLoadState('idle')
+    setErrorMessage('')
+  }
 
   useEffect(() => {
     if (!isReady || !initialUrlRef.current) return
@@ -269,7 +297,12 @@ export const StudioEditor: React.FC = () => {
   )
 
   return (
-    <main className="studio-shell" data-history-version={historyVersion}>
+    <main
+      className="studio-shell"
+      data-history-version={historyVersion}
+      data-ready={isReady}
+      aria-busy={!isReady}
+    >
       <header className="studio-topbar">
         <a
           className="studio-brand"
@@ -333,8 +366,13 @@ export const StudioEditor: React.FC = () => {
               inputUrl={inputUrl}
               setInputUrl={setInputUrl}
               onLoad={() => void handleLoad()}
+              isReady={isReady}
               loadState={loadState}
               errorMessage={errorMessage}
+              mediaSource={state.mediaSource}
+              captureViewport={state.captureViewport}
+              captureArea={state.captureArea}
+              onCaptureSettingChange={updateCaptureSetting}
             />
           </aside>
         )}

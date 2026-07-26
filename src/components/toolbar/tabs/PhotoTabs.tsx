@@ -1,78 +1,94 @@
 import * as React from 'react'
 import { RotateCcw } from 'lucide-react'
+
 import { useCardStore } from '../../../store/cardStore'
 
+const focusPositions = [
+  { value: 'object-left-top', label: 'Superior esquerdo' },
+  { value: 'object-top', label: 'Superior central' },
+  { value: 'object-right-top', label: 'Superior direito' },
+  { value: 'object-left', label: 'Centro esquerdo' },
+  { value: 'object-center', label: 'Centro' },
+  { value: 'object-right', label: 'Centro direito' },
+  { value: 'object-left-bottom', label: 'Inferior esquerdo' },
+  { value: 'object-bottom', label: 'Inferior central' },
+  { value: 'object-right-bottom', label: 'Inferior direito' },
+] as const
+
 export const PhotoTabs: React.FC = () => {
-  const { layout, updateNestedField, resetPhoto } = useCardStore()
-  const updateLayout = (field: string, val: unknown): void =>
-    updateNestedField('layout', field, val)
+  const { layout, updateNestedField, setFullState, resetPhoto } = useCardStore()
+  const updateLayout = (field: string, value: unknown): void =>
+    updateNestedField('layout', field, value)
+
+  const setFocus = (imagePosition: string) => {
+    setFullState({
+      layout: {
+        ...layout,
+        imagePosition,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+      },
+    })
+  }
 
   return (
-    <div className="space-y-6 pt-2">
-      <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">
-        Foto do Link
-      </h4>
-
-      {/* Image Aspect Ratio */}
-      <div>
-        <label
-          htmlFor="photo-aspect-select"
-          className="block text-xs font-medium mb-1.5 text-[var(--text-muted)]"
-        >
-          Formato da Área da Foto
-        </label>
-        <select
-          id="photo-aspect-select"
-          value={layout.aspectRatio}
-          onChange={e => updateLayout('aspectRatio', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/30 transition-colors"
-        >
-          <option value="aspect-video" className="bg-[#0f0f0f]">
-            16:9 (Padrão)
-          </option>
-          <option value="aspect-square" className="bg-[#0f0f0f]">
-            1:1 (Quadrado)
-          </option>
-          <option value="aspect-[4/3]" className="bg-[#0f0f0f]">
-            4:3 (Clássico)
-          </option>
-          <option value="aspect-[9/16]" className="bg-[#0f0f0f]">
-            9:16 (Stories)
-          </option>
-          <option value="aspect-[4/5]" className="bg-[#0f0f0f]">
-            4:5 (Portrait)
-          </option>
-          <option value="aspect-auto" className="bg-[#0f0f0f]">
-            Original (Sem Cortar)
-          </option>
-        </select>
-        <p className="text-[10px] text-white/30 mt-2 ml-1">
-          Original preserva a altura da imagem.
-        </p>
+    <div className="photo-controls">
+      <div className="panel-section-heading">
+        <div>
+          <h3>Enquadramento</h3>
+          <p>Redimensione a imagem e escolha o ponto que deve receber foco.</p>
+        </div>
       </div>
 
-      {/* Image Scale */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label
-            htmlFor="photo-zoom-slider"
-            className="text-xs font-medium text-[var(--text-muted)]"
+      <label className="studio-field">
+        <span>Formato da área</span>
+        <select
+          value={layout.aspectRatio}
+          onChange={event => updateLayout('aspectRatio', event.target.value)}
+        >
+          <option value="aspect-video">16:9 · Paisagem</option>
+          <option value="aspect-square">1:1 · Quadrado</option>
+          <option value="aspect-[4/3]">4:3 · Clássico</option>
+          <option value="aspect-[9/16]">9:16 · Story</option>
+          <option value="aspect-[4/5]">4:5 · Retrato</option>
+          <option value="aspect-auto">Original · Sem recorte</option>
+        </select>
+      </label>
+
+      <fieldset className="photo-option-group">
+        <legend>Ajuste à área</legend>
+        <div className="photo-fit-grid" role="group" aria-label="Ajuste à área">
+          <button
+            type="button"
+            aria-pressed={layout.imageFit === 'cover'}
+            onClick={() => updateLayout('imageFit', 'cover')}
           >
-            Zoom da Foto
-          </label>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-white font-mono">
-              {Math.round(layout.imageScale * 100)}%
-            </span>
-            <button
-              onClick={() => updateLayout('imageScale', 1)}
-              className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              title="Resetar Zoom"
-              aria-label="Resetar zoom da foto"
-            >
-              <RotateCcw size={12} />
-            </button>
-          </div>
+            Preencher
+            <small>Pode recortar as bordas</small>
+          </button>
+          <button
+            type="button"
+            aria-pressed={layout.imageFit === 'contain'}
+            onClick={() => updateLayout('imageFit', 'contain')}
+          >
+            Mostrar inteira
+            <small>Preserva toda a imagem</small>
+          </button>
+        </div>
+      </fieldset>
+
+      <div className="photo-slider-control">
+        <div className="photo-control-heading">
+          <label htmlFor="photo-zoom-slider">Tamanho da imagem</label>
+          <span>{Math.round(layout.imageScale * 100)}%</span>
+          <button
+            type="button"
+            onClick={() => updateLayout('imageScale', 1)}
+            aria-label="Restaurar tamanho da imagem"
+            title="Restaurar tamanho"
+          >
+            <RotateCcw size={13} />
+          </button>
         </div>
         <input
           id="photo-zoom-slider"
@@ -81,34 +97,42 @@ export const PhotoTabs: React.FC = () => {
           max="2.5"
           step="0.05"
           value={layout.imageScale}
-          onChange={e => updateLayout('imageScale', parseFloat(e.target.value))}
-          className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+          onChange={event =>
+            updateLayout('imageScale', Number(event.target.value))
+          }
         />
       </div>
 
-      {/* Image Position */}
-      <div className="grid grid-cols-2 gap-4 pt-2">
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              htmlFor="photo-offset-x"
-              className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wider"
+      <fieldset className="photo-option-group">
+        <legend>Ponto de foco</legend>
+        <div
+          className="image-focus-grid"
+          role="group"
+          aria-label="Ponto de foco da imagem"
+        >
+          {focusPositions.map(position => (
+            <button
+              key={position.value}
+              type="button"
+              aria-label={position.label}
+              aria-pressed={layout.imagePosition === position.value}
+              title={position.label}
+              onClick={() => setFocus(position.value)}
             >
-              Ajuste X
-            </label>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-white font-mono">
-                {layout.imageOffsetX}px
-              </span>
-              <button
-                onClick={() => updateLayout('imageOffsetX', 0)}
-                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Resetar X"
-                aria-label="Resetar ajuste X da foto"
-              >
-                <RotateCcw size={12} />
-              </button>
-            </div>
+              <span aria-hidden="true" />
+            </button>
+          ))}
+        </div>
+        <p className="photo-help">
+          Escolha onde manter o assunto principal quando houver recorte.
+        </p>
+      </fieldset>
+
+      <div className="photo-offset-grid">
+        <div className="photo-slider-control">
+          <div className="photo-control-heading">
+            <label htmlFor="photo-offset-x">Mover na horizontal</label>
+            <span>{layout.imageOffsetX}px</span>
           </div>
           <input
             id="photo-offset-x"
@@ -117,33 +141,15 @@ export const PhotoTabs: React.FC = () => {
             max="400"
             step="1"
             value={layout.imageOffsetX}
-            onChange={e =>
-              updateLayout('imageOffsetX', parseInt(e.target.value))
+            onChange={event =>
+              updateLayout('imageOffsetX', Number(event.target.value))
             }
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
           />
         </div>
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label
-              htmlFor="photo-offset-y"
-              className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-wider"
-            >
-              Ajuste Y
-            </label>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-white font-mono">
-                {layout.imageOffsetY}px
-              </span>
-              <button
-                onClick={() => updateLayout('imageOffsetY', 0)}
-                className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                title="Resetar Y"
-                aria-label="Resetar ajuste Y da foto"
-              >
-                <RotateCcw size={12} />
-              </button>
-            </div>
+        <div className="photo-slider-control">
+          <div className="photo-control-heading">
+            <label htmlFor="photo-offset-y">Mover na vertical</label>
+            <span>{layout.imageOffsetY}px</span>
           </div>
           <input
             id="photo-offset-y"
@@ -152,26 +158,17 @@ export const PhotoTabs: React.FC = () => {
             max="400"
             step="1"
             value={layout.imageOffsetY}
-            onChange={e =>
-              updateLayout('imageOffsetY', parseInt(e.target.value))
+            onChange={event =>
+              updateLayout('imageOffsetY', Number(event.target.value))
             }
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
           />
         </div>
       </div>
-      {/* Reset Section */}
-      <div className="pt-6 border-t border-white/5">
-        <button
-          onClick={resetPhoto}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/30 rounded-xl text-xs font-semibold text-white/50 hover:text-red-400 transition-all group"
-        >
-          <RotateCcw
-            size={14}
-            className="group-hover:rotate-[-45deg] transition-transform"
-          />
-          Resetar Ajustes de Foto
-        </button>
-      </div>
+
+      <button type="button" className="photo-reset-button" onClick={resetPhoto}>
+        <RotateCcw size={14} aria-hidden="true" />
+        Restaurar enquadramento
+      </button>
     </div>
   )
 }

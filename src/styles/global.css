@@ -812,6 +812,146 @@ html {
   font-size: 12px;
 }
 
+.load-status[data-state='ready'] {
+  color: var(--studio-lime);
+}
+
+.load-status[data-state='error'] {
+  color: var(--color-red-400);
+}
+
+.capture-source-section,
+.capture-options {
+  display: grid;
+  gap: 12px;
+}
+
+.capture-source-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.capture-source-grid button {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  min-height: 64px;
+  border: 1px solid var(--studio-border);
+  border-radius: 10px;
+  background: var(--studio-surface);
+  color: var(--studio-muted);
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.capture-source-grid button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--studio-lime) 62%, transparent);
+  background: color-mix(in srgb, var(--studio-lime) 8%, var(--studio-surface));
+  color: var(--studio-text);
+}
+
+.capture-source-grid button > span {
+  display: grid;
+  gap: 3px;
+}
+
+.capture-source-grid strong {
+  font-size: 12px;
+}
+
+.capture-source-grid small,
+.capture-device-grid small,
+.capture-area-field small {
+  color: var(--studio-subdued);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.capture-options {
+  border: 1px solid var(--studio-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--studio-surface) 72%, transparent);
+  padding: 10px;
+}
+
+.capture-options fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.capture-options legend {
+  margin-bottom: 7px;
+  color: var(--studio-muted);
+  font-size: 12px;
+}
+
+.capture-device-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.capture-device-grid button {
+  display: grid;
+  min-height: 62px;
+  place-items: center;
+  gap: 3px;
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  background: var(--studio-panel);
+  color: var(--studio-muted);
+  padding: 7px 4px;
+  cursor: pointer;
+}
+
+.capture-device-grid button[aria-pressed='true'] {
+  border-color: var(--studio-border-strong);
+  background: var(--studio-control);
+  color: var(--studio-lime);
+}
+
+.capture-device-grid button > span {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.capture-source-grid button:disabled,
+.capture-device-grid button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.studio-field select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--studio-border);
+  border-radius: 9px;
+  outline: 0;
+  background: var(--studio-panel);
+  color: var(--studio-text);
+  padding: 0 10px;
+}
+
+.studio-field select:focus {
+  border-color: var(--studio-border-strong);
+}
+
+.capture-loading-note {
+  margin: 0;
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  background: var(--studio-panel);
+  color: var(--studio-subdued);
+  padding: 9px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .studio-field {
   display: grid;
   gap: 7px;
@@ -917,6 +1057,162 @@ html {
   cursor: pointer;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.photo-controls {
+  display: grid;
+  gap: 18px;
+}
+
+.photo-option-group {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.photo-option-group legend {
+  margin-bottom: 8px;
+  color: var(--studio-muted);
+  font-size: 12px;
+}
+
+.photo-fit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.photo-fit-grid button {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  border: 1px solid var(--studio-border);
+  border-radius: 9px;
+  background: var(--studio-surface);
+  color: var(--studio-muted);
+  padding: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.photo-fit-grid button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--studio-lime) 62%, transparent);
+  background: color-mix(in srgb, var(--studio-lime) 8%, var(--studio-surface));
+  color: var(--studio-text);
+}
+
+.photo-fit-grid small,
+.photo-help {
+  color: var(--studio-subdued);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.photo-slider-control {
+  display: grid;
+  gap: 8px;
+}
+
+.photo-control-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--studio-muted);
+  font-size: 12px;
+}
+
+.photo-control-heading > span {
+  color: var(--studio-text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+}
+
+.photo-control-heading button {
+  display: grid;
+  min-width: 30px;
+  min-height: 30px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--studio-subdued);
+  cursor: pointer;
+}
+
+.photo-control-heading button:hover {
+  border-color: var(--studio-border);
+  background: var(--studio-control);
+  color: var(--studio-text);
+}
+
+.photo-slider-control input[type='range'] {
+  width: 100%;
+  accent-color: var(--studio-lime);
+}
+
+.image-focus-grid {
+  display: grid;
+  width: min(100%, 150px);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.image-focus-grid button {
+  display: grid;
+  aspect-ratio: 1;
+  min-height: 38px;
+  place-items: center;
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  background: var(--studio-surface);
+  cursor: pointer;
+}
+
+.image-focus-grid button > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--studio-subdued);
+}
+
+.image-focus-grid button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--studio-lime) 62%, transparent);
+  background: color-mix(in srgb, var(--studio-lime) 8%, var(--studio-surface));
+}
+
+.image-focus-grid button[aria-pressed='true'] > span {
+  background: var(--studio-lime);
+}
+
+.photo-help {
+  margin: 8px 0 0;
+}
+
+.photo-offset-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.photo-reset-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--studio-border);
+  border-radius: 9px;
+  background: var(--studio-surface);
+  color: var(--studio-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.photo-reset-button:hover {
+  border-color: var(--studio-border-strong);
+  color: var(--studio-text);
 }
 
 .legacy-controls {
