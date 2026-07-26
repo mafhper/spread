@@ -104,14 +104,6 @@ describe('cardStore', () => {
       activeTab: 'canvas',
       isExporting: false,
       isHydrated: false,
-      frame: {
-        enabled: false,
-        templateId: 'none',
-        primaryColor: '#6366f1',
-        secondaryColor: '#a855f7',
-        textStyle: 'modern',
-        showText: true,
-      },
       exportScale: undefined,
       uiScale: undefined,
     })
@@ -205,19 +197,6 @@ describe('cardStore', () => {
 
       useCardStore.getState().updateNestedField('cardPosition', 'y', 200)
       expect(useCardStore.getState().cardPosition.y).toBe(200)
-    })
-
-    it('should update nested fields in frame', () => {
-      useCardStore.getState().updateNestedField('frame', 'enabled', true)
-      expect(useCardStore.getState().frame.enabled).toBe(true)
-
-      useCardStore.getState().updateNestedField('frame', 'templateId', 'modern')
-      expect(useCardStore.getState().frame.templateId).toBe('modern')
-
-      useCardStore
-        .getState()
-        .updateNestedField('frame', 'primaryColor', '#ff0000')
-      expect(useCardStore.getState().frame.primaryColor).toBe('#ff0000')
     })
 
     it('should not update if value is the same', () => {
@@ -521,61 +500,6 @@ describe('cardStore', () => {
     // Should reset design
     expect(state.colors.bg1).toBe('#0f172a')
     expect(state.layout.padding).toBe(6)
-  })
-
-  describe('frame management', () => {
-    it('should update frame via updateFrame', () => {
-      const spy = vi.spyOn(console, 'log')
-      useCardStore.getState().updateFrame('enabled', true)
-      expect(useCardStore.getState().frame.enabled).toBe(true)
-      expect(spy).toHaveBeenCalledWith('[Store] Updating frame.enabled:', true)
-      spy.mockRestore()
-    })
-
-    it('should update frame primary color', () => {
-      useCardStore.getState().updateFrame('primaryColor', '#ff0000')
-      expect(useCardStore.getState().frame.primaryColor).toBe('#ff0000')
-    })
-
-    it('should update frame secondary color', () => {
-      useCardStore.getState().updateFrame('secondaryColor', '#00ff00')
-      expect(useCardStore.getState().frame.secondaryColor).toBe('#00ff00')
-    })
-
-    it('should update frame textStyle', () => {
-      useCardStore.getState().updateFrame('textStyle', 'classic')
-      expect(useCardStore.getState().frame.textStyle).toBe('classic')
-    })
-
-    it('should update frame showText', () => {
-      useCardStore.getState().updateFrame('showText', false)
-      expect(useCardStore.getState().frame.showText).toBe(false)
-    })
-
-    it('should reset frame to default state', () => {
-      useCardStore.setState({
-        frame: {
-          ...useCardStore.getState().frame,
-          enabled: true,
-          templateId: 'custom',
-          primaryColor: '#ff0000',
-        },
-      })
-      useCardStore.getState().resetFrame()
-      expect(useCardStore.getState().frame.templateId).toBe('none')
-      expect(useCardStore.getState().frame.enabled).toBe(false)
-      expect(useCardStore.getState().frame.primaryColor).toBe('#6366f1')
-    })
-
-    it('should set template via setTemplate', () => {
-      const spy = vi.spyOn(console, 'log')
-      useCardStore.getState().setTemplate('modern-template')
-      expect(useCardStore.getState().frame.templateId).toBe('modern-template')
-      expect(spy).toHaveBeenCalledWith(
-        '[Store] Setting template: modern-template'
-      )
-      spy.mockRestore()
-    })
   })
 
   describe('UI state management', () => {
@@ -1147,74 +1071,6 @@ describe('cardStore', () => {
     })
   })
 
-  describe('frame edge cases', () => {
-    it('should handle frame updates when frame is initially undefined-like', () => {
-      // Frame should always have default structure
-      const state = useCardStore.getState()
-      expect(state.frame).toBeDefined()
-      expect(state.frame.templateId).toBe('none')
-      expect(state.frame.enabled).toBe(false)
-    })
-
-    it('should handle multiple frame field updates', () => {
-      const store = useCardStore.getState()
-
-      store.updateFrame('enabled', true)
-      store.updateFrame('primaryColor', '#111111')
-      store.updateFrame('secondaryColor', '#222222')
-      store.updateFrame('textStyle', 'vintage')
-      store.updateFrame('showText', false)
-
-      const state = useCardStore.getState()
-      expect(state.frame.enabled).toBe(true)
-      expect(state.frame.primaryColor).toBe('#111111')
-      expect(state.frame.secondaryColor).toBe('#222222')
-      expect(state.frame.textStyle).toBe('vintage')
-      expect(state.frame.showText).toBe(false)
-    })
-
-    it('should reset frame independently of other resets', () => {
-      const store = useCardStore.getState()
-
-      store.updateFrame('enabled', true)
-      store.updateFrame('primaryColor', '#custom')
-      store.updateField('title', 'Custom Title')
-
-      store.resetFrame()
-
-      const state = useCardStore.getState()
-      expect(state.frame.enabled).toBe(false)
-      expect(state.frame.primaryColor).toBe('#6366f1')
-      expect(state.title).toBe('Custom Title') // Preserved
-    })
-
-    it('should handle setTemplate with various template IDs', () => {
-      const store = useCardStore.getState()
-
-      const templates = ['modern', 'vintage', 'minimal', 'colorful', 'dark']
-      templates.forEach(templateId => {
-        store.setTemplate(templateId)
-        expect(useCardStore.getState().frame.templateId).toBe(templateId)
-      })
-    })
-
-    it('should preserve frame style properties on template change', () => {
-      const store = useCardStore.getState()
-
-      // Set custom style properties
-      store.updateFrame('primaryColor', '#custom1')
-      store.updateFrame('secondaryColor', '#custom2')
-
-      // Change template
-      store.setTemplate('new-template')
-
-      const state = useCardStore.getState()
-      expect(state.frame.templateId).toBe('new-template')
-      expect(state.frame.primaryColor).toBe('#custom1') // Preserved
-      expect(state.frame.secondaryColor).toBe('#custom2') // Preserved
-    })
-  })
-
   describe('complex state interactions', () => {
     it('should handle concurrent section updates', () => {
       const store = useCardStore.getState()
@@ -1357,28 +1213,6 @@ describe('cardStore', () => {
       // Toggle back
       store.updateField('isExporting', false)
       expect(useCardStore.getState().isExporting).toBe(false)
-    })
-
-    it('should persist frame style properties but not enabled/templateId', () => {
-      const store = useCardStore.getState()
-
-      // Update frame properties
-      store.updateFrame('enabled', true)
-      store.updateFrame('templateId', 'custom-template')
-      store.updateFrame('primaryColor', '#persisted-primary')
-      store.updateFrame('secondaryColor', '#persisted-secondary')
-      store.updateFrame('textStyle', 'vintage')
-
-      // Verify frame updates were applied
-      expect(useCardStore.getState().frame.enabled).toBe(true)
-      expect(useCardStore.getState().frame.templateId).toBe('custom-template')
-      expect(useCardStore.getState().frame.primaryColor).toBe(
-        '#persisted-primary'
-      )
-      expect(useCardStore.getState().frame.secondaryColor).toBe(
-        '#persisted-secondary'
-      )
-      expect(useCardStore.getState().frame.textStyle).toBe('vintage')
     })
 
     it('should handle localStorage getItem for rehydration', () => {
@@ -1722,25 +1556,6 @@ describe('cardStore', () => {
       expect(useCardStore.getState().layout.aspectRatio).toBe('aspect-video')
       expect(useCardStore.getState().layout.padding).toBe(12)
     })
-
-    it('should persist frame style properties correctly', () => {
-      const store = useCardStore.getState()
-
-      // These should be persisted
-      store.updateFrame('primaryColor', '#persist-primary')
-      store.updateFrame('secondaryColor', '#persist-secondary')
-      store.updateFrame('textStyle', 'classic')
-
-      // These should NOT be persisted (but we just verify they can be set)
-      store.updateFrame('enabled', true)
-      store.updateFrame('templateId', 'test-template')
-
-      // Verify frame updates were applied
-      expect(useCardStore.getState().frame.primaryColor).toBe(
-        '#persist-primary'
-      )
-      expect(useCardStore.getState().frame.enabled).toBe(true)
-    })
   })
 
   describe('additional edge cases for complete coverage', () => {
@@ -1866,47 +1681,6 @@ describe('cardStore', () => {
       expect(useCardStore.getState().layout.opacity).toBe(0.987654321)
     })
 
-    it('should handle frame with various template IDs', () => {
-      const store = useCardStore.getState()
-
-      const templates = [
-        'none',
-        'modern',
-        'vintage',
-        'minimal',
-        'elegant',
-        'neon',
-        'polaroid',
-        'cassette',
-        'vinyl',
-        'cd-jewel',
-        'cd-digipak',
-      ]
-
-      templates.forEach(templateId => {
-        store.setTemplate(templateId)
-        expect(useCardStore.getState().frame.templateId).toBe(templateId)
-      })
-    })
-
-    it('should handle frame text styles', () => {
-      const store = useCardStore.getState()
-
-      const styles = [
-        'modern',
-        'classic',
-        'vintage',
-        'minimal',
-        'bold',
-        'elegant',
-      ]
-
-      styles.forEach(style => {
-        store.updateFrame('textStyle', style)
-        expect(useCardStore.getState().frame.textStyle).toBe(style)
-      })
-    })
-
     it('should handle complete state transitions', () => {
       const store = useCardStore.getState()
 
@@ -1933,19 +1707,12 @@ describe('cardStore', () => {
       store.updateField('titleSize', 120)
       store.updateField('textAlign', 'center')
 
-      // 5. User enables frame
-      store.updateFrame('enabled', true)
-      store.setTemplate('modern')
-      store.updateFrame('primaryColor', '#e94560')
-
       // Verify final state
       const state = useCardStore.getState()
       expect(state.url).toBe('https://example.com/article')
       expect(state.colors.bg1).toBe('#1a1a2e')
       expect(state.layout.padding).toBe(24)
       expect(state.fontFamily).toBe('Georgia')
-      expect(state.frame.enabled).toBe(true)
-      expect(state.frame.templateId).toBe('modern')
     })
 
     it('should handle resetToDefaults with various initial states', () => {
@@ -2005,7 +1772,6 @@ describe('cardStore', () => {
       store.resetCard()
       store.resetPhoto()
       store.resetCanvas()
-      store.resetFrame()
       store.resetToDefaults()
       store.resetContent()
 

@@ -28,11 +28,6 @@ describe('PreviewCard component', () => {
     mockStore.isWelcomeState = false
     mockStore.title = 'Frame Title'
     mockStore.description = 'Canonical description'
-    mockStore.frame = {
-      ...mockStore.frame,
-      enabled: true,
-      showText: true,
-    }
 
     vi.mocked(useCardStore).mockReturnValue(mockStore)
 
