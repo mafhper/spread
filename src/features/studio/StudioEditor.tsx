@@ -12,7 +12,6 @@ import {
   FilePlus2,
   Loader2,
   PanelLeft,
-  PanelRight,
   Redo2,
   Undo2,
   X,
@@ -32,7 +31,6 @@ import {
   documentFromCardState,
   type SpreadDocumentV1,
 } from '../composition/document'
-import { InspectorPanel } from './InspectorPanel'
 import { LibraryPanel } from './LibraryPanel'
 import { studioRepository } from './repository'
 
@@ -44,7 +42,7 @@ const PreviewSection = lazy(() =>
 
 const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
 
-type MobilePanel = 'library' | 'inspector' | null
+type MobilePanel = 'library' | null
 type LoadState = 'idle' | 'metadata' | 'page' | 'assets' | 'ready' | 'error'
 type ExportState = 'idle' | 'running' | 'success' | 'error'
 
@@ -184,6 +182,10 @@ export const StudioEditor: React.FC = () => {
     state.updateField(field, value)
     setLoadState('idle')
     setErrorMessage('')
+    const currentUrl = useCardStore.getState().url
+    if (currentUrl && isReady) {
+      void handleLoad(currentUrl)
+    }
   }
 
   useEffect(() => {
@@ -389,15 +391,6 @@ export const StudioEditor: React.FC = () => {
             <PreviewSection ref={previewRef} />
           </Suspense>
         </section>
-
-        {(!isCompact || mobilePanel === 'inspector') && (
-          <aside
-            className={`studio-side-panel studio-inspector ${isCompact ? 'studio-mobile-sheet' : ''}`}
-          >
-            {panelClose}
-            <InspectorPanel />
-          </aside>
-        )}
       </div>
 
       {isCompact && (
@@ -410,17 +403,7 @@ export const StudioEditor: React.FC = () => {
               )
             }
           >
-            <PanelLeft size={18} /> Conteúdo
-          </button>
-          <button
-            aria-pressed={mobilePanel === 'inspector'}
-            onClick={() =>
-              setMobilePanel(current =>
-                current === 'inspector' ? null : 'inspector'
-              )
-            }
-          >
-            <PanelRight size={18} /> Ajustes
+            <PanelLeft size={18} /> Ajustes
           </button>
         </nav>
       )}

@@ -9,6 +9,10 @@ import {
   Tablet,
 } from 'lucide-react'
 
+import { CanvasControls } from '../../components/toolbar/tabs/CanvasControls'
+import { CardTabs } from '../../components/toolbar/tabs/CardTabs'
+import { PhotoTabs } from '../../components/toolbar/tabs/PhotoTabs'
+import { TypographyTabs } from '../../components/toolbar/tabs/TypographyTabs'
 import { ColorTabs } from '../../components/toolbar/tabs/ColorTabs'
 import { BackgroundTabs } from '../../components/toolbar/tabs/BackgroundTabs'
 import { useCardStore } from '../../store/cardStore'
@@ -20,7 +24,13 @@ import {
 } from '../../types/capture'
 import { PresetLibrary } from './PresetLibrary'
 
-export type LibraryPanelId = 'content' | 'presets' | 'backgrounds'
+export type LibraryPanelId =
+  | 'link'
+  | 'canvas'
+  | 'card'
+  | 'image'
+  | 'text'
+  | 'backgrounds'
 
 export interface LibraryPanelProps {
   inputUrl: string
@@ -39,8 +49,11 @@ export interface LibraryPanelProps {
 }
 
 const tabs: Array<{ id: LibraryPanelId; label: string }> = [
-  { id: 'content', label: 'Conteúdo' },
-  { id: 'presets', label: 'Presets' },
+  { id: 'link', label: 'Link' },
+  { id: 'canvas', label: 'Canvas' },
+  { id: 'card', label: 'Card' },
+  { id: 'image', label: 'Imagem' },
+  { id: 'text', label: 'Texto' },
   { id: 'backgrounds', label: 'Fundos' },
 ]
 
@@ -68,7 +81,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
   captureArea,
   onCaptureSettingChange,
 }) => {
-  const [activePanel, setActivePanel] = useState<LibraryPanelId>('content')
+  const [activePanel, setActivePanel] = useState<LibraryPanelId>('link')
   const { title, description, author, template, updateField } = useCardStore()
   const isLoading =
     !isReady ||
@@ -79,10 +92,10 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
   return (
     <div className="studio-panel-content">
       <div className="studio-panel-title">
-        <span>Biblioteca</span>
-        <small>Fonte e direção visual</small>
+        <span>Ajustes</span>
+        <small>Fonte, canvas e estilo</small>
       </div>
-      <div className="studio-segmented" role="tablist" aria-label="Biblioteca">
+      <div className="studio-segmented" role="tablist" aria-label="Ajustes">
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -96,7 +109,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
       </div>
 
       <div className="studio-panel-scroll">
-        {activePanel === 'content' && (
+        {activePanel === 'link' && (
           <div className="studio-form-stack">
             <div className="panel-section-heading">
               <div>
@@ -282,9 +295,30 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = ({
             </label>
           </div>
         )}
-        {activePanel === 'presets' && <PresetLibrary />}
+        {activePanel === 'canvas' && (
+          <div className="legacy-controls">
+            <CanvasControls />
+          </div>
+        )}
+        {activePanel === 'card' && (
+          <div className="legacy-controls">
+            <CardTabs />
+          </div>
+        )}
+        {activePanel === 'image' && (
+          <div className="legacy-controls">
+            <PhotoTabs />
+          </div>
+        )}
+        {activePanel === 'text' && (
+          <div className="legacy-controls">
+            <TypographyTabs />
+          </div>
+        )}
         {activePanel === 'backgrounds' && (
           <div className="legacy-controls studio-form-stack">
+            <PresetLibrary />
+            <div className="panel-divider" />
             <ColorTabs />
             <div className="panel-divider" />
             <BackgroundTabs />
