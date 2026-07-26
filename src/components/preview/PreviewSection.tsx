@@ -280,7 +280,10 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       if (layout.cardAuto && !isAutoCanvas) {
         const availableWidth = canvasWidth > 0 ? canvasWidth : 640
         const availableHeight = canvasHeight > 0 ? canvasHeight : 360
-        const cardW = 640
+        const cardW = Math.min(
+          Math.max(640, canvasWidth * 0.55),
+          canvasWidth - 80
+        )
         // Use the measured card height for accurate scaling
         const cardH =
           layout.measuredCardHeight || (cardRef.current?.offsetHeight ?? 360)

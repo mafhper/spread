@@ -11,7 +11,7 @@ import {
   resolveCompositionGeometry,
 } from './geometry'
 
-const CARD_WIDTH = 640
+const BASE_CARD_WIDTH = 640
 
 const getPatternImage = (pattern: unknown) => {
   switch (pattern) {
@@ -94,8 +94,13 @@ export const CompositionArtboard = forwardRef<
     preset: canvasSize.preset,
   })
   const naturalHeight = Math.max(1, layout.measuredCardHeight || 360)
+
+  const cardWidth = isAutoCanvas
+    ? BASE_CARD_WIDTH
+    : Math.min(Math.max(BASE_CARD_WIDTH, canvasWidth * 0.55), canvasWidth - 80)
+
   const position = migrateLegacyCardPosition(cardPosition, {
-    width: CARD_WIDTH,
+    width: cardWidth,
     height: naturalHeight,
     scale: finalScale,
   })
@@ -107,7 +112,7 @@ export const CompositionArtboard = forwardRef<
       padding: cardPadding,
     },
     card: {
-      width: CARD_WIDTH,
+      width: cardWidth,
       height: naturalHeight,
       scale: finalScale,
       x: position.x,
@@ -165,13 +170,7 @@ export const CompositionArtboard = forwardRef<
         ref={cardRef}
         className="absolute z-10 w-fit h-fit"
         style={{
-          // Posiciona o canto superior-esquerdo do card JÁ ESCALADO e escala a
-          // partir do top-left. html-to-image aplica o scale de um filho a
-          // partir do top-left e ignora transform-origin: center; com center o
-          // card fica deslocado e corta o topo (logo) sempre que finalScale
-          // difere de 1 (formatos fixos que reduzem o card). Escalando do
-          // top-left, preview e exportação concordam.
-          left: geometry.cardCenterX - (CARD_WIDTH * finalScale) / 2,
+          left: geometry.cardCenterX - (cardWidth * finalScale) / 2,
           top: geometry.cardCenterY - (naturalHeight * finalScale) / 2,
           transform: `scale(${finalScale})`,
           transformOrigin: 'top left',
