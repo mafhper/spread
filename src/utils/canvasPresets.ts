@@ -17,11 +17,12 @@ export const CANVAS_PRESETS: Record<string, CanvasPresetValue> = {
 
 export type CanvasPresetName = keyof typeof CANVAS_PRESETS
 
-export const VIEWPORT_TO_PRESET: Record<PageCaptureViewport, CanvasPresetName> = {
-  mobile: 'story',
-  tablet: 'post',
-  desktop: 'landscape',
-}
+export const VIEWPORT_TO_PRESET: Record<PageCaptureViewport, CanvasPresetName> =
+  {
+    mobile: 'story',
+    tablet: 'post',
+    desktop: 'landscape',
+  }
 
 export const detectViewport = (): PageCaptureViewport => {
   const width = window.innerWidth

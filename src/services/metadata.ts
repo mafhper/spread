@@ -226,7 +226,8 @@ export async function fetchMetadata(
       microlinkRequest,
     ])
     if (!youtubeData && !microlinkData) return null
-    if (options.capture && !microlinkData?.screenshot && !microlinkData?.image) return null
+    if (options.capture && !microlinkData?.screenshot && !microlinkData?.image)
+      return null
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
