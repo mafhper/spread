@@ -30,6 +30,8 @@ export const PAGE_CAPTURE_VIEWPORTS: Record<
     width: number
     height: number
     isMobile: boolean
+    hasTouch: boolean
+    isLandscape: boolean
   }
 > = {
   desktop: {
@@ -37,17 +39,23 @@ export const PAGE_CAPTURE_VIEWPORTS: Record<
     width: 1440,
     height: 900,
     isMobile: false,
+    hasTouch: false,
+    isLandscape: true,
   },
   tablet: {
     label: 'Tablet',
-    width: 1024,
-    height: 768,
-    isMobile: false,
+    width: 768,
+    height: 1024,
+    isMobile: true,
+    hasTouch: true,
+    isLandscape: false,
   },
   mobile: {
     label: 'Celular',
     width: 390,
     height: 844,
     isMobile: true,
+    hasTouch: true,
+    isLandscape: false,
   },
 }

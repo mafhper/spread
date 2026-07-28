@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useCardStore } from '../../store/cardStore'
 import { CompositionArtboard } from '../../features/composition/CompositionArtboard'
+import { hasIntrinsicCaptureDimensions } from '../../features/composition/captureAsset'
 import { log } from '../../utils/logger'
 import { CANVAS_PRESETS } from '../../utils/canvasPresets'
 import { WelcomeCard } from './WelcomeCard'
@@ -140,16 +141,22 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       viewScale,
     })
 
-    const isDirectPage = outputMode === 'page-capture' && !!pageCapture
+    const isPageMode = outputMode === 'page-capture'
+    const isDirectPage =
+      isPageMode && hasIntrinsicCaptureDimensions(pageCapture)
     const canvasWidth =
-      isDirectPage && canvasSize.preset === 'auto'
-        ? pageCapture.width || canvasSize.width || 1080
+      isPageMode && canvasSize.preset === 'auto'
+        ? isDirectPage
+          ? pageCapture.width
+          : canvasSize.width || 1080
         : canvasSize.width > 0
           ? canvasSize.width
           : CANVAS_PRESETS[canvasSize.preset]?.w || 1080
     const canvasHeight =
-      isDirectPage && canvasSize.preset === 'auto'
-        ? pageCapture.height || canvasSize.height || 1080
+      isPageMode && canvasSize.preset === 'auto'
+        ? isDirectPage
+          ? pageCapture.height
+          : canvasSize.height || 1080
         : canvasSize.height > 0
           ? canvasSize.height
           : CANVAS_PRESETS[canvasSize.preset]?.h || 1080
@@ -609,7 +616,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
             )}
             {isAutoScale && (
               <span className="text-[10px] text-white/40 uppercase tracking-wider ml-1">
-                Auto
+                Zoom auto
               </span>
             )}
           </div>

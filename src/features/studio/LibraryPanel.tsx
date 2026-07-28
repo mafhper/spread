@@ -24,6 +24,7 @@ import {
   type PageCaptureArea,
   type PageCaptureViewport,
 } from '../../types/capture'
+import { CANVAS_PRESETS } from '../../utils/canvasPresets'
 import { PresetLibrary } from './PresetLibrary'
 
 type PanelId = 'content' | 'composition' | 'appearance'
@@ -51,6 +52,12 @@ const captureViewports = [
   { id: 'tablet' as const, Icon: Tablet, ...PAGE_CAPTURE_VIEWPORTS.tablet },
   { id: 'mobile' as const, Icon: Smartphone, ...PAGE_CAPTURE_VIEWPORTS.mobile },
 ]
+
+const captureAreaLabels: Record<PageCaptureArea, string> = {
+  viewport: 'Tela visível',
+  main: 'Conteúdo principal',
+  fullPage: 'Página inteira',
+}
 
 const PageFrameControls: React.FC = () => {
   const { pageFrame, updateNestedField } = useCardStore()
@@ -160,6 +167,7 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = props => {
     template,
     outputMode,
     pageCapture,
+    canvasSize,
     updateField,
   } = useCardStore()
   const isLoading =
@@ -169,6 +177,26 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = props => {
     props.loadState === 'assets'
   const isPageMode = outputMode === 'page-capture'
   const needsCapture = isPageMode || props.mediaSource === 'page'
+  const desiredViewport = PAGE_CAPTURE_VIEWPORTS[props.captureViewport]
+  const captureIsPending = Boolean(
+    pageCapture &&
+    (pageCapture.settings.viewport !== props.captureViewport ||
+      pageCapture.settings.area !== props.captureArea)
+  )
+  const appliedViewport = pageCapture
+    ? PAGE_CAPTURE_VIEWPORTS[pageCapture.settings.viewport]
+    : null
+  const canvasPreset = CANVAS_PRESETS[canvasSize.preset]
+  const outputDimensions =
+    canvasSize.preset === 'auto'
+      ? pageCapture?.width && pageCapture?.height
+        ? `${pageCapture.width} × ${pageCapture.height}`
+        : 'Tamanho da captura'
+      : `${canvasSize.width} × ${canvasSize.height}`
+  const outputLabel =
+    canvasSize.preset === 'auto'
+      ? `Auto · ${outputDimensions}`
+      : `${canvasPreset?.label || canvasSize.preset} · ${outputDimensions}`
 
   return (
     <div className="studio-panel-content">
@@ -329,6 +357,29 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = props => {
 
             {needsCapture && (
               <div className="capture-options">
+                <div
+                  className="capture-geometry-summary"
+                  data-columns={isPageMode ? '2' : '1'}
+                >
+                  <div>
+                    <small>Renderização da página</small>
+                    <strong>{desiredViewport.label}</strong>
+                    <span>
+                      {desiredViewport.width} × {desiredViewport.height}
+                    </span>
+                  </div>
+                  {isPageMode && (
+                    <div>
+                      <small>Formato de saída</small>
+                      <strong>{outputLabel}</strong>
+                      <span>
+                        {canvasSize.preset === 'auto'
+                          ? 'Preserva a captura'
+                          : 'Usa o enquadramento escolhido'}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <fieldset>
                   <legend>Dispositivo da captura</legend>
                   <div
@@ -385,12 +436,25 @@ export const LibraryPanel: React.FC<LibraryPanelProps> = props => {
                   ) : (
                     <Monitor size={16} />
                   )}
-                  {pageCapture ? 'Atualizar captura' : 'Capturar página'}
+                  {props.loadState === 'page'
+                    ? `Capturando ${desiredViewport.label}…`
+                    : captureIsPending
+                      ? 'Aplicar nova captura'
+                      : pageCapture
+                        ? 'Atualizar captura'
+                        : 'Capturar página'}
                 </button>
                 {pageCapture && (
-                  <p className="capture-loading-note">
-                    A exportação usa a última captura concluída até você
-                    atualizar esta página.
+                  <p
+                    className="capture-loading-note"
+                    data-pending={captureIsPending}
+                    aria-live="polite"
+                  >
+                    {captureIsPending && appliedViewport
+                      ? isLoading
+                        ? `Mantendo ${appliedViewport.label} · ${captureAreaLabels[pageCapture.settings.area]} visível enquanto ${desiredViewport.label} · ${captureAreaLabels[props.captureArea]} é processada.`
+                        : `A visualização ainda usa ${appliedViewport.label} · ${captureAreaLabels[pageCapture.settings.area]}. Aplique novamente para usar ${desiredViewport.label} · ${captureAreaLabels[props.captureArea]}.`
+                      : `Captura atual: ${desiredViewport.label} · ${captureAreaLabels[props.captureArea]}.`}
                   </p>
                 )}
               </div>

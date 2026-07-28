@@ -12,6 +12,21 @@ export interface HistoryItem {
 }
 
 const STORAGE_KEY = 'spread_history_v1'
+const CAPTURE_IMAGE_MAX_CHARS = 1_000_000
+
+const snapshotPageCapture = (value: unknown) => {
+  if (!value || typeof value !== 'object') return null
+  const capture = value as Record<string, unknown>
+  const image = capture.image
+
+  return {
+    ...capture,
+    image:
+      typeof image === 'string' && image.length <= CAPTURE_IMAGE_MAX_CHARS
+        ? image
+        : null,
+  }
+}
 
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([])
@@ -56,8 +71,15 @@ export function useHistory() {
       textAlign: currentState.textAlign,
       // Aggressive pruning for large base64
       image: prune(currentState.image),
+      coverImage: prune(currentState.coverImage),
+      pageCapture: snapshotPageCapture(currentState.pageCapture),
       customBgImage: prune(currentState.customBgImage),
       favicon: prune(currentState.favicon),
+      outputMode: currentState.outputMode,
+      pageFrame: currentState.pageFrame,
+      mediaSource: currentState.mediaSource,
+      captureViewport: currentState.captureViewport,
+      captureArea: currentState.captureArea,
     }
 
     const newItem: HistoryItem = {

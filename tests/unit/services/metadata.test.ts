@@ -29,9 +29,12 @@ describe('metadata service', () => {
       expect(requestUrl.searchParams.get('viewport.width')).toBe('390')
       expect(requestUrl.searchParams.get('viewport.height')).toBe('844')
       expect(requestUrl.searchParams.get('viewport.isMobile')).toBe('true')
+      expect(requestUrl.searchParams.get('viewport.hasTouch')).toBe('true')
+      expect(requestUrl.searchParams.get('viewport.isLandscape')).toBe('false')
       expect(requestUrl.searchParams.get('viewport.deviceScaleFactor')).toBe(
         '1'
       )
+      expect(requestUrl.searchParams.get('screenshot.fullPage')).toBe('false')
     })
 
     it('selects semantic main content or the full page capture area', () => {
@@ -53,6 +56,10 @@ describe('metadata service', () => {
       expect(fullPageRequest.searchParams.get('screenshot.fullPage')).toBe(
         'true'
       )
+      expect(fullPageRequest.searchParams.get('viewport.width')).toBe('768')
+      expect(fullPageRequest.searchParams.get('viewport.height')).toBe('1024')
+      expect(fullPageRequest.searchParams.get('viewport.isMobile')).toBe('true')
+      expect(fullPageRequest.searchParams.get('viewport.hasTouch')).toBe('true')
       expect(fullPageRequest.searchParams.has('screenshot.element')).toBe(false)
     })
 
@@ -109,6 +116,27 @@ describe('metadata service', () => {
         width: 1440,
         height: 900,
       })
+    })
+
+    it('rejects a capture response that only contains an Open Graph cover', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'success',
+            data: {
+              title: 'Metadata only',
+              image: { url: 'https://example.com/social.jpg' },
+            },
+          }),
+      } as Response)
+
+      await expect(
+        captureRenderedPage('https://example.com/app', {
+          viewport: 'desktop',
+          area: 'viewport',
+        })
+      ).resolves.toBeNull()
     })
 
     it('should fetch metadata successfully', async () => {

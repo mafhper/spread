@@ -161,11 +161,15 @@ export function buildMicrolinkUrl(
   params.set('viewport.height', String(viewport.height))
   params.set('viewport.deviceScaleFactor', '1')
   params.set('viewport.isMobile', String(viewport.isMobile))
+  params.set('viewport.hasTouch', String(viewport.hasTouch))
+  params.set('viewport.isLandscape', String(viewport.isLandscape))
 
   if (capture.area === 'main') {
     params.set('screenshot.element', 'main')
   } else if (capture.area === 'fullPage') {
     params.set('screenshot.fullPage', 'true')
+  } else {
+    params.set('screenshot.fullPage', 'false')
   }
 
   return `https://api.microlink.io?${params.toString()}`
@@ -249,8 +253,7 @@ async function resolveLinkData(
       microlinkRequest,
     ])
     if (!youtubeData && !microlinkData) return null
-    if (options.capture && !microlinkData?.screenshot && !microlinkData?.image)
-      return null
+    if (options.capture && !microlinkData?.screenshot) return null
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
@@ -285,9 +288,7 @@ async function resolveLinkData(
         author,
         template,
       },
-      capture: options.capture
-        ? microlinkData?.screenshot || microlinkData?.image || null
-        : null,
+      capture: options.capture ? microlinkData?.screenshot || null : null,
     }
   } catch (error) {
     console.error('Metadata fetch failed:', error)

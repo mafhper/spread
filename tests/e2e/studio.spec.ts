@@ -343,10 +343,10 @@ test('rendered page capture waits for the page and exposes visual framing contro
   page,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop')
-  let captureRequest: URL | null = null
+  const captureRequests: URL[] = []
 
   await page.route('https://api.microlink.io/**', async route => {
-    captureRequest = new URL(route.request().url())
+    captureRequests.push(new URL(route.request().url()))
     await route.fulfill({
       json: {
         status: 'success',
@@ -377,6 +377,12 @@ test('rendered page capture waits for the page and exposes visual framing contro
       name: 'Captura da página Exportação limpa da página',
     })
     .click()
+  await expect(
+    page
+      .getByTestId('composition-artboard')
+      .getByText('Capture a página para visualizar e exportar este resultado.')
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Exportar' })).toBeDisabled()
   await page.getByRole('button', { name: 'Celular 390 × 844' }).click()
   await page
     .getByLabel('Área capturada')
@@ -387,12 +393,23 @@ test('rendered page capture waits for the page and exposes visual framing contro
     page.getByRole('img', { name: 'Página capturada' })
   ).toBeVisible()
   await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
-  expect(captureRequest).not.toBeNull()
-  expect(captureRequest!.searchParams.get('waitUntil')).toBe('networkidle0')
-  expect(captureRequest!.searchParams.get('waitForTimeout')).toBe('1500')
-  expect(captureRequest!.searchParams.get('viewport.width')).toBe('390')
-  expect(captureRequest!.searchParams.get('viewport.height')).toBe('844')
-  expect(captureRequest!.searchParams.get('screenshot.element')).toBe('main')
+  expect(captureRequests).toHaveLength(1)
+  expect(captureRequests[0].searchParams.get('waitUntil')).toBe('networkidle0')
+  expect(captureRequests[0].searchParams.get('waitForTimeout')).toBe('1500')
+  expect(captureRequests[0].searchParams.get('viewport.width')).toBe('390')
+  expect(captureRequests[0].searchParams.get('viewport.height')).toBe('844')
+  expect(captureRequests[0].searchParams.get('viewport.hasTouch')).toBe('true')
+  expect(captureRequests[0].searchParams.get('screenshot.element')).toBe('main')
+
+  await page.getByRole('button', { name: 'Tablet 768 × 1024' }).click()
+  await expect(
+    page.getByRole('img', { name: 'Página capturada' })
+  ).toHaveAttribute('data-capture-viewport', 'tablet')
+  expect(captureRequests).toHaveLength(2)
+  expect(captureRequests[1].searchParams.get('viewport.width')).toBe('768')
+  expect(captureRequests[1].searchParams.get('viewport.height')).toBe('1024')
+  expect(captureRequests[1].searchParams.get('viewport.isMobile')).toBe('true')
+  expect(captureRequests[1].searchParams.get('viewport.hasTouch')).toBe('true')
 
   await page.getByRole('tab', { name: 'Composição' }).click()
   await page.getByRole('button', { name: 'Superior direito' }).click()
@@ -405,6 +422,127 @@ test('rendered page capture waits for the page and exposes visual framing contro
       name: 'Página capturada',
     })
   ).toHaveAttribute('style', /width/)
+})
+
+test('legacy page media keeps its screenshot and recovers intrinsic framing', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop')
+  const targetUrl = 'https://example.com/legacy-page'
+  const screenshotUrl = 'http://127.0.0.1:4321/spread/assets/social-preview.png'
+
+  await page.route('https://api.microlink.io/**', async route => {
+    await route.fulfill({
+      json: {
+        status: 'success',
+        data: {
+          title: 'Legacy page',
+          description: 'Metadata refreshed after draft hydration.',
+          image: {
+            url: 'http://127.0.0.1:4321/spread/logo.svg',
+          },
+          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+        },
+      },
+    })
+  })
+
+  await page.goto('editor/')
+  await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true')
+  await page.waitForTimeout(650)
+  await page.evaluate(
+    async ({ targetUrl, screenshotUrl }) => {
+      const database = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open('spread-studio-v1', 1)
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = () => reject(request.error)
+      })
+      try {
+        const current = await new Promise<{
+          document: Record<string, unknown>
+        }>((resolve, reject) => {
+          const transaction = database.transaction('drafts', 'readonly')
+          const request = transaction.objectStore('drafts').get('current')
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+        const v2 = current.document as {
+          canvas: Record<string, unknown>
+          card: Record<string, unknown>
+          typography: Record<string, unknown>
+          background: Record<string, unknown>
+          media: Record<string, unknown>
+        }
+        const legacyDocument = {
+          schema: 'spread-document@1',
+          content: {
+            url: targetUrl,
+            title: 'Legacy page',
+            description: 'Saved rendered page',
+            author: '',
+            image: screenshotUrl,
+            favicon: null,
+            domain: 'example.com',
+            template: 'default',
+            mediaSource: 'page',
+            capture: { viewport: 'desktop', area: 'viewport' },
+          },
+          canvas: {
+            ...v2.canvas,
+            width: 1080,
+            height: 1350,
+            preset: 'post',
+          },
+          card: v2.card,
+          typography: v2.typography,
+          background: v2.background,
+          media: v2.media,
+        }
+        await new Promise<void>((resolve, reject) => {
+          const transaction = database.transaction('drafts', 'readwrite')
+          transaction.objectStore('drafts').put({
+            id: 'current',
+            document: legacyDocument,
+            updatedAt: Date.now(),
+          })
+          transaction.oncomplete = () => resolve()
+          transaction.onerror = () => reject(transaction.error)
+        })
+        localStorage.setItem('spread_pending_url', targetUrl)
+      } finally {
+        database.close()
+      }
+    },
+    { targetUrl, screenshotUrl }
+  )
+
+  await page.reload()
+  await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Preview' })).toHaveAttribute(
+    'src',
+    screenshotUrl
+  )
+
+  await page
+    .getByRole('button', {
+      name: 'Captura da página Exportação limpa da página',
+    })
+    .click()
+  const capturedPage = page.getByRole('img', { name: 'Página capturada' })
+  await expect(capturedPage).toBeVisible()
+  const framing = await capturedPage.evaluate((image: HTMLImageElement) => ({
+    naturalWidth: image.naturalWidth,
+    naturalHeight: image.naturalHeight,
+    renderedWidth: Number.parseFloat(image.style.width),
+    renderedHeight: Number.parseFloat(image.style.height),
+  }))
+
+  expect(framing.naturalWidth).toBeGreaterThan(0)
+  expect(framing.naturalHeight).toBeGreaterThan(0)
+  expect(framing.renderedWidth / framing.renderedHeight).toBeCloseTo(
+    framing.naturalWidth / framing.naturalHeight,
+    5
+  )
 })
 
 test('background color editing after loading a link uses the in-app picker', async ({
