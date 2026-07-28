@@ -1,6 +1,6 @@
 import {
   createPresetFromDocument,
-  type SpreadDocumentV1,
+  type SpreadDocumentV2,
   type SpreadPresetV1,
 } from '../composition/document'
 
@@ -13,7 +13,7 @@ interface PresetDefinition {
   gradient: string
   opacity: number
   radius: number
-  pattern?: SpreadDocumentV1['background']['pattern']
+  pattern?: SpreadDocumentV2['background']['pattern']
 }
 
 const DEFINITIONS: PresetDefinition[] = [
@@ -83,7 +83,7 @@ const DEFINITIONS: PresetDefinition[] = [
 ]
 
 export function createBuiltinPresets(
-  baseDocument: SpreadDocumentV1
+  baseDocument: SpreadDocumentV2
 ): SpreadPresetV1[] {
   return DEFINITIONS.map((definition, index) => {
     const document = structuredClone(baseDocument)

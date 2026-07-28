@@ -53,6 +53,9 @@ function getExampleState(
     favicon: null,
     domain: 'music.youtube.com',
     template: 'music' as const,
+    outputMode: 'social-card' as const,
+    pageCapture: null,
+    pageFrame: { fit: 'contain' as const, scale: 1, offsetX: 0, offsetY: 0 },
     isWelcomeState: false,
     colors: example.colors,
     gradientStyle: example.gradientStyle,
@@ -250,7 +253,7 @@ export const LandingApp: React.FC = () => {
               <CompositionArtboard
                 canvasWidth={1080}
                 canvasHeight={1080}
-                autoScale={1}
+                fitScale={1}
                 cardRef={cardRef}
                 cardPadding={64}
                 state={previewState}

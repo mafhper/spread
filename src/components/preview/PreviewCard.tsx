@@ -39,11 +39,14 @@ interface PreviewCardProps {
   scale?: number
   /** Estado isolado para superfícies que não devem persistir no editor. */
   cardState?: PreviewCardState
+  /** The composition owns width; content may not silently grow the card. */
+  width?: number
 }
 
 export const PreviewCard: React.FC<PreviewCardProps> = ({
   padding,
   cardState,
+  width = 640,
   // scale is available but not currently used within this component
 }) => {
   const storeState = useCardStore()
@@ -83,8 +86,10 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
     >
       <div
         id="cardWrapper"
-        className="relative grid grid-cols-1 grid-rows-1 overflow-visible w-fit h-fit min-w-[640px]"
+        className="relative grid grid-cols-1 grid-rows-1 overflow-visible h-fit"
         style={{
+          width,
+          boxSizing: 'border-box',
           borderRadius: `${layout.innerRadius}px`,
           padding:
             padding !== undefined ? `${padding}px` : `${layout.padding / 4}rem`,
@@ -100,7 +105,7 @@ export const PreviewCard: React.FC<PreviewCardProps> = ({
               layout.cardAspectRatio
             )}
             style={{
-              width: '640px',
+              width: `${width}px`,
               height: 'auto',
               aspectRatio:
                 layout.cardAspectRatio === 'aspect-square'

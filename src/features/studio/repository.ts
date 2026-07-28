@@ -1,4 +1,8 @@
-import type { SpreadDocumentV1, SpreadPresetV1 } from '../composition/document'
+import type {
+  SpreadDocument,
+  SpreadDocumentV2,
+  SpreadPresetV1,
+} from '../composition/document'
 
 const DATABASE_NAME = 'spread-studio-v1'
 const DATABASE_VERSION = 1
@@ -8,7 +12,7 @@ const CURRENT_DRAFT_ID = 'current'
 
 interface StoredDraft {
   id: string
-  document: SpreadDocumentV1
+  document: SpreadDocument
   updatedAt: number
 }
 
@@ -62,8 +66,8 @@ async function withStore<T>(
 }
 
 export interface StudioRepository {
-  loadDraft(): Promise<SpreadDocumentV1 | null>
-  saveDraft(document: SpreadDocumentV1): Promise<void>
+  loadDraft(): Promise<SpreadDocument | null>
+  saveDraft(document: SpreadDocumentV2): Promise<void>
   clearDraft(): Promise<void>
   listPresets(): Promise<SpreadPresetV1[]>
   savePreset(preset: SpreadPresetV1): Promise<void>
@@ -77,13 +81,25 @@ export const studioRepository: StudioRepository = {
       'readonly',
       store => requestResult(store.get(CURRENT_DRAFT_ID))
     )
-    return draft?.document?.schema === 'spread-document@1'
+    return draft?.document?.schema === 'spread-document@1' ||
+      draft?.document?.schema === 'spread-document@2'
       ? draft.document
       : null
   },
 
   async saveDraft(document) {
     await withStore(DRAFTS_STORE, 'readwrite', async store => {
+      const current = await requestResult<StoredDraft | undefined>(
+        store.get(CURRENT_DRAFT_ID)
+      )
+      if (current?.document.schema === 'spread-document@1') {
+        await requestResult(
+          store.put({
+            ...current,
+            id: 'legacy-v1-backup',
+          } satisfies StoredDraft)
+        )
+      }
       await requestResult(
         store.put({
           id: CURRENT_DRAFT_ID,

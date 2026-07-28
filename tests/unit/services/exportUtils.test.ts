@@ -182,7 +182,8 @@ describe('exportUtils', () => {
       await getEmbeddedFontCSS('Open Sans')
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('Open+Sans')
+        expect.stringContaining('Open+Sans'),
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       )
     })
   })

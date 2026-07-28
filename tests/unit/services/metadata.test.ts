@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { buildMicrolinkUrl, fetchMetadata } from '@/services/metadata'
+import {
+  buildMicrolinkUrl,
+  captureRenderedPage,
+  fetchMetadata,
+} from '@/services/metadata'
 
 describe('metadata service', () => {
   beforeEach(() => {
@@ -20,6 +24,7 @@ describe('metadata service', () => {
       expect(requestUrl.searchParams.get('screenshot')).toBe('true')
       expect(requestUrl.searchParams.get('prerender')).toBe('true')
       expect(requestUrl.searchParams.get('waitUntil')).toBe('networkidle0')
+      expect(requestUrl.searchParams.get('waitForTimeout')).toBe('1500')
       expect(requestUrl.searchParams.get('force')).toBe('true')
       expect(requestUrl.searchParams.get('viewport.width')).toBe('390')
       expect(requestUrl.searchParams.get('viewport.height')).toBe('844')
@@ -75,6 +80,35 @@ describe('metadata service', () => {
         vi.mocked(global.fetch).mock.calls[0][0] as string
       )
       expect(requestUrl.searchParams.get('waitUntil')).toBe('networkidle0')
+    })
+
+    it('returns intrinsic screenshot dimensions for the capture pipeline', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'success',
+            data: {
+              title: 'Rendered app',
+              screenshot: {
+                url: 'https://example.com/page.png',
+                width: 1440,
+                height: 900,
+              },
+            },
+          }),
+      } as Response)
+
+      await expect(
+        captureRenderedPage('https://example.com/app', {
+          viewport: 'desktop',
+          area: 'viewport',
+        })
+      ).resolves.toMatchObject({
+        image: 'https://example.com/page.png',
+        width: 1440,
+        height: 900,
+      })
     })
 
     it('should fetch metadata successfully', async () => {

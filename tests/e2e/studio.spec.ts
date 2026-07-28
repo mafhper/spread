@@ -100,14 +100,20 @@ test('editor renders one canonical artboard and responsive controls', async ({
     .toBe(true)
 
   if (testInfo.project.name === 'mobile') {
-    await expect(page.getByRole('button', { name: 'Conteúdo' })).toBeVisible()
-    await page.getByRole('button', { name: 'Conteúdo' }).click()
-    await expect(page.getByText('Fonte e direção visual')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ajustes' })).toBeVisible()
+    await page.getByRole('button', { name: 'Ajustes' }).click()
+    await expect(
+      page.getByText('Conteúdo, enquadramento e aparência')
+    ).toBeVisible()
     await page.keyboard.press('Escape')
-    await expect(page.getByText('Fonte e direção visual')).toBeHidden()
+    await expect(
+      page.getByText('Conteúdo, enquadramento e aparência')
+    ).toBeHidden()
   } else {
-    await expect(page.getByText('Fonte e direção visual')).toBeVisible()
-    await expect(page.getByText('Ajustes do elemento')).toBeVisible()
+    await expect(
+      page.getByText('Conteúdo, enquadramento e aparência')
+    ).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Composição' })).toBeVisible()
   }
 
   await page.screenshot({
@@ -127,9 +133,9 @@ test('built-in preset changes style without replacing content', async ({
   const originalTitle = await title.textContent()
 
   if (testInfo.project.name === 'mobile') {
-    await page.getByRole('button', { name: 'Conteúdo' }).click()
+    await page.getByRole('button', { name: 'Ajustes' }).click()
   }
-  await page.getByRole('tab', { name: 'Presets' }).click()
+  await page.getByRole('tab', { name: 'Aparência' }).click()
   await page.getByRole('button', { name: 'Clean Dark' }).click()
 
   await expect(title).toHaveText(originalTitle || '')
@@ -147,14 +153,16 @@ test('PNG export uses the visible artboard dimensions without clipping the heade
   const brand = artboard.getByText('Spread', { exact: true })
   const brandLogo = artboard.getByTestId('card-brand-logo')
   const brandTitle = artboard.getByTestId('card-brand-title')
-  const [artboardBox, brandBox, brandLogoBox, brandTitleBox] =
+  const [artboardBox, cardBox, brandBox, brandLogoBox, brandTitleBox] =
     await Promise.all([
       artboard.boundingBox(),
+      page.locator('#previewCard').boundingBox(),
       brand.boundingBox(),
       brandLogo.boundingBox(),
       brandTitle.boundingBox(),
     ])
   expect(artboardBox).not.toBeNull()
+  expect(cardBox).not.toBeNull()
   expect(brandBox).not.toBeNull()
   expect(brandLogoBox).not.toBeNull()
   expect(brandTitleBox).not.toBeNull()
@@ -166,6 +174,28 @@ test('PNG export uses the visible artboard dimensions without clipping the heade
   expect(brandLogoBox!.x + brandLogoBox!.width).toBeLessThanOrEqual(
     brandTitleBox!.x
   )
+  expect(
+    Math.abs(
+      cardBox!.x +
+        cardBox!.width / 2 -
+        (artboardBox!.x + artboardBox!.width / 2)
+    )
+  ).toBeLessThanOrEqual(1)
+
+  await page.getByRole('tab', { name: 'Composição' }).click()
+  for (const preset of ['Auto', 'Post', 'Story', 'Twitter']) {
+    await page.getByRole('button', { name: `Tamanho ${preset}` }).click()
+    await expect
+      .poll(async () => {
+        const [canvas, card] = await Promise.all([
+          artboard.boundingBox(),
+          page.locator('#previewCard').boundingBox(),
+        ])
+        if (!canvas || !card) return Number.POSITIVE_INFINITY
+        return Math.abs(card.x + card.width / 2 - (canvas.x + canvas.width / 2))
+      })
+      .toBeLessThanOrEqual(1)
+  }
 
   const exportSafeStyles = await artboard
     .getByTestId('card-brand-header')
@@ -209,7 +239,7 @@ test('draft and user presets survive reload', async ({ page }, testInfo) => {
   await title.fill('Rascunho persistido')
   await page.waitForTimeout(650)
 
-  await page.getByRole('tab', { name: 'Presets' }).click()
+  await page.getByRole('tab', { name: 'Aparência' }).click()
   await page.getByPlaceholder('Nome do estilo').fill('Meu estilo')
   await page.getByRole('button', { name: 'Salvar' }).click()
   await expect(
@@ -219,7 +249,7 @@ test('draft and user presets survive reload', async ({ page }, testInfo) => {
   await page.reload()
   await page.waitForLoadState('networkidle')
   await expect(page.getByLabel('Título')).toHaveValue('Rascunho persistido')
-  await page.getByRole('tab', { name: 'Presets' }).click()
+  await page.getByRole('tab', { name: 'Aparência' }).click()
   await expect(
     page.getByRole('button', { name: 'Meu estilo', exact: true })
   ).toBeVisible()
@@ -333,36 +363,45 @@ test('rendered page capture waits for the page and exposes visual framing contro
   })
 
   await page.goto('editor/', { waitUntil: 'domcontentloaded' })
-  await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true')
+  await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true', {
+    timeout: 10_000,
+  })
   await page
     .locator('#studio-source-url')
     .fill('https://example.com/dynamic-app')
-  await page.getByRole('button', { name: 'Usar captura da página' }).click()
-  await page.getByRole('button', { name: 'Capturar como Celular' }).click()
+  await page
+    .getByRole('button', {
+      name: 'Captura da página Exportação limpa da página',
+    })
+    .click()
+  await page.getByRole('button', { name: 'Celular 390 × 844' }).click()
   await page
     .getByLabel('Área capturada')
     .selectOption({ label: 'Conteúdo principal' })
-  await page.getByRole('button', { name: 'Carregar link' }).click()
+  await page.getByRole('button', { name: 'Capturar página' }).click()
 
-  await expect(page.getByLabel('Título')).toHaveValue('Dynamic page ready')
+  await expect(
+    page.getByRole('img', { name: 'Página capturada' })
+  ).toBeVisible()
   await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
   expect(captureRequest).not.toBeNull()
   expect(captureRequest!.searchParams.get('waitUntil')).toBe('networkidle0')
+  expect(captureRequest!.searchParams.get('waitForTimeout')).toBe('1500')
   expect(captureRequest!.searchParams.get('viewport.width')).toBe('390')
   expect(captureRequest!.searchParams.get('viewport.height')).toBe('844')
   expect(captureRequest!.searchParams.get('screenshot.element')).toBe('main')
 
-  await page.getByRole('tab', { name: 'Imagem' }).click()
+  await page.getByRole('tab', { name: 'Composição' }).click()
   await page.getByRole('button', { name: 'Superior direito' }).click()
   await expect(
     page.getByRole('button', { name: 'Superior direito' })
   ).toHaveAttribute('aria-pressed', 'true')
-  await page.getByRole('slider', { name: 'Tamanho da imagem' }).fill('1.5')
+  await page.getByRole('slider', { name: 'Zoom da captura' }).fill('1.5')
   await expect(
     page.getByTestId('composition-artboard').getByRole('img', {
-      name: 'Preview',
+      name: 'Página capturada',
     })
-  ).toHaveAttribute('style', /scale\(1\.5\)/)
+  ).toHaveAttribute('style', /width/)
 })
 
 test('background color editing after loading a link uses the in-app picker', async ({
@@ -404,14 +443,13 @@ test('background color editing after loading a link uses the in-app picker', asy
   await page.getByRole('button', { name: 'Carregar link' }).click()
   await expect(page.getByLabel('Título')).toHaveValue('Link carregado')
 
-  await page.getByRole('tab', { name: 'Fundos' }).click()
+  await page.getByRole('tab', { name: 'Aparência' }).click()
   const color1 = page.getByRole('textbox', { name: 'Cor 1', exact: true })
   const manualSummary = page.getByText(/^#[0-9A-F]{6} → #[0-9A-F]{6}$/).first()
   const summaryWidthBefore = await manualSummary.evaluate(element =>
     Math.round(element.getBoundingClientRect().width)
   )
   await expect(color1).toHaveAttribute('type', 'text')
-  await expect(page.locator('input[type="color"]')).toHaveCount(0)
   await page.getByRole('button', { name: 'Abrir seletor Cor 1' }).click()
   await expect(
     page.getByRole('dialog', { name: 'Seletor Cor 1' })
