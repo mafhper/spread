@@ -250,7 +250,11 @@ export function documentFromCardState(
   }
 }
 
-/** Convert the V1 card-relative export coordinates into the V2 UI percentage. */
+/**
+ * Convert V1 pixel offsets into the normalized coordinate system used by V2.
+ * Fixed canvases normalize against the canvas so the visual position is
+ * preserved. Auto canvases continue to normalize against the wrapped card.
+ */
 export function migrateDocumentV1(
   document: SpreadDocumentV1
 ): SpreadDocumentV2 {
@@ -269,6 +273,13 @@ export function migrateDocumentV1(
           capturedAt: 0,
         }
       : null
+  const isAutoCanvas = document.canvas.preset === 'auto'
+  const horizontalReference = isAutoCanvas
+    ? document.card.naturalWidth || BASE_CARD_WIDTH
+    : document.canvas.width || BASE_CARD_WIDTH
+  const verticalReference = isAutoCanvas
+    ? document.card.naturalHeight || 360
+    : document.canvas.height || document.card.naturalHeight || 360
 
   return {
     schema: 'spread-document@2',
@@ -289,15 +300,10 @@ export function migrateDocumentV1(
       ...document.canvas,
       cardPosition: {
         x:
-          (document.canvas.cardPosition.x /
-            Math.max(1, document.canvas.width || BASE_CARD_WIDTH)) *
+          (document.canvas.cardPosition.x / Math.max(1, horizontalReference)) *
           100,
         y:
-          (document.canvas.cardPosition.y /
-            Math.max(
-              1,
-              document.canvas.height || document.card.naturalHeight || 360
-            )) *
+          (document.canvas.cardPosition.y / Math.max(1, verticalReference)) *
           100,
       },
     },

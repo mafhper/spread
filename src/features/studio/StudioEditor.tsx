@@ -244,10 +244,10 @@ export const StudioEditor: React.FC = () => {
       if (!image) throw new Error('A imagem capturada não pôde ser preparada.')
 
       const commitState = useCardStore.getState()
-      const coverImage =
-        commitState.url === sourceUrl
-          ? commitState.coverImage || result.metadata.image
-          : result.metadata.image
+      const isSameDocument = commitState.url === sourceUrl
+      const coverImage = isSameDocument
+        ? commitState.coverImage || result.metadata.image
+        : result.metadata.image
       const pageCapture = {
         image,
         width: dimensions?.width || result.width || 1,
@@ -257,12 +257,19 @@ export const StudioEditor: React.FC = () => {
       }
       commitState.setFullState({
         url: sourceUrl,
-        title: result.metadata.title || commitState.title,
-        description: result.metadata.description || commitState.description,
-        author: result.metadata.author || commitState.author,
-        favicon: result.metadata.favicon || commitState.favicon,
-        domain: result.metadata.domain || commitState.domain,
-        template: result.metadata.template || commitState.template,
+        title:
+          result.metadata.title ||
+          (isSameDocument ? commitState.title : result.metadata.domain),
+        description:
+          result.metadata.description ||
+          (isSameDocument ? commitState.description : ''),
+        author:
+          result.metadata.author || (isSameDocument ? commitState.author : ''),
+        favicon:
+          result.metadata.favicon ||
+          (isSameDocument ? commitState.favicon : null),
+        domain: result.metadata.domain,
+        template: result.metadata.template,
         coverImage,
         pageCapture,
         image:

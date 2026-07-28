@@ -279,6 +279,62 @@ describe('useHistory hook', () => {
     )
   })
 
+  it('discards capture geometry when its image is too large for history', () => {
+    vi.mocked(localStorage.getItem).mockReturnValue(null)
+    const { result } = renderHook(() => useHistory())
+
+    act(() => {
+      result.current.saveToHistory({
+        url: 'https://history.com/full-page',
+        title: 'Large captured page',
+        outputMode: 'page-capture',
+        mediaSource: 'page',
+        pageCapture: {
+          image: `data:image/png;base64,${'x'.repeat(1_000_001)}`,
+          width: 1440,
+          height: 12_000,
+          settings: { viewport: 'desktop', area: 'fullPage' },
+          capturedAt: 1,
+        },
+      })
+    })
+
+    expect(result.current.history[0].fullState.pageCapture).toBeNull()
+  })
+
+  it('sanitizes legacy history entries with pruned capture images', () => {
+    vi.mocked(localStorage.getItem).mockReturnValue(null)
+    const { result } = renderHook(() => useHistory())
+    const historyItem = {
+      id: 'legacy-pruned-capture',
+      url: 'https://history.com/full-page',
+      title: 'Legacy capture',
+      timestamp: 1,
+      fullState: {
+        outputMode: 'page-capture',
+        pageCapture: {
+          image: null,
+          width: 1440,
+          height: 12_000,
+          settings: { viewport: 'desktop', area: 'fullPage' },
+          capturedAt: 1,
+        },
+      },
+    }
+
+    act(() => {
+      result.current.loadFromHistory(historyItem)
+    })
+
+    expect(mockSetFullState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outputMode: 'page-capture',
+        pageCapture: null,
+        isWelcomeState: false,
+      })
+    )
+  })
+
   it('should delete from history', () => {
     const initialHistory = [
       {

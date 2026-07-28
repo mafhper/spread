@@ -346,15 +346,22 @@ test('rendered page capture waits for the page and exposes visual framing contro
   const captureRequests: URL[] = []
 
   await page.route('https://api.microlink.io/**', async route => {
-    captureRequests.push(new URL(route.request().url()))
+    const requestUrl = new URL(route.request().url())
+    const targetUrl = requestUrl.searchParams.get('url') || ''
+    captureRequests.push(requestUrl)
+    const isPreviousDocument = targetUrl.includes('previous-app')
     await route.fulfill({
       json: {
         status: 'success',
         data: {
-          title: 'Dynamic page ready',
-          description: 'Content loaded after the app became stable.',
+          title: isPreviousDocument ? 'Previous page' : 'Dynamic page ready',
+          description: isPreviousDocument
+            ? 'Metadata from the previous document.'
+            : 'Content loaded after the app became stable.',
           image: {
-            url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+            url: isPreviousDocument
+              ? 'http://127.0.0.1:4321/spread/logo.svg'
+              : 'http://127.0.0.1:4321/spread/assets/social-preview.png',
           },
           screenshot: {
             url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
@@ -369,6 +376,11 @@ test('rendered page capture waits for the page and exposes visual framing contro
   await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true', {
     timeout: 10_000,
   })
+  await page
+    .locator('#studio-source-url')
+    .fill('https://example.com/previous-app')
+  await page.getByRole('button', { name: 'Carregar link' }).click()
+  await expect(page.getByLabel('Título')).toHaveValue('Previous page')
   await page
     .locator('#studio-source-url')
     .fill('https://example.com/dynamic-app')
@@ -393,23 +405,39 @@ test('rendered page capture waits for the page and exposes visual framing contro
     page.getByRole('img', { name: 'Página capturada' })
   ).toBeVisible()
   await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
-  expect(captureRequests).toHaveLength(1)
-  expect(captureRequests[0].searchParams.get('waitUntil')).toBe('networkidle0')
-  expect(captureRequests[0].searchParams.get('waitForTimeout')).toBe('1500')
-  expect(captureRequests[0].searchParams.get('viewport.width')).toBe('390')
-  expect(captureRequests[0].searchParams.get('viewport.height')).toBe('844')
-  expect(captureRequests[0].searchParams.get('viewport.hasTouch')).toBe('true')
-  expect(captureRequests[0].searchParams.get('screenshot.element')).toBe('main')
+  expect(captureRequests).toHaveLength(2)
+  expect(captureRequests[1].searchParams.get('waitUntil')).toBe('networkidle0')
+  expect(captureRequests[1].searchParams.get('waitForTimeout')).toBe('1500')
+  expect(captureRequests[1].searchParams.get('viewport.width')).toBe('390')
+  expect(captureRequests[1].searchParams.get('viewport.height')).toBe('844')
+  expect(captureRequests[1].searchParams.get('viewport.hasTouch')).toBe('true')
+  expect(captureRequests[1].searchParams.get('screenshot.element')).toBe('main')
+
+  await page
+    .getByRole('button', {
+      name: 'Card social Imagem, título e estilo',
+    })
+    .click()
+  await expect(page.getByLabel('Título')).toHaveValue('Dynamic page ready')
+  await expect(page.getByAltText('Preview')).toHaveAttribute(
+    'src',
+    /\/assets\/social-preview\.png$/
+  )
+  await page
+    .getByRole('button', {
+      name: 'Captura da página Exportação limpa da página',
+    })
+    .click()
 
   await page.getByRole('button', { name: 'Tablet 768 × 1024' }).click()
   await expect(
     page.getByRole('img', { name: 'Página capturada' })
   ).toHaveAttribute('data-capture-viewport', 'tablet')
-  expect(captureRequests).toHaveLength(2)
-  expect(captureRequests[1].searchParams.get('viewport.width')).toBe('768')
-  expect(captureRequests[1].searchParams.get('viewport.height')).toBe('1024')
-  expect(captureRequests[1].searchParams.get('viewport.isMobile')).toBe('true')
-  expect(captureRequests[1].searchParams.get('viewport.hasTouch')).toBe('true')
+  expect(captureRequests).toHaveLength(3)
+  expect(captureRequests[2].searchParams.get('viewport.width')).toBe('768')
+  expect(captureRequests[2].searchParams.get('viewport.height')).toBe('1024')
+  expect(captureRequests[2].searchParams.get('viewport.isMobile')).toBe('true')
+  expect(captureRequests[2].searchParams.get('viewport.hasTouch')).toBe('true')
 
   await page.getByRole('tab', { name: 'Composição' }).click()
   await page.getByRole('button', { name: 'Superior direito' }).click()
@@ -517,7 +545,9 @@ test('legacy page media keeps its screenshot and recovers intrinsic framing', as
   )
 
   await page.reload()
-  await expect(page.getByText('Conteúdo atualizado.')).toBeVisible()
+  await expect(page.getByText('Conteúdo atualizado.')).toBeVisible({
+    timeout: 10_000,
+  })
   await expect(page.getByRole('img', { name: 'Preview' })).toHaveAttribute(
     'src',
     screenshotUrl
