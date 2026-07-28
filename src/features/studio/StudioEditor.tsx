@@ -24,8 +24,13 @@ import { getPendingUrl, removePendingUrl } from '../../utils/persistence'
 import type {
   LinkMediaSource,
   PageCaptureArea,
+  PageCaptureSettings,
   PageCaptureViewport,
 } from '../../types/capture'
+import {
+  ensureIntrinsicCaptureDimensions,
+  hasIntrinsicCaptureDimensions,
+} from '../composition/captureAsset'
 import {
   cardStatePatchFromDocument,
   documentFromCardState,
@@ -76,12 +81,29 @@ export const StudioEditor: React.FC = () => {
 
   useEffect(() => {
     let active = true
+    const hydrationController = new AbortController()
     void (async () => {
       try {
         const draft = await studioRepository.loadDraft()
         if (draft && active) {
+          const patch = cardStatePatchFromDocument(draft)
+          if (patch.pageCapture) {
+            const timeoutId = window.setTimeout(
+              () => hydrationController.abort(),
+              8000
+            )
+            try {
+              patch.pageCapture = await ensureIntrinsicCaptureDimensions(
+                patch.pageCapture,
+                source => getImageDimensions(source, hydrationController.signal)
+              )
+            } finally {
+              window.clearTimeout(timeoutId)
+            }
+          }
+          if (!active) return
           state.setFullState({
-            ...cardStatePatchFromDocument(draft),
+            ...patch,
             isWelcomeState: false,
           })
           setInputUrl(draft.content.url)
@@ -103,6 +125,7 @@ export const StudioEditor: React.FC = () => {
 
     return () => {
       active = false
+      hydrationController.abort()
       abortRef.current?.abort()
     }
   }, [])
@@ -116,7 +139,6 @@ export const StudioEditor: React.FC = () => {
       const controller = new AbortController()
       abortRef.current = controller
       setErrorMessage('')
-      const currentState = useCardStore.getState()
       setLoadState('metadata')
 
       try {
@@ -139,15 +161,16 @@ export const StudioEditor: React.FC = () => {
         ])
         if (controller.signal.aborted) return
 
+        const commitState = useCardStore.getState()
         const preservedPageCapture =
-          currentState.url === sourceUrl ? currentState.pageCapture : null
+          commitState.url === sourceUrl ? commitState.pageCapture : null
         const coverImage = image || metadata.image
-        currentState.setFullState({
+        commitState.setFullState({
           url: sourceUrl,
           title: metadata.title || metadata.domain,
           description: metadata.description,
           image:
-            currentState.mediaSource === 'page' && preservedPageCapture
+            commitState.mediaSource === 'page' && preservedPageCapture
               ? preservedPageCapture.image
               : coverImage,
           coverImage,
@@ -173,26 +196,6 @@ export const StudioEditor: React.FC = () => {
     [inputUrl]
   )
 
-  const updateCaptureSetting = (
-    field: 'mediaSource' | 'captureViewport' | 'captureArea',
-    value: LinkMediaSource | PageCaptureViewport | PageCaptureArea
-  ) => {
-    if (field === 'mediaSource') {
-      const mediaSource = value as LinkMediaSource
-      state.updateField('mediaSource', mediaSource)
-      if (state.outputMode === 'social-card') {
-        state.updateField(
-          'image',
-          mediaSource === 'page'
-            ? state.pageCapture?.image || state.coverImage
-            : state.coverImage
-        )
-      }
-    } else state.updateField(field, value)
-    setLoadState('idle')
-    setErrorMessage('')
-  }
-
   const updateOutputMode = (outputMode: 'social-card' | 'page-capture') => {
     state.updateField('outputMode', outputMode)
     if (outputMode === 'social-card') {
@@ -206,8 +209,9 @@ export const StudioEditor: React.FC = () => {
     setErrorMessage('')
   }
 
-  const capturePage = async () => {
-    const sourceUrl = inputUrl.trim() || state.url
+  const capturePage = async (overrides: Partial<PageCaptureSettings> = {}) => {
+    const currentState = useCardStore.getState()
+    const sourceUrl = inputUrl.trim() || currentState.url
     if (!sourceUrl) return
 
     abortRef.current?.abort()
@@ -215,8 +219,8 @@ export const StudioEditor: React.FC = () => {
     abortRef.current = controller
     const requestId = ++captureRequestRef.current
     const settings = {
-      viewport: state.captureViewport,
-      area: state.captureArea,
+      viewport: overrides.viewport ?? currentState.captureViewport,
+      area: overrides.area ?? currentState.captureArea,
     }
     setLoadState('page')
     setErrorMessage('')
@@ -239,9 +243,10 @@ export const StudioEditor: React.FC = () => {
         return
       if (!image) throw new Error('A imagem capturada não pôde ser preparada.')
 
+      const commitState = useCardStore.getState()
       const coverImage =
-        state.url === sourceUrl
-          ? state.coverImage || result.metadata.image
+        commitState.url === sourceUrl
+          ? commitState.coverImage || result.metadata.image
           : result.metadata.image
       const pageCapture = {
         image,
@@ -250,22 +255,22 @@ export const StudioEditor: React.FC = () => {
         settings,
         capturedAt: Date.now(),
       }
-      state.setFullState({
+      commitState.setFullState({
         url: sourceUrl,
-        title: result.metadata.title || state.title,
-        description: result.metadata.description || state.description,
-        author: result.metadata.author || state.author,
-        favicon: result.metadata.favicon || state.favicon,
-        domain: result.metadata.domain || state.domain,
-        template: result.metadata.template || state.template,
+        title: result.metadata.title || commitState.title,
+        description: result.metadata.description || commitState.description,
+        author: result.metadata.author || commitState.author,
+        favicon: result.metadata.favicon || commitState.favicon,
+        domain: result.metadata.domain || commitState.domain,
+        template: result.metadata.template || commitState.template,
         coverImage,
         pageCapture,
         image:
-          state.outputMode === 'social-card'
-            ? state.mediaSource === 'page'
+          commitState.outputMode === 'social-card'
+            ? commitState.mediaSource === 'page'
               ? image
               : coverImage
-            : state.image,
+            : commitState.image,
         isWelcomeState: false,
       })
       setInputUrl(sourceUrl)
@@ -278,6 +283,43 @@ export const StudioEditor: React.FC = () => {
           : 'Não foi possível capturar a página.'
       )
       setLoadState('error')
+    }
+  }
+
+  const updateCaptureSetting = (
+    field: 'mediaSource' | 'captureViewport' | 'captureArea',
+    value: LinkMediaSource | PageCaptureViewport | PageCaptureArea
+  ) => {
+    const currentState = useCardStore.getState()
+    if (field === 'mediaSource') {
+      const mediaSource = value as LinkMediaSource
+      currentState.updateField('mediaSource', mediaSource)
+      if (currentState.outputMode === 'social-card') {
+        currentState.updateField(
+          'image',
+          mediaSource === 'page'
+            ? currentState.pageCapture?.image || currentState.coverImage
+            : currentState.coverImage
+        )
+      }
+      setLoadState('idle')
+      setErrorMessage('')
+      return
+    }
+
+    currentState.updateField(field, value)
+    setLoadState('idle')
+    setErrorMessage('')
+
+    const captureIsVisible =
+      currentState.outputMode === 'page-capture' ||
+      currentState.mediaSource === 'page'
+    if (currentState.pageCapture && captureIsVisible) {
+      const overrides =
+        field === 'captureViewport'
+          ? { viewport: value as PageCaptureViewport }
+          : { area: value as PageCaptureArea }
+      void capturePage(overrides)
     }
   }
 
@@ -369,7 +411,8 @@ export const StudioEditor: React.FC = () => {
     if (
       !previewRef.current ||
       exportState === 'running' ||
-      (state.outputMode === 'page-capture' && !state.pageCapture)
+      (state.outputMode === 'page-capture' &&
+        !hasIntrinsicCaptureDimensions(state.pageCapture))
     )
       return
     setExportState('running')
@@ -447,7 +490,8 @@ export const StudioEditor: React.FC = () => {
           onClick={() => void download()}
           disabled={
             exportState === 'running' ||
-            (state.outputMode === 'page-capture' && !state.pageCapture)
+            (state.outputMode === 'page-capture' &&
+              !hasIntrinsicCaptureDimensions(state.pageCapture))
           }
         >
           {exportState === 'running' ? (

@@ -6,6 +6,7 @@ import {
 } from '../../components/preview/PreviewCard'
 import { useCardStore, type CardState } from '../../store/cardStore'
 import { computeUnifiedExportScale } from '../../utils/exportScale'
+import { hasIntrinsicCaptureDimensions } from './captureAsset'
 import { resolvePageFrame } from './pageFrame'
 import { resolveCompositionGeometry } from './geometry'
 
@@ -87,7 +88,7 @@ export const CompositionArtboard = forwardRef<
   } = composition
   const isAutoCanvas = canvasSize.preset === 'auto'
   const isPageMode = outputMode === 'page-capture'
-  const isDirectPage = isPageMode && !!pageCapture
+  const isDirectPage = isPageMode && hasIntrinsicCaptureDimensions(pageCapture)
   const finalScale = computeUnifiedExportScale({
     exportScale,
     cardScale: layout.cardScale,
@@ -143,8 +144,8 @@ export const CompositionArtboard = forwardRef<
     isDirectPage && pageCapture
       ? resolvePageFrame(
           {
-            width: pageCapture.width || canvasWidth,
-            height: pageCapture.height || canvasHeight,
+            width: pageCapture.width,
+            height: pageCapture.height,
           },
           { width: canvasWidth, height: canvasHeight },
           pageFrame
@@ -179,6 +180,8 @@ export const CompositionArtboard = forwardRef<
         <img
           src={pageCapture.image}
           alt="Página capturada"
+          data-capture-viewport={pageCapture.settings.viewport}
+          data-capture-area={pageCapture.settings.area}
           className="absolute z-10 max-w-none"
           style={{
             left: pageBounds.left,

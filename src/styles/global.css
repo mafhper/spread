@@ -952,6 +952,41 @@ html {
   padding: 10px;
 }
 
+.capture-geometry-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.capture-geometry-summary[data-columns='1'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.capture-geometry-summary > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  background: var(--studio-panel);
+  padding: 9px;
+}
+
+.capture-geometry-summary small,
+.capture-geometry-summary span {
+  color: var(--studio-subdued);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.capture-geometry-summary strong {
+  overflow: hidden;
+  color: var(--studio-text);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .capture-options fieldset {
   min-width: 0;
   margin: 0;
@@ -1025,6 +1060,10 @@ html {
   padding: 9px;
   font-size: 10px;
   line-height: 1.45;
+}
+
+.capture-loading-note[data-pending='true'] {
+  color: var(--studio-muted);
 }
 
 .studio-field {
