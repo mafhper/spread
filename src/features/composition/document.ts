@@ -288,10 +288,16 @@ export function migrateDocumentV1(
     canvas: {
       ...document.canvas,
       cardPosition: {
-        x: (document.canvas.cardPosition.x / BASE_CARD_WIDTH) * 100,
+        x:
+          (document.canvas.cardPosition.x /
+            Math.max(1, document.canvas.width || BASE_CARD_WIDTH)) *
+          100,
         y:
           (document.canvas.cardPosition.y /
-            Math.max(1, document.card.naturalHeight || 360)) *
+            Math.max(
+              1,
+              document.canvas.height || document.card.naturalHeight || 360
+            )) *
           100,
       },
     },

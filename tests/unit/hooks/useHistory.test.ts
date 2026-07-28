@@ -237,6 +237,48 @@ describe('useHistory hook', () => {
     )
   })
 
+  it('preserves a direct page capture and its framing in history', () => {
+    vi.mocked(localStorage.getItem).mockReturnValue(null)
+    const { result } = renderHook(() => useHistory())
+    const pageCapture = {
+      image: 'data:image/png;base64,captured-page',
+      width: 1440,
+      height: 900,
+      settings: { viewport: 'desktop', area: 'viewport' },
+      capturedAt: 1,
+    }
+
+    act(() => {
+      result.current.saveToHistory({
+        url: 'https://history.com/page',
+        title: 'Captured page',
+        outputMode: 'page-capture',
+        mediaSource: 'page',
+        pageCapture,
+        pageFrame: { fit: 'cover', scale: 1.5, offsetX: 25, offsetY: -25 },
+      })
+    })
+
+    expect(result.current.history[0].fullState).toMatchObject({
+      outputMode: 'page-capture',
+      mediaSource: 'page',
+      pageCapture,
+      pageFrame: { fit: 'cover', scale: 1.5, offsetX: 25, offsetY: -25 },
+    })
+
+    act(() => {
+      result.current.loadFromHistory(result.current.history[0])
+    })
+
+    expect(mockSetFullState).toHaveBeenCalledWith(
+      expect.objectContaining({
+        outputMode: 'page-capture',
+        mediaSource: 'page',
+        pageCapture,
+      })
+    )
+  })
+
   it('should delete from history', () => {
     const initialHistory = [
       {

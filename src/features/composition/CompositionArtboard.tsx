@@ -86,7 +86,8 @@ export const CompositionArtboard = forwardRef<
     pageFrame,
   } = composition
   const isAutoCanvas = canvasSize.preset === 'auto'
-  const isDirectPage = outputMode === 'page-capture' && !!pageCapture
+  const isPageMode = outputMode === 'page-capture'
+  const isDirectPage = isPageMode && !!pageCapture
   const finalScale = computeUnifiedExportScale({
     exportScale,
     cardScale: layout.cardScale,
@@ -157,9 +158,9 @@ export const CompositionArtboard = forwardRef<
       data-output-mode={outputMode}
       className="artboard-root relative isolate"
       style={{
-        width: isDirectPage ? canvasWidth : geometry.width,
-        height: isDirectPage ? canvasHeight : geometry.height,
-        overflow: isDirectPage || geometry.clip ? 'hidden' : 'visible',
+        width: isPageMode ? canvasWidth : geometry.width,
+        height: isPageMode ? canvasHeight : geometry.height,
+        overflow: isPageMode || geometry.clip ? 'hidden' : 'visible',
         borderRadius: `${canvasSize.roundness ?? 0}px`,
         ...backgroundStyle,
       }}
@@ -186,6 +187,13 @@ export const CompositionArtboard = forwardRef<
             height: pageBounds.height,
           }}
         />
+      ) : isPageMode ? (
+        <div
+          className="artboard-empty-state absolute inset-0 z-10"
+          role="status"
+        >
+          <p>Capture a página para visualizar e exportar este resultado.</p>
+        </div>
       ) : (
         <div
           ref={cardRef}

@@ -63,6 +63,36 @@ describe('Spread document model', () => {
     })
   })
 
+  it('converts legacy fixed-canvas offsets into canvas-relative positions', () => {
+    const current = documentFromCardState(createMockCardStore())
+    const legacy = {
+      ...current,
+      schema: 'spread-document@1' as const,
+      content: {
+        url: current.content.url,
+        title: current.content.title,
+        description: current.content.description,
+        author: current.content.author,
+        image: current.content.coverImage,
+        favicon: current.content.favicon,
+        domain: current.content.domain,
+        template: current.content.template,
+      },
+      canvas: {
+        ...current.canvas,
+        width: 1080,
+        height: 1350,
+        preset: 'post',
+        cardPosition: { x: 320, y: 675 },
+      },
+    }
+
+    const migrated = migrateDocumentV1(legacy)
+
+    expect(migrated.canvas.cardPosition.x).toBeCloseTo((320 / 1080) * 100)
+    expect(migrated.canvas.cardPosition.y).toBeCloseTo(50)
+  })
+
   it('stores style only in presets and preserves content when applying one', () => {
     const source = documentFromCardState(
       createMockCardStore({ title: 'Source title', author: 'Source author' })

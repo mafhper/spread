@@ -139,14 +139,19 @@ export const StudioEditor: React.FC = () => {
         ])
         if (controller.signal.aborted) return
 
+        const preservedPageCapture =
+          currentState.url === sourceUrl ? currentState.pageCapture : null
+        const coverImage = image || metadata.image
         currentState.setFullState({
           url: sourceUrl,
           title: metadata.title || metadata.domain,
           description: metadata.description,
-          image: image || metadata.image,
-          coverImage: image || metadata.image,
-          pageCapture:
-            currentState.url === sourceUrl ? currentState.pageCapture : null,
+          image:
+            currentState.mediaSource === 'page' && preservedPageCapture
+              ? preservedPageCapture.image
+              : coverImage,
+          coverImage,
+          pageCapture: preservedPageCapture,
           favicon: favicon || metadata.favicon,
           domain: metadata.domain,
           author: metadata.author,
@@ -234,7 +239,10 @@ export const StudioEditor: React.FC = () => {
         return
       if (!image) throw new Error('A imagem capturada não pôde ser preparada.')
 
-      const coverImage = state.coverImage || result.metadata.image
+      const coverImage =
+        state.url === sourceUrl
+          ? state.coverImage || result.metadata.image
+          : result.metadata.image
       const pageCapture = {
         image,
         width: dimensions?.width || result.width || 1,
@@ -253,8 +261,10 @@ export const StudioEditor: React.FC = () => {
         coverImage,
         pageCapture,
         image:
-          state.outputMode === 'social-card' && state.mediaSource === 'page'
-            ? image
+          state.outputMode === 'social-card'
+            ? state.mediaSource === 'page'
+              ? image
+              : coverImage
             : state.image,
         isWelcomeState: false,
       })
@@ -356,7 +366,12 @@ export const StudioEditor: React.FC = () => {
   }
 
   const download = async () => {
-    if (!previewRef.current || exportState === 'running') return
+    if (
+      !previewRef.current ||
+      exportState === 'running' ||
+      (state.outputMode === 'page-capture' && !state.pageCapture)
+    )
+      return
     setExportState('running')
     try {
       await previewRef.current.download()
@@ -430,7 +445,10 @@ export const StudioEditor: React.FC = () => {
         <button
           className="studio-export-button"
           onClick={() => void download()}
-          disabled={exportState === 'running'}
+          disabled={
+            exportState === 'running' ||
+            (state.outputMode === 'page-capture' && !state.pageCapture)
+          }
         >
           {exportState === 'running' ? (
             <Loader2 size={16} className="animate-spin" />

@@ -377,6 +377,12 @@ test('rendered page capture waits for the page and exposes visual framing contro
       name: 'Captura da página Exportação limpa da página',
     })
     .click()
+  await expect(
+    page
+      .getByTestId('composition-artboard')
+      .getByText('Capture a página para visualizar e exportar este resultado.')
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Exportar' })).toBeDisabled()
   await page.getByRole('button', { name: 'Celular 390 × 844' }).click()
   await page
     .getByLabel('Área capturada')

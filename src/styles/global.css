@@ -204,6 +204,26 @@ html {
   contain: layout;
   box-sizing: border-box;
 }
+
+.artboard-empty-state {
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  color: var(--studio-text);
+  text-align: center;
+}
+
+.artboard-empty-state p {
+  max-width: 280px;
+  margin: 0;
+  border: 1px solid var(--studio-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--studio-surface) 74%, transparent);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;

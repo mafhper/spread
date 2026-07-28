@@ -249,8 +249,7 @@ async function resolveLinkData(
       microlinkRequest,
     ])
     if (!youtubeData && !microlinkData) return null
-    if (options.capture && !microlinkData?.screenshot && !microlinkData?.image)
-      return null
+    if (options.capture && !microlinkData?.screenshot) return null
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
@@ -285,9 +284,7 @@ async function resolveLinkData(
         author,
         template,
       },
-      capture: options.capture
-        ? microlinkData?.screenshot || microlinkData?.image || null
-        : null,
+      capture: options.capture ? microlinkData?.screenshot || null : null,
     }
   } catch (error) {
     console.error('Metadata fetch failed:', error)

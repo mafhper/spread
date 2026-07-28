@@ -140,16 +140,17 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       viewScale,
     })
 
-    const isDirectPage = outputMode === 'page-capture' && !!pageCapture
+    const isPageMode = outputMode === 'page-capture'
+    const isDirectPage = isPageMode && !!pageCapture
     const canvasWidth =
-      isDirectPage && canvasSize.preset === 'auto'
-        ? pageCapture.width || canvasSize.width || 1080
+      isPageMode && canvasSize.preset === 'auto'
+        ? pageCapture?.width || canvasSize.width || 1080
         : canvasSize.width > 0
           ? canvasSize.width
           : CANVAS_PRESETS[canvasSize.preset]?.w || 1080
     const canvasHeight =
-      isDirectPage && canvasSize.preset === 'auto'
-        ? pageCapture.height || canvasSize.height || 1080
+      isPageMode && canvasSize.preset === 'auto'
+        ? pageCapture?.height || canvasSize.height || 1080
         : canvasSize.height > 0
           ? canvasSize.height
           : CANVAS_PRESETS[canvasSize.preset]?.h || 1080

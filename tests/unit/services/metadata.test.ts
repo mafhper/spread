@@ -111,6 +111,27 @@ describe('metadata service', () => {
       })
     })
 
+    it('rejects a capture response that only contains an Open Graph cover', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            status: 'success',
+            data: {
+              title: 'Metadata only',
+              image: { url: 'https://example.com/social.jpg' },
+            },
+          }),
+      } as Response)
+
+      await expect(
+        captureRenderedPage('https://example.com/app', {
+          viewport: 'desktop',
+          area: 'viewport',
+        })
+      ).resolves.toBeNull()
+    })
+
     it('should fetch metadata successfully', async () => {
       const mockResponse = {
         status: 'success',
