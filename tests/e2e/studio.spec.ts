@@ -325,6 +325,9 @@ test('local link fixtures cover metadata variants and preserve the document on f
   for (const fixture of fixtures) {
     await source.fill(fixture.url)
     await page.getByRole('button', { name: 'Carregar link' }).click()
+    await expect(
+      page.getByRole('button', { name: 'Carregar link' })
+    ).toBeEnabled()
     await expect(title).toHaveValue(fixture.expected || fixture.title)
     await expect(page.getByTestId('composition-artboard')).toHaveCount(1)
   }
