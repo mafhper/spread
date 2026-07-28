@@ -5,6 +5,7 @@ import {
   cardStatePatchFromDocument,
   createPresetFromDocument,
   documentFromCardState,
+  migrateDocumentV1,
 } from '@/features/composition/document'
 import { createBuiltinPresets } from '@/features/studio/builtinPresets'
 import { createMockCardStore } from '../../mocks/useCardStore'
@@ -24,28 +25,41 @@ describe('Spread document model', () => {
 
     const document = documentFromCardState(state)
 
-    expect(document.schema).toBe('spread-document@1')
+    expect(document.schema).toBe('spread-document@2')
     expect(document.content.url).toBe('https://example.com/story')
     expect(document.content.mediaSource).toBe('page')
-    expect(document.content.capture).toEqual({
-      viewport: 'mobile',
-      area: 'fullPage',
-    })
-    expect(document.canvas.cardPosition).toEqual({ x: 160, y: -36 })
+    expect(document.outputMode).toBe('social-card')
+    expect(document.canvas.cardPosition).toEqual({ x: 25, y: -10 })
     expect(document).not.toHaveProperty('isSidebarOpen')
     expect(document).not.toHaveProperty('isExporting')
     expect(() => JSON.stringify(document)).not.toThrow()
   })
 
-  it('opens older documents with safe page capture defaults', () => {
-    const document = documentFromCardState(createMockCardStore())
-    delete document.content.mediaSource
-    delete document.content.capture
+  it('migrates V1 page documents into social cards without losing the capture', () => {
+    const current = documentFromCardState(createMockCardStore())
+    const document = {
+      ...current,
+      schema: 'spread-document@1' as const,
+      content: {
+        url: current.content.url,
+        title: current.content.title,
+        description: current.content.description,
+        author: current.content.author,
+        image: 'data:image/png;base64,legacy',
+        favicon: current.content.favicon,
+        domain: current.content.domain,
+        template: current.content.template,
+        mediaSource: 'page' as const,
+        capture: { viewport: 'mobile' as const, area: 'fullPage' as const },
+      },
+    }
+    const migrated = migrateDocumentV1(document)
 
-    expect(cardStatePatchFromDocument(document)).toMatchObject({
-      mediaSource: 'metadata',
-      captureViewport: 'desktop',
-      captureArea: 'viewport',
+    expect(cardStatePatchFromDocument(migrated)).toMatchObject({
+      outputMode: 'social-card',
+      mediaSource: 'page',
+      captureViewport: 'mobile',
+      captureArea: 'fullPage',
     })
   })
 
@@ -66,7 +80,7 @@ describe('Spread document model', () => {
     expect(preset).not.toHaveProperty('content')
     expect(applied.content).toEqual(target.content)
     expect(applied.background).toEqual(source.background)
-    expect(applied.schema).toBe('spread-document@1')
+    expect(applied.schema).toBe('spread-document@2')
   })
 
   it('provides the six approved built-in styles', () => {

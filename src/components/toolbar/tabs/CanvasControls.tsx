@@ -20,13 +20,20 @@ interface CanvasPreset {
   icon: React.ReactNode
 }
 
-const ICONS: Record<string, React.ReactNode> = {
-  auto: <Maximize size={14} />,
-  story: <Smartphone size={14} />,
-  post: <ImageIcon size={14} />,
-  square: <Square size={14} />,
-  landscape: <Monitor size={14} />,
-  twitter: <Monitor size={14} />,
+const iconForPreset = (preset: string): React.ReactNode => {
+  switch (preset) {
+    case 'story':
+      return <Smartphone size={14} />
+    case 'post':
+      return <ImageIcon size={14} />
+    case 'square':
+      return <Square size={14} />
+    case 'landscape':
+    case 'twitter':
+      return <Monitor size={14} />
+    default:
+      return <Maximize size={14} />
+  }
 }
 
 const CANVAS_PRESET_LIST: CanvasPreset[] = Object.entries(CANVAS_PRESETS).map(
@@ -35,14 +42,16 @@ const CANVAS_PRESET_LIST: CanvasPreset[] = Object.entries(CANVAS_PRESETS).map(
     label: value.label,
     width: value.w,
     height: value.h,
-    icon: ICONS[key] ?? <Maximize size={14} />,
+    icon: iconForPreset(key),
   })
 )
 
 // Inspector › Canvas: cuida apenas do formato/dimensão e da posição do card.
 // Cores, gradiente e textura do fundo vivem no painel Fundos (ColorTabs /
 // BackgroundTabs) — não devem ser duplicados aqui.
-export const CanvasControls: React.FC = () => {
+export const CanvasControls: React.FC<{ showCardPosition?: boolean }> = ({
+  showCardPosition = true,
+}) => {
   const { canvasSize, cardPosition, updateNestedField } = useCardStore()
   const [isCompactViewport, setIsCompactViewport] = React.useState(false)
 
@@ -119,85 +128,103 @@ export const CanvasControls: React.FC = () => {
             </div>
           ),
         },
-        {
-          id: 'position',
-          title: 'Posição do Card',
-          summary: `X ${cardPosition.x}% · Y ${cardPosition.y}%`,
-          content: (
-            <div className="space-y-2.5">
-              <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] text-white/40 block">
-                    Eixo X
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-mono text-white/40">
-                      {cardPosition.x}%
-                    </span>
+        ...(showCardPosition
+          ? [
+              {
+                id: 'position',
+                title: 'Posição do Card',
+                summary: `X ${cardPosition.x}% · Y ${cardPosition.y}%`,
+                content: (
+                  <div className="space-y-2.5">
                     <button
-                      onClick={() => updateNestedField('cardPosition', 'x', 0)}
-                      className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      title="Resetar X"
-                      aria-label="Resetar posição X"
+                      type="button"
+                      className="w-full min-h-[44px] rounded-lg border border-white/10 bg-white/5 text-xs font-semibold text-white/80 hover:bg-white/10"
+                      onClick={() => {
+                        updateNestedField('cardPosition', 'x', 0)
+                        updateNestedField('cardPosition', 'y', 0)
+                      }}
                     >
-                      <RotateCcw size={12} />
+                      Centralizar card
                     </button>
+                    <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] text-white/40 block">
+                          Eixo X
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono text-white/40">
+                            {cardPosition.x}%
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateNestedField('cardPosition', 'x', 0)
+                            }
+                            className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            title="Resetar X"
+                            aria-label="Resetar posição X"
+                          >
+                            <RotateCcw size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="-50"
+                        max="50"
+                        step="5"
+                        value={cardPosition.x}
+                        onChange={e =>
+                          updateNestedField(
+                            'cardPosition',
+                            'x',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] text-white/40 block">
+                          Eixo Y
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono text-white/40">
+                            {cardPosition.y}%
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateNestedField('cardPosition', 'y', 0)
+                            }
+                            className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            title="Resetar Y"
+                            aria-label="Resetar posição Y"
+                          >
+                            <RotateCcw size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="range"
+                        min="-50"
+                        max="50"
+                        step="5"
+                        value={cardPosition.y}
+                        onChange={e =>
+                          updateNestedField(
+                            'cardPosition',
+                            'y',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
                   </div>
-                </div>
-                <input
-                  type="range"
-                  min="-50"
-                  max="50"
-                  step="5"
-                  value={cardPosition.x}
-                  onChange={e =>
-                    updateNestedField(
-                      'cardPosition',
-                      'x',
-                      parseInt(e.target.value)
-                    )
-                  }
-                  className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-              <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] text-white/40 block">
-                    Eixo Y
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-mono text-white/40">
-                      {cardPosition.y}%
-                    </span>
-                    <button
-                      onClick={() => updateNestedField('cardPosition', 'y', 0)}
-                      className="p-3 -m-2.5 hover:bg-white/10 rounded transition-colors text-white/20 hover:text-white/60 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      title="Resetar Y"
-                      aria-label="Resetar posição Y"
-                    >
-                      <RotateCcw size={12} />
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="range"
-                  min="-50"
-                  max="50"
-                  step="5"
-                  value={cardPosition.y}
-                  onChange={e =>
-                    updateNestedField(
-                      'cardPosition',
-                      'y',
-                      parseInt(e.target.value)
-                    )
-                  }
-                  className="w-full accent-white h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            </div>
-          ),
-        },
+                ),
+              },
+            ]
+          : []),
       ]}
     />
   )

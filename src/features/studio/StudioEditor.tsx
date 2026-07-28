@@ -18,10 +18,9 @@ import {
 } from 'lucide-react'
 
 import { useCardStore } from '../../store/cardStore'
-import { fetchMetadata } from '../../services/metadata'
-import { urlToBase64 } from '../../services/exportUtils'
+import { captureRenderedPage, fetchLinkMetadata } from '../../services/metadata'
+import { getImageDimensions, urlToBase64 } from '../../services/exportUtils'
 import { getPendingUrl, removePendingUrl } from '../../utils/persistence'
-import { detectViewport } from '../../utils/canvasPresets'
 import type {
   LinkMediaSource,
   PageCaptureArea,
@@ -30,7 +29,7 @@ import type {
 import {
   cardStatePatchFromDocument,
   documentFromCardState,
-  type SpreadDocumentV1,
+  type SpreadDocumentV2,
 } from '../composition/document'
 import { LibraryPanel } from './LibraryPanel'
 import { studioRepository } from './repository'
@@ -63,9 +62,10 @@ export const StudioEditor: React.FC = () => {
     | null
   >(null)
   const initialUrlRef = useRef<string | null>(null)
-  const pastRef = useRef<SpreadDocumentV1[]>([])
-  const futureRef = useRef<SpreadDocumentV1[]>([])
+  const pastRef = useRef<SpreadDocumentV2[]>([])
+  const futureRef = useRef<SpreadDocumentV2[]>([])
   const applyingHistoryRef = useRef(false)
+  const captureRequestRef = useRef(0)
 
   useEffect(() => {
     const sync = () => setIsCompact(window.innerWidth < 900)
@@ -117,25 +117,14 @@ export const StudioEditor: React.FC = () => {
       abortRef.current = controller
       setErrorMessage('')
       const currentState = useCardStore.getState()
-      const isPageCapture = currentState.mediaSource === 'page'
-      setLoadState(isPageCapture ? 'page' : 'metadata')
+      setLoadState('metadata')
 
       try {
-        const metadata = await fetchMetadata(sourceUrl, {
+        const metadata = await fetchLinkMetadata(sourceUrl, {
           signal: controller.signal,
-          capture: isPageCapture
-            ? {
-                viewport: currentState.captureViewport,
-                area: currentState.captureArea,
-              }
-            : undefined,
         })
         if (!metadata) {
-          throw new Error(
-            isPageCapture
-              ? 'A página não concluiu a captura. Tente outra área ou dispositivo.'
-              : 'Não foi possível ler este link.'
-          )
+          throw new Error('Não foi possível ler este link.')
         }
         if (controller.signal.aborted) return
 
@@ -155,6 +144,9 @@ export const StudioEditor: React.FC = () => {
           title: metadata.title || metadata.domain,
           description: metadata.description,
           image: image || metadata.image,
+          coverImage: image || metadata.image,
+          pageCapture:
+            currentState.url === sourceUrl ? currentState.pageCapture : null,
           favicon: favicon || metadata.favicon,
           domain: metadata.domain,
           author: metadata.author,
@@ -180,23 +172,102 @@ export const StudioEditor: React.FC = () => {
     field: 'mediaSource' | 'captureViewport' | 'captureArea',
     value: LinkMediaSource | PageCaptureViewport | PageCaptureArea
   ) => {
-    if (field === 'mediaSource' && value === 'page') {
-      const viewport = detectViewport()
-      state.updateField('mediaSource', value)
-      state.updateField('captureViewport', viewport)
-      state.updateNestedField('canvasSize', 'preset', 'auto')
-      state.updateLayout('aspectRatio', 'aspect-auto')
-      state.updateLayout('imageFit', 'contain')
-      state.updateNestedField('cardPosition', 'x', 0)
-      state.updateNestedField('cardPosition', 'y', 0)
-    } else {
-      state.updateField(field, value)
+    if (field === 'mediaSource') {
+      const mediaSource = value as LinkMediaSource
+      state.updateField('mediaSource', mediaSource)
+      if (state.outputMode === 'social-card') {
+        state.updateField(
+          'image',
+          mediaSource === 'page'
+            ? state.pageCapture?.image || state.coverImage
+            : state.coverImage
+        )
+      }
+    } else state.updateField(field, value)
+    setLoadState('idle')
+    setErrorMessage('')
+  }
+
+  const updateOutputMode = (outputMode: 'social-card' | 'page-capture') => {
+    state.updateField('outputMode', outputMode)
+    if (outputMode === 'social-card') {
+      const sourceImage =
+        state.mediaSource === 'page'
+          ? state.pageCapture?.image || state.coverImage
+          : state.coverImage
+      state.updateField('image', sourceImage)
     }
     setLoadState('idle')
     setErrorMessage('')
-    const currentUrl = useCardStore.getState().url
-    if (currentUrl && isReady) {
-      void handleLoad(currentUrl)
+  }
+
+  const capturePage = async () => {
+    const sourceUrl = inputUrl.trim() || state.url
+    if (!sourceUrl) return
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const requestId = ++captureRequestRef.current
+    const settings = {
+      viewport: state.captureViewport,
+      area: state.captureArea,
+    }
+    setLoadState('page')
+    setErrorMessage('')
+
+    try {
+      const result = await captureRenderedPage(sourceUrl, settings, {
+        signal: controller.signal,
+      })
+      if (!result) {
+        throw new Error('A página não concluiu a captura. Tente novamente.')
+      }
+      setLoadState('assets')
+      const image = await urlToBase64(result.image, {
+        signal: controller.signal,
+      })
+      const dimensions = image
+        ? await getImageDimensions(image, controller.signal)
+        : null
+      if (controller.signal.aborted || requestId !== captureRequestRef.current)
+        return
+      if (!image) throw new Error('A imagem capturada não pôde ser preparada.')
+
+      const coverImage = state.coverImage || result.metadata.image
+      const pageCapture = {
+        image,
+        width: dimensions?.width || result.width || 1,
+        height: dimensions?.height || result.height || 1,
+        settings,
+        capturedAt: Date.now(),
+      }
+      state.setFullState({
+        url: sourceUrl,
+        title: result.metadata.title || state.title,
+        description: result.metadata.description || state.description,
+        author: result.metadata.author || state.author,
+        favicon: result.metadata.favicon || state.favicon,
+        domain: result.metadata.domain || state.domain,
+        template: result.metadata.template || state.template,
+        coverImage,
+        pageCapture,
+        image:
+          state.outputMode === 'social-card' && state.mediaSource === 'page'
+            ? image
+            : state.image,
+        isWelcomeState: false,
+      })
+      setInputUrl(sourceUrl)
+      setLoadState('ready')
+    } catch (error) {
+      if (controller.signal.aborted) return
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível capturar a página.'
+      )
+      setLoadState('error')
     }
   }
 
@@ -216,7 +287,7 @@ export const StudioEditor: React.FC = () => {
     if (!isReady) return
     const timeoutId = window.setTimeout(() => {
       void studioRepository
-        .saveDraft(JSON.parse(serializedDocument) as SpreadDocumentV1)
+        .saveDraft(JSON.parse(serializedDocument) as SpreadDocumentV2)
         .catch(() => undefined)
     }, 500)
     return () => window.clearTimeout(timeoutId)
@@ -244,7 +315,7 @@ export const StudioEditor: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [mobilePanel])
 
-  const applyHistoryDocument = (document: SpreadDocumentV1) => {
+  const applyHistoryDocument = (document: SpreadDocumentV2) => {
     applyingHistoryRef.current = true
     state.setFullState({
       ...cardStatePatchFromDocument(document),
@@ -380,6 +451,8 @@ export const StudioEditor: React.FC = () => {
               inputUrl={inputUrl}
               setInputUrl={setInputUrl}
               onLoad={() => void handleLoad()}
+              onCapturePage={() => void capturePage()}
+              onOutputModeChange={updateOutputMode}
               isReady={isReady}
               loadState={loadState}
               errorMessage={errorMessage}

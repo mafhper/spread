@@ -13,8 +13,11 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { resolvePublicAsset } from '../utils/resolvePublicAsset'
 import type {
+  CapturedPageAsset,
   LinkMediaSource,
+  OutputMode,
   PageCaptureArea,
+  PageFrameSettings,
   PageCaptureViewport,
 } from '../types/capture'
 
@@ -28,6 +31,10 @@ export interface CardState {
   favicon: string | null
   domain: string
   template: 'default' | 'music' | 'news'
+  outputMode: OutputMode
+  coverImage: string | null
+  pageCapture: CapturedPageAsset | null
+  pageFrame: PageFrameSettings
   mediaSource: LinkMediaSource
   captureViewport: PageCaptureViewport
   captureArea: PageCaptureArea
@@ -140,6 +147,15 @@ const DEFAULT_STATE = {
   favicon: resolvePublicAsset('logo.svg'),
   domain: 'spread.app',
   template: 'default' as const,
+  outputMode: 'social-card' as const,
+  coverImage: resolvePublicAsset('assets/social-preview.png'),
+  pageCapture: null,
+  pageFrame: {
+    fit: 'contain' as const,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+  },
   mediaSource: 'metadata' as const,
   captureViewport: 'desktop' as const,
   captureArea: 'viewport' as const,
@@ -288,6 +304,10 @@ export const useCardStore = create<CardState>()(
           domain: DEFAULT_STATE.domain,
           isWelcomeState: true,
           template: 'default',
+          outputMode: DEFAULT_STATE.outputMode,
+          coverImage: DEFAULT_STATE.coverImage,
+          pageCapture: DEFAULT_STATE.pageCapture,
+          pageFrame: DEFAULT_STATE.pageFrame,
           mediaSource: DEFAULT_STATE.mediaSource,
           captureViewport: DEFAULT_STATE.captureViewport,
           captureArea: DEFAULT_STATE.captureArea,
@@ -352,6 +372,10 @@ export const useCardStore = create<CardState>()(
           image: state.image,
           favicon: state.favicon,
           domain: state.domain,
+          outputMode: state.outputMode,
+          coverImage: state.coverImage,
+          pageCapture: state.pageCapture,
+          pageFrame: state.pageFrame,
           mediaSource: state.mediaSource,
           captureViewport: state.captureViewport,
           captureArea: state.captureArea,

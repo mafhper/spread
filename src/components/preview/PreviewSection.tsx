@@ -18,11 +18,10 @@ import { useCardStore } from '../../store/cardStore'
 import { CompositionArtboard } from '../../features/composition/CompositionArtboard'
 import { log } from '../../utils/logger'
 import { CANVAS_PRESETS } from '../../utils/canvasPresets'
-import { PAGE_CAPTURE_VIEWPORTS } from '../../types/capture'
 import { WelcomeCard } from './WelcomeCard'
 
 import { useHistory } from '../../hooks/useHistory'
-import { fetchMetadata } from '../../services/metadata'
+import { fetchLinkMetadata } from '../../services/metadata'
 import { useColorExtractor } from '../../hooks/useColorExtractor'
 import {
   urlToBase64,
@@ -53,8 +52,8 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       isWelcomeState,
       isSidebarOpen,
       layout,
-      mediaSource,
-      captureViewport,
+      outputMode,
+      pageCapture,
     } = useCardStore()
     const currentState = useCardStore()
     const { saveToHistory, history, loadFromHistory } = useHistory()
@@ -141,14 +140,19 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       viewScale,
     })
 
+    const isDirectPage = outputMode === 'page-capture' && !!pageCapture
     const canvasWidth =
-      canvasSize.width > 0
-        ? canvasSize.width
-        : CANVAS_PRESETS[canvasSize.preset]?.w || 1080
+      isDirectPage && canvasSize.preset === 'auto'
+        ? pageCapture.width || canvasSize.width || 1080
+        : canvasSize.width > 0
+          ? canvasSize.width
+          : CANVAS_PRESETS[canvasSize.preset]?.w || 1080
     const canvasHeight =
-      canvasSize.height > 0
-        ? canvasSize.height
-        : CANVAS_PRESETS[canvasSize.preset]?.h || 1080
+      isDirectPage && canvasSize.preset === 'auto'
+        ? pageCapture.height || canvasSize.height || 1080
+        : canvasSize.height > 0
+          ? canvasSize.height
+          : CANVAS_PRESETS[canvasSize.preset]?.h || 1080
 
     // Computed Background Style
     const getBackgroundStyle = () => {
@@ -235,16 +239,11 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
           updateNestedField('layout', 'measuredCardHeight', newHeight)
         }
 
-        // If Auto Canvas is on, update canvas dimensions
-        if (isAutoCanvas) {
-          // For page captures, use viewport width instead of card DOM width
-          const isPage = mediaSource === 'page'
-          const targetWidth = isPage
-            ? (PAGE_CAPTURE_VIEWPORTS[captureViewport]?.width ?? newWidth)
-            : newWidth
-          const targetHeight = isPage
-            ? layout.measuredCardHeight || newHeight
-            : newHeight
+        // Auto canvas wraps only the social card. Direct page mode receives
+        // its size from the committed capture asset.
+        if (isAutoCanvas && outputMode === 'social-card') {
+          const targetWidth = newWidth
+          const targetHeight = newHeight
 
           if (
             (Math.abs(canvasSize.width - targetWidth) > 1 ||
@@ -275,8 +274,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       canvasSize.width,
       canvasSize.height,
       layout.measuredCardHeight,
-      mediaSource,
-      captureViewport,
+      outputMode,
     ])
 
     // Auto Scale Card Logic (to fit inside canvas if needed) - mantido para compatibilidade com export
@@ -291,13 +289,10 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       // Apply auto-scale only when Card Auto is active AND Canvas is Fixed
       // If Canvas is Auto, we should NOT scale the card internally, as the canvas will wrap the card natural size.
       // The useAutoScale hook will handle the visual zoom to fit the screen.
-      if (layout.cardAuto && !isAutoCanvas) {
+      if (layout.cardAuto && !isAutoCanvas && !isDirectPage) {
         const availableWidth = canvasWidth > 0 ? canvasWidth : 640
         const availableHeight = canvasHeight > 0 ? canvasHeight : 360
-        const cardW = Math.min(
-          Math.max(640, canvasWidth * 0.55),
-          canvasWidth - 80
-        )
+        const cardW = 640
         // Use the measured card height for accurate scaling
         const cardH =
           layout.measuredCardHeight || (cardRef.current?.offsetHeight ?? 360)
@@ -331,6 +326,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       layout.cardAuto,
       layout.measuredCardHeight,
       layout.paddingAuto,
+      isDirectPage,
       containerRef.current,
       cardRef.current,
     ])
@@ -385,7 +381,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
       if (!inputUrl) return
       setIsLoadingMetadata(true)
       try {
-        const data = await fetchMetadata(inputUrl)
+        const data = await fetchLinkMetadata(inputUrl)
         if (data) {
           const [base64Favicon, base64Image] = await Promise.all([
             data.favicon ? urlToBase64(data.favicon) : Promise.resolve(null),
@@ -397,6 +393,8 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
             title: data.title,
             description: data.description,
             image: base64Image || data.image,
+            coverImage: base64Image || data.image,
+            pageCapture: null,
             favicon: base64Favicon || data.favicon,
             domain: data.domain,
             author: data.author || '',
@@ -653,7 +651,7 @@ export const PreviewSection = forwardRef<PreviewSectionHandle>(
                 ref={exportRef}
                 canvasWidth={canvasWidth}
                 canvasHeight={canvasHeight}
-                autoScale={autoScale}
+                fitScale={autoScale}
                 cardRef={cardRef}
                 cardPadding={paddingValue()}
               />

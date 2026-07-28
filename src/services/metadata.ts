@@ -18,6 +18,13 @@ export interface LinkMetadata {
   template: 'default' | 'music' | 'news'
 }
 
+export interface RenderedPageCapture {
+  metadata: LinkMetadata
+  image: string
+  width: number
+  height: number
+}
+
 // Microlink scrapes the page server-side and can be slow (or hang) for
 // JS-heavy pages like YouTube Music. Cap it so the link processing never
 // blocks indefinitely; when it times out we fall back to oEmbed data.
@@ -131,8 +138,8 @@ function detectTemplate(url: string): 'default' | 'music' | 'news' {
 interface MicrolinkMetadata {
   title: string
   description: string
-  image: string | null
-  screenshot: string | null
+  image: { url: string; width: number; height: number } | null
+  screenshot: { url: string; width: number; height: number } | null
   favicon: string | null
   author: string
 }
@@ -148,6 +155,7 @@ export function buildMicrolinkUrl(
   params.set('screenshot', 'true')
   params.set('prerender', 'true')
   params.set('waitUntil', 'networkidle0')
+  params.set('waitForTimeout', '1500')
   params.set('force', 'true')
   params.set('viewport.width', String(viewport.width))
   params.set('viewport.height', String(viewport.height))
@@ -183,17 +191,32 @@ async function fetchMicrolinkData(
   return {
     title: data.title || '',
     description: data.description || '',
-    image: data.image?.url || null,
-    screenshot: data.screenshot?.url || null,
+    image: data.image?.url
+      ? {
+          url: data.image.url,
+          width: Number(data.image.width) || 0,
+          height: Number(data.image.height) || 0,
+        }
+      : null,
+    screenshot: data.screenshot?.url
+      ? {
+          url: data.screenshot.url,
+          width: Number(data.screenshot.width) || 0,
+          height: Number(data.screenshot.height) || 0,
+        }
+      : null,
     favicon: data.logo?.url || fallbackFavicon,
     author: data.author || data.publisher || '',
   }
 }
 
-export async function fetchMetadata(
+async function resolveLinkData(
   url: string,
   options: { signal?: AbortSignal; capture?: PageCaptureSettings } = {}
-): Promise<LinkMetadata | null> {
+): Promise<{
+  metadata: LinkMetadata
+  capture: { url: string; width: number; height: number } | null
+} | null> {
   try {
     let targetUrl = url
     if (!targetUrl.startsWith('http')) {
@@ -231,9 +254,7 @@ export async function fetchMetadata(
 
     let title = microlinkData?.title || ''
     const description = microlinkData?.description || ''
-    let image: string | null = options.capture
-      ? microlinkData?.screenshot || microlinkData?.image || null
-      : microlinkData?.image || null
+    let image: string | null = microlinkData?.image?.url || null
     let author = microlinkData?.author || ''
     const favicon: string | null = microlinkData?.favicon || fallbackFavicon
 
@@ -255,16 +276,56 @@ export async function fetchMetadata(
     }
 
     return {
-      title,
-      description,
-      image,
-      favicon,
-      domain,
-      author,
-      template,
+      metadata: {
+        title,
+        description,
+        image,
+        favicon,
+        domain,
+        author,
+        template,
+      },
+      capture: options.capture
+        ? microlinkData?.screenshot || microlinkData?.image || null
+        : null,
     }
   } catch (error) {
     console.error('Metadata fetch failed:', error)
     return null
   }
+}
+
+export async function fetchLinkMetadata(
+  url: string,
+  options: { signal?: AbortSignal } = {}
+): Promise<LinkMetadata | null> {
+  const result = await resolveLinkData(url, options)
+  return result?.metadata ?? null
+}
+
+export async function captureRenderedPage(
+  url: string,
+  capture: PageCaptureSettings,
+  options: { signal?: AbortSignal } = {}
+): Promise<RenderedPageCapture | null> {
+  const result = await resolveLinkData(url, { ...options, capture })
+  if (!result?.capture) return null
+  return {
+    metadata: result.metadata,
+    image: result.capture.url,
+    width: result.capture.width,
+    height: result.capture.height,
+  }
+}
+
+/** Compatibility entry point for callers that still request capture inline. */
+export async function fetchMetadata(
+  url: string,
+  options: { signal?: AbortSignal; capture?: PageCaptureSettings } = {}
+): Promise<LinkMetadata | null> {
+  if (options.capture) {
+    const result = await captureRenderedPage(url, options.capture, options)
+    return result ? { ...result.metadata, image: result.image } : null
+  }
+  return fetchLinkMetadata(url, options)
 }

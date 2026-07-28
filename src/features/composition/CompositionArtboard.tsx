@@ -4,13 +4,10 @@ import {
   PreviewCard,
   type PreviewCardState,
 } from '../../components/preview/PreviewCard'
-import { type CardState, useCardStore } from '../../store/cardStore'
+import { useCardStore, type CardState } from '../../store/cardStore'
 import { computeUnifiedExportScale } from '../../utils/exportScale'
-import {
-  migrateLegacyCardPosition,
-  resolveCompositionGeometry,
-} from './geometry'
-import { PAGE_CAPTURE_VIEWPORTS } from '../../types/capture'
+import { resolvePageFrame } from './pageFrame'
+import { resolveCompositionGeometry } from './geometry'
 
 const BASE_CARD_WIDTH = 640
 
@@ -34,20 +31,15 @@ const getPatternImage = (pattern: unknown) => {
 }
 
 const getPatternBase = (pattern: unknown) => {
-  switch (pattern) {
-    case 'grid':
-      return 40
-    case 'diagonal':
-      return 10
-    default:
-      return 20
-  }
+  if (pattern === 'grid') return 40
+  if (pattern === 'diagonal') return 10
+  return 20
 }
 
 export interface CompositionArtboardProps {
   canvasWidth: number
   canvasHeight: number
-  autoScale: number
+  fitScale: number
   cardRef: React.RefObject<HTMLDivElement | null>
   cardPadding: number
   state?: CompositionArtboardState
@@ -64,16 +56,20 @@ export type CompositionArtboardState = PreviewCardState &
     | 'patternScale'
     | 'cardPosition'
     | 'exportScale'
+    | 'outputMode'
+    | 'pageCapture'
+    | 'pageFrame'
   >
 
 export const CompositionArtboard = forwardRef<
   HTMLDivElement,
   CompositionArtboardProps
 >(function CompositionArtboard(
-  { canvasWidth, canvasHeight, autoScale, cardRef, cardPadding, state },
+  { canvasWidth, canvasHeight, fitScale, cardRef, cardPadding, state },
   ref
 ) {
   const storeState = useCardStore()
+  const composition = state ?? storeState
   const {
     colors,
     canvasSize,
@@ -85,36 +81,29 @@ export const CompositionArtboard = forwardRef<
     cardPosition,
     layout,
     exportScale,
-  } = state ?? storeState
-
+    outputMode,
+    pageCapture,
+    pageFrame,
+  } = composition
   const isAutoCanvas = canvasSize.preset === 'auto'
+  const isDirectPage = outputMode === 'page-capture' && !!pageCapture
   const finalScale = computeUnifiedExportScale({
     exportScale,
     cardScale: layout.cardScale,
-    autoScale,
+    autoScale: fitScale,
     preset: canvasSize.preset,
   })
   const naturalHeight = Math.max(1, layout.measuredCardHeight || 360)
-
-  const isPageCapture = storeState.mediaSource === 'page'
-  const viewportWidth =
-    isPageCapture && isAutoCanvas
-      ? (PAGE_CAPTURE_VIEWPORTS[storeState.captureViewport]?.width ??
-        BASE_CARD_WIDTH)
-      : 0
-
-  const cardWidth = isAutoCanvas
-    ? Math.max(BASE_CARD_WIDTH, viewportWidth)
-    : Math.min(Math.max(BASE_CARD_WIDTH, canvasWidth * 0.55), canvasWidth - 80)
-
-  const position = migrateLegacyCardPosition(cardPosition, {
-    width: cardWidth,
-    height: naturalHeight,
-    scale: finalScale,
-  })
+  const cardWidth = BASE_CARD_WIDTH
+  const position = {
+    x: ((cardPosition.x || 0) / 100) * (isAutoCanvas ? cardWidth : canvasWidth),
+    y:
+      ((cardPosition.y || 0) / 100) *
+      (isAutoCanvas ? naturalHeight : canvasHeight),
+  }
   const geometry = resolveCompositionGeometry({
     canvas: {
-      mode: isAutoCanvas ? 'auto' : 'fixed',
+      mode: isAutoCanvas && !isDirectPage ? 'auto' : 'fixed',
       width: canvasWidth,
       height: canvasHeight,
       padding: cardPadding,
@@ -133,7 +122,6 @@ export const CompositionArtboard = forwardRef<
       spread: layout.shadowSpread ?? 0,
     },
   })
-
   const gradient =
     gradientStyle?.includes('deg') || gradientStyle?.includes('circle')
       ? gradientStyle
@@ -150,16 +138,28 @@ export const CompositionArtboard = forwardRef<
           : `linear-gradient(${gradient}, ${colors.bg1}, ${colors.bg2})`,
       }
   const patternBase = getPatternBase(pattern)
+  const pageBounds =
+    isDirectPage && pageCapture
+      ? resolvePageFrame(
+          {
+            width: pageCapture.width || canvasWidth,
+            height: pageCapture.height || canvasHeight,
+          },
+          { width: canvasWidth, height: canvasHeight },
+          pageFrame
+        )
+      : null
 
   return (
     <div
       ref={ref}
       data-testid="composition-artboard"
+      data-output-mode={outputMode}
       className="artboard-root relative isolate"
       style={{
-        width: geometry.width,
-        height: geometry.height,
-        overflow: geometry.clip ? 'hidden' : 'visible',
+        width: isDirectPage ? canvasWidth : geometry.width,
+        height: isDirectPage ? canvasHeight : geometry.height,
+        overflow: isDirectPage || geometry.clip ? 'hidden' : 'visible',
         borderRadius: `${canvasSize.roundness ?? 0}px`,
         ...backgroundStyle,
       }}
@@ -174,18 +174,37 @@ export const CompositionArtboard = forwardRef<
           mixBlendMode: 'overlay',
         }}
       />
-      <div
-        ref={cardRef}
-        className="absolute z-10 w-fit h-fit"
-        style={{
-          left: geometry.cardCenterX - (cardWidth * finalScale) / 2,
-          top: geometry.cardCenterY - (naturalHeight * finalScale) / 2,
-          transform: `scale(${finalScale})`,
-          transformOrigin: 'top left',
-        }}
-      >
-        <PreviewCard padding={cardPadding} cardState={state} />
-      </div>
+      {pageBounds && pageCapture ? (
+        <img
+          src={pageCapture.image}
+          alt="Página capturada"
+          className="absolute z-10 max-w-none"
+          style={{
+            left: pageBounds.left,
+            top: pageBounds.top,
+            width: pageBounds.width,
+            height: pageBounds.height,
+          }}
+        />
+      ) : (
+        <div
+          ref={cardRef}
+          className="absolute z-10 h-fit"
+          style={{
+            width: cardWidth,
+            left: geometry.cardCenterX - (cardWidth * finalScale) / 2,
+            top: geometry.cardCenterY - (naturalHeight * finalScale) / 2,
+            transform: `scale(${finalScale})`,
+            transformOrigin: 'top left',
+          }}
+        >
+          <PreviewCard
+            padding={cardPadding}
+            cardState={state}
+            width={cardWidth}
+          />
+        </div>
+      )}
     </div>
   )
 })

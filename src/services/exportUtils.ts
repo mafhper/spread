@@ -108,6 +108,35 @@ export async function urlToBase64(
   return null
 }
 
+/** Decode the actual asset dimensions once, so auto page canvases are stable. */
+export async function getImageDimensions(
+  source: string,
+  signal?: AbortSignal
+): Promise<{ width: number; height: number } | null> {
+  if (typeof Image === 'undefined') return null
+  if (signal?.aborted) return null
+
+  return new Promise(resolve => {
+    const image = new Image()
+    const finish = () => {
+      signal?.removeEventListener('abort', abort)
+      resolve(
+        image.naturalWidth > 0 && image.naturalHeight > 0
+          ? { width: image.naturalWidth, height: image.naturalHeight }
+          : null
+      )
+    }
+    const abort = () => {
+      image.src = ''
+      finish()
+    }
+    image.onload = finish
+    image.onerror = finish
+    signal?.addEventListener('abort', abort, { once: true })
+    image.src = source
+  })
+}
+
 /**
  * Aguarda o próximo frame de animação (resolve imediatamente fora do browser).
  */
@@ -171,10 +200,24 @@ export async function waitForStableLayout(
  * 3. Fetches WOFF2 data
  * 4. Reconstructs CSS with Data URLs
  */
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  timeoutMs = 2_500
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(input, { signal: controller.signal })
+  } finally {
+    window.clearTimeout(timeout)
+  }
+}
+
 export async function getEmbeddedFontCSS(fontFamily: string): Promise<string> {
   try {
     const cssUrl = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;700&display=swap`
-    const res = await fetch(cssUrl)
+    const res = await fetchWithTimeout(cssUrl)
     let css = await res.text()
 
     // Find all URLs in the CSS
@@ -186,7 +229,7 @@ export async function getEmbeddedFontCSS(fontFamily: string): Promise<string> {
 
       // Fetch font file
       try {
-        const fontRes = await fetch(originalUrl)
+        const fontRes = await fetchWithTimeout(originalUrl)
         const fontBlob = await fontRes.blob()
         const base64 = await blobToBase64(fontBlob)
 

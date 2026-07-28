@@ -122,8 +122,8 @@ describe('PreviewSection Component', () => {
       domain: 'test.com',
       template: 'default' as const,
     }
-    const { fetchMetadata } = await import('@/services/metadata')
-    vi.mocked(fetchMetadata).mockResolvedValue(mockData)
+    const { fetchLinkMetadata } = await import('@/services/metadata')
+    vi.mocked(fetchLinkMetadata).mockResolvedValue(mockData)
 
     render(<PreviewSection />)
 
@@ -134,7 +134,7 @@ describe('PreviewSection Component', () => {
     fireEvent.click(generateButton)
 
     await waitFor(() => {
-      expect(fetchMetadata).toHaveBeenCalledWith('https://test.com')
+      expect(fetchLinkMetadata).toHaveBeenCalledWith('https://test.com')
       expect(mockStore.setFullState).toHaveBeenCalled()
     })
   })
@@ -143,8 +143,8 @@ describe('PreviewSection Component', () => {
     const mockStore = createMockCardStore({ isWelcomeState: true })
     vi.mocked(useCardStore).mockReturnValue(mockStore)
 
-    const { fetchMetadata } = await import('@/services/metadata')
-    vi.mocked(fetchMetadata).mockRejectedValue(new Error('Network error'))
+    const { fetchLinkMetadata } = await import('@/services/metadata')
+    vi.mocked(fetchLinkMetadata).mockRejectedValue(new Error('Network error'))
 
     vi.spyOn(window, 'alert').mockImplementation(() => {})
 
