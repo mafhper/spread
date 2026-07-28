@@ -63,7 +63,7 @@ describe('Spread document model', () => {
     })
   })
 
-  it('converts legacy fixed-canvas offsets into canvas-relative positions', () => {
+  it('preserves legacy fixed-canvas pixel offsets as canvas-relative positions', () => {
     const current = documentFromCardState(createMockCardStore())
     const legacy = {
       ...current,
@@ -91,6 +91,40 @@ describe('Spread document model', () => {
 
     expect(migrated.canvas.cardPosition.x).toBeCloseTo((320 / 1080) * 100)
     expect(migrated.canvas.cardPosition.y).toBeCloseTo(50)
+  })
+
+  it('restores legacy Auto offsets against the wrapped card dimensions', () => {
+    const current = documentFromCardState(createMockCardStore())
+    const legacy = {
+      ...current,
+      schema: 'spread-document@1' as const,
+      content: {
+        url: current.content.url,
+        title: current.content.title,
+        description: current.content.description,
+        author: current.content.author,
+        image: current.content.coverImage,
+        favicon: current.content.favicon,
+        domain: current.content.domain,
+        template: current.content.template,
+      },
+      canvas: {
+        ...current.canvas,
+        width: 1200,
+        height: 630,
+        preset: 'auto',
+        cardPosition: { x: 320, y: 180 },
+      },
+      card: {
+        ...current.card,
+        naturalWidth: 640,
+        naturalHeight: 360,
+      },
+    }
+
+    const migrated = migrateDocumentV1(legacy)
+
+    expect(migrated.canvas.cardPosition).toEqual({ x: 50, y: 50 })
   })
 
   it('stores style only in presets and preserves content when applying one', () => {

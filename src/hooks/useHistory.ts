@@ -19,12 +19,17 @@ const snapshotPageCapture = (value: unknown) => {
   const capture = value as Record<string, unknown>
   const image = capture.image
 
+  if (
+    typeof image !== 'string' ||
+    image.length === 0 ||
+    image.length > CAPTURE_IMAGE_MAX_CHARS
+  ) {
+    return null
+  }
+
   return {
     ...capture,
-    image:
-      typeof image === 'string' && image.length <= CAPTURE_IMAGE_MAX_CHARS
-        ? image
-        : null,
+    image,
   }
 }
 
@@ -120,6 +125,15 @@ export function useHistory() {
     if (item.fullState) {
       // If we pruned high-res images to save space, fallback to the thumbnail we kept
       const stateToRestore = { ...item.fullState }
+      const pageCapture = stateToRestore.pageCapture
+      if (
+        pageCapture &&
+        (typeof pageCapture !== 'object' ||
+          typeof (pageCapture as Record<string, unknown>).image !== 'string' ||
+          !(pageCapture as Record<string, unknown>).image)
+      ) {
+        stateToRestore.pageCapture = null
+      }
       if (!stateToRestore.image && item.previewImage) {
         stateToRestore.image = item.previewImage
       }
