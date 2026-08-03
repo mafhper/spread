@@ -22,7 +22,7 @@ Spread is a high-fidelity web utility engineered for the generation of aesthetic
 - **Heuristic Color Engine**: Leverages a specialized analysis module to derive dominant color palettes from source media, generating balanced chromatic gradients.
 - **Adaptive Layout Templates**: Features a suite of specialized configurations optimized for varying content types, including music, photography, and journalism.
 - **Layout Stability & UX**: Implements skeleton-based progressive loading and anchor-aware navigation to eliminate Cumulative Layout Shift (CLS) during content hydration.
-- **High-Resolution Rendering**: Built on Astro 6 and React 19, delivering a low-latency interface with support for 2x pixel-ratio PNG asset exports.
+- **High-Resolution Rendering**: Built on Astro 7 and React 19, delivering a low-latency interface with support for 2x pixel-ratio PNG asset exports.
 
 ---
 
@@ -45,7 +45,7 @@ Spread uses a compact validation flow built from root project scripts and GitHub
 - **Local gate**: `bun run check` runs ESLint, TypeScript, Prettier, and Vitest.
 - **CI preflight**: `bun run preflight:github` adds coverage and an npm high-severity audit.
 - **Git hooks**: Husky runs `check` before commits and `preflight:github` before pushes.
-- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, and Dependabot tracks GitHub Actions updates.
+- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, and Dependabot tracks npm and GitHub Actions updates.
 
 ---
 

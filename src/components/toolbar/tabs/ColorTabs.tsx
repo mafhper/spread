@@ -256,14 +256,14 @@ const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
   }
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div ref={wrapperRef} className="relative color-picker-field">
       <label
         htmlFor={`${label.toLowerCase().replace(' ', '-')}-hex`}
         className="block text-xs font-medium mb-1.5 text-white/50"
       >
         {label}
       </label>
-      <div className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
+      <div className="color-picker-field-row flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
         <button
           type="button"
           aria-label={`Abrir seletor ${label}`}
@@ -307,7 +307,7 @@ const ColorPickerField: React.FC<ColorPickerFieldProps> = ({
           }}
           inputMode="text"
           spellCheck={false}
-          className="w-full bg-transparent text-xs font-mono uppercase focus:outline-none"
+          className="color-picker-field-input w-full bg-transparent text-xs font-mono uppercase focus:outline-none"
         />
       </div>
 
@@ -573,7 +573,7 @@ export const ColorTabs: React.FC = () => {
           title: 'Presets',
           summary: `${COLOR_PRESETS.length} combinações rápidas`,
           content: (
-            <div className="grid grid-cols-5 gap-2">
+            <div className="color-preset-grid">
               {COLOR_PRESETS.map(([c1, c2], i) => (
                 <button
                   key={i}

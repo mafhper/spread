@@ -21,7 +21,7 @@ Spread é um utilitário web de alta fidelidade projetado para a geração de at
 - **Orquestração de Metadados**: Implementa a extração automatizada via protocolos Open Graph para recuperação de títulos canônicos, descrições e iconografia de alta qualidade.
 - **Motor de Cores Heurístico**: Utiliza um módulo de análise especializado para derivar paletas de cores dominantes da mídia de origem, gerando gradientes cromáticos equilibrados.
 - **Templates de Layout Adaptativos**: Apresenta um conjunto de configurações especializadas otimizadas para diversos tipos de conteúdo, incluindo música, fotografia e jornalismo.
-- **Renderização de Alta Resolução**: Desenvolvido sobre Astro 6 e React 19, entregando uma interface de baixa latência com suporte para exportação de ativos PNG em proporção de pixels de 2x.
+- **Renderização de Alta Resolução**: Desenvolvido sobre Astro 7 e React 19, entregando uma interface de baixa latência com suporte para exportação de ativos PNG em proporção de pixels de 2x.
 
 ---
 
@@ -44,7 +44,7 @@ O Spread usa um fluxo compacto de validação baseado nos scripts raiz do projet
 - **Gate local**: `bun run check` executa ESLint, TypeScript, Prettier e Vitest.
 - **Preflight de CI**: `bun run preflight:github` adiciona cobertura e auditoria npm para severidade alta.
 - **Hooks Git**: Husky executa `check` antes de commits e `preflight:github` antes de pushes.
-- **Automação GitHub**: `quality.yml` valida PRs e pushes, `dependency-guard.yml` revisa mudanças de dependências, `deploy.yml` publica o GitHub Pages a partir da `main`, e o Dependabot acompanha atualizações de GitHub Actions.
+- **Automação GitHub**: `quality.yml` valida PRs e pushes, `dependency-guard.yml` revisa mudanças de dependências, `deploy.yml` publica o GitHub Pages a partir da `main`, e o Dependabot acompanha atualizações de npm e GitHub Actions.
 
 ---
 

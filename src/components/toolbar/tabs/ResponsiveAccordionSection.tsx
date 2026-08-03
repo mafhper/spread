@@ -34,12 +34,12 @@ export const ResponsiveAccordionSection: React.FC<
   }, [])
 
   return (
-    <section className="rounded-2xl border border-white/8 bg-white/[0.03] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+    <section className="responsive-section rounded-2xl border border-white/8 bg-white/[0.03] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
       {isCompactViewport ? (
         <button
           type="button"
           onClick={() => setIsOpen(current => !current)}
-          className="w-full px-4 py-4 text-left flex items-start justify-between gap-3"
+          className="responsive-section-trigger w-full px-4 py-4 text-left flex items-start justify-between gap-3"
           aria-expanded={isOpen}
           aria-label={`${title} ${summary}`.trim()}
         >
@@ -60,7 +60,7 @@ export const ResponsiveAccordionSection: React.FC<
           />
         </button>
       ) : (
-        <div className="flex items-start justify-between gap-3 px-4 pt-4">
+        <div className="responsive-section-header flex items-start justify-between gap-3 px-4 pt-4">
           <div className="min-w-0">
             <h4 className="text-[10px] font-bold text-white/30 uppercase tracking-[0.1em]">
               {title}
@@ -76,7 +76,7 @@ export const ResponsiveAccordionSection: React.FC<
       {(isOpen || !isCompactViewport) && (
         <div
           className={clsx(
-            'px-4 pb-4',
+            'responsive-section-content px-4 pb-4',
             isCompactViewport ? 'pt-1 border-t border-white/6' : 'pt-4'
           )}
         >
