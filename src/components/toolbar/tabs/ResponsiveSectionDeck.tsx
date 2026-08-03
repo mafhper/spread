@@ -42,7 +42,7 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
 
   if (!isCompactViewport) {
     return (
-      <div className="space-y-4">
+      <div className="responsive-section-deck space-y-4">
         {sections.map(section => (
           <ResponsiveAccordionSection
             key={section.id}
@@ -67,7 +67,7 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="responsive-section-deck space-y-2.5">
       <div className="-mx-3 overflow-x-auto px-3 scrollbar-hide">
         <div className="flex min-w-max gap-1.5 pr-10">
           {sections.map(section => {
@@ -93,13 +93,15 @@ export const ResponsiveSectionDeck: React.FC<ResponsiveSectionDeckProps> = ({
         </div>
       </div>
 
-      <section className="rounded-2xl border border-white/8 bg-white/[0.025] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+      <section className="responsive-section rounded-2xl border border-white/8 bg-white/[0.025] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
         {activeSection.action && (
           <div className="flex justify-end px-2.5 pt-2.5">
             {activeSection.action}
           </div>
         )}
-        <div className="px-2.5 pt-2 pb-2.5">{activeSection.content}</div>
+        <div className="responsive-section-content px-2.5 pt-2 pb-2.5">
+          {activeSection.content}
+        </div>
       </section>
     </div>
   )
