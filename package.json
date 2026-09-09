@@ -93,7 +93,10 @@
     "fast-uri": "3.1.6",
     "ip-address": "10.2.0",
     "uuid": "14.0.0",
-    "svgo": "4.1.0"
+    "svgo": "4.1.0",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^10.2.6"
+    }
   },
   "overrides": {
     "shell-quote": "^1.10.0",
@@ -145,8 +148,8 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.69.0",
     "@typescript-eslint/parser": "^8.69.0",
-    "@vitest/coverage-istanbul": "^4.1.4",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/coverage-istanbul": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "cross-env": "^7.0.3",
     "eslint": "^9.39.4",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -167,6 +170,6 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.69.0",
-    "vitest": "4.1.4"
+    "vitest": "^4.1.11"
   }
 }
