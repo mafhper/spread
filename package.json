@@ -55,7 +55,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^6.0.0",
-    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.2",
     "clsx": "^2.1.1",
     "colorthief": "^3.4.0",
