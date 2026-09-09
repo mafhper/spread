@@ -10,13 +10,7 @@ import type {
 
 export type TemplateKind = 'default' | 'music' | 'news'
 export type BackgroundPattern =
-  | 'none'
-  | 'dots'
-  | 'grid'
-  | 'noise'
-  | 'lines'
-  | 'diagonal'
-  | 'lattice'
+  'none' | 'dots' | 'grid' | 'noise' | 'lines' | 'diagonal' | 'lattice'
 
 interface DocumentCanvas {
   width: number
