@@ -95,7 +95,8 @@
     "ip-address": "10.2.0",
     "uuid": "14.0.0",
     "svgo": "4.1.0",
-    "@typescript-eslint/typescript-estree/minimatch": "^10.2.6"
+    "@typescript-eslint/typescript-estree/minimatch": "^10.2.6",
+    "smol-toml": "^1.8.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
