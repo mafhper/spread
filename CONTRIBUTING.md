@@ -4,7 +4,20 @@ Thank you for considering contributing to Spread. We value community contributio
 
 ## Development Workflow
 
-This project utilizes **Bun** as the primary runtime and package manager.
+This project utilizes **Bun** as the only supported runtime and package manager.
+
+### Package Manager
+
+Do not run `npm install`, `npm ci`, `npm update`, or any other npm command that modifies dependencies. The `bun.lock` file is the only source of truth for dependency resolution. If a `package-lock.json`, `yarn.lock`, or `pnpm-lock.yaml` appears in the repository, it will be rejected by CI.
+
+```bash
+bun install            # install dependencies
+bun install --frozen-lockfile  # deterministic CI-style install
+bun add <package>      # add a dependency
+bun run <script>       # run a project script
+```
+
+Use `bun run security:audit` (or `bun run check:package-manager`) before pushing to verify the dependency state.
 
 ### Contribution Process
 

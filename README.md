@@ -43,9 +43,9 @@ The production deployment is available for live testing and evaluation.
 Spread uses a compact validation flow built from root project scripts and GitHub Actions.
 
 - **Local gate**: `bun run check` runs ESLint, TypeScript, Prettier, and Vitest.
-- **CI preflight**: `bun run preflight:github` adds coverage and an npm high-severity audit.
+- **CI preflight**: `bun run preflight:github` adds coverage and a Bun high-severity audit.
 - **Git hooks**: Husky runs `check` before commits and `preflight:github` before pushes.
-- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, `release.yml` creates GitHub Releases from `v*` tags, and Dependabot tracks npm and GitHub Actions updates.
+- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, `release.yml` creates GitHub Releases from `v*` tags, and Dependabot tracks Bun and GitHub Actions updates.
 
 ---
 
@@ -83,36 +83,27 @@ _Figure 2: Professional-grade templates for social media distribution._
 
 ## Development & Deployment
 
-The project supports a **cross-platform workflow** (Windows, macOS, Linux) and can be run with **Bun** (recommended) or **Node/npm**. Scripts are written to avoid shell-specific commands.
+The project supports a **cross-platform workflow** (Windows, macOS, Linux) and runs with **Bun**, the only supported package manager. Scripts are written to avoid shell-specific commands. The `bun.lock` file is the single source of truth; npm, Yarn, or pnpm lockfiles are rejected.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org) >= 22.13.0 (required)
-- [npm](https://www.npmjs.com) >= 10
-- [Bun Runtime](https://bun.sh) >= 1.1 (recommended)
+- [Bun](https://bun.sh) >= 1.3.13 (required)
+- [Node.js](https://nodejs.org) >= 22.13.0 (required by the toolchain)
 
-### Universal Flow (Bun or Node)
+### Universal Flow
 
 ```bash
-# Dependency synchronization for local development (choose one)
+# Dependency synchronization for local development
 bun install
-# or
-npm install
 
-# Deterministic install for CI-style validation (choose one)
+# Deterministic install for CI-style validation
 bun install --frozen-lockfile
-# or
-npm ci
 
 # Development server
 bun run dev
-# or
-npm run dev
 
 # Production build
 bun run build
-# or
-npm run build
 ```
 
 ### Validation

@@ -1,10 +1,11 @@
 {
   "name": "spread",
   "type": "module",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Crie visualizações elegantes de links com customização completa",
   "author": "mafhper",
   "license": "MIT",
+  "packageManager": "bun@1.3.13",
   "repository": {
     "type": "git",
     "url": "https://github.com/mafhper/spread.git"
@@ -19,8 +20,7 @@
     "tailwindcss"
   ],
   "engines": {
-    "node": ">=22.13.0",
-    "npm": ">=10.0.0"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "astro": "astro",
@@ -44,11 +44,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --noEmit",
-    "security:audit": "npm audit --audit-level=high --omit=dev --omit=optional",
+    "security:audit": "bun audit --audit-level=high",
+    "check:package-manager": "node scripts/check-package-manager.mjs",
     "security:update:root": "bun install",
     "security:update": "run-s security:update:root",
     "check": "run-p lint type-check format:check test:core",
-    "preflight:github": "run-s type-check lint format:check test:coverage security:audit",
+    "preflight:github": "run-s check:package-manager type-check lint format:check test:coverage security:audit",
     "clean:dist": "rimraf dist",
     "validate": "run-s clean:dist build check security:audit"
   },
@@ -94,36 +95,7 @@
     "ip-address": "10.2.0",
     "uuid": "14.0.0",
     "svgo": "4.1.0",
-    "@typescript-eslint/typescript-estree": {
-      "minimatch": "^10.2.6"
-    }
-  },
-  "overrides": {
-    "shell-quote": "^1.10.0",
-    "qs": "^6.15.2",
-    "express": "^4.22.2",
-    "body-parser": "^1.20.5",
-    "tmp": "0.2.7",
-    "undici": "7.29.0",
-    "esbuild": "0.28.1",
-    "glob": "^11.0.0",
-    "flatted": "^3.4.2",
-    "lodash": "^4.18.1",
-    "lodash-es": "^4.18.1",
-    "path-to-regexp": "0.1.13",
-    "h3": "^1.15.8",
-    "js-yaml": "^4.3.1",
-    "yaml": "^2.8.3",
-    "@remix-run/router": "^1.23.1",
-    "basic-ftp": "6.0.1",
-    "browserslist": "^4.28.9",
-    "@humanfs/node": "^0.16.8",
-    "nanoid": "^3.3.18",
-    "postcss-selector-parser": "^7.1.5",
-    "fast-uri": "3.1.6",
-    "ip-address": "10.2.0",
-    "uuid": "14.0.0",
-    "svgo": "4.1.0"
+    "@typescript-eslint/typescript-estree/minimatch": "^10.2.6"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
