@@ -1,7 +1,7 @@
 {
   "name": "spread",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Crie visualizações elegantes de links com customização completa",
   "author": "mafhper",
   "license": "MIT",
