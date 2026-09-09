@@ -152,25 +152,25 @@ jobs:
             />
           </p>
 
-          **Spread** gera visualizacoes elegantes de links com customizacao completa.
+          **Spread** generates elegant link visualizations with full customization.
 
           MIDDLE
 
           if [ -n "$NOTES" ]; then
-            echo "## O que ha de novo nesta versao" >> release-body.md
+            echo "## What's new in this version" >> release-body.md
             echo "" >> release-body.md
             echo "$NOTES" >> release-body.md
             echo "" >> release-body.md
           fi
 
           cat >> release-body.md << 'INSTALL'
-          ## Uso
+          ## Usage
 
-          Acesse a versao publicada em:
+          Access the published version at:
 
           **[mafhper.github.io/spread](https://mafhper.github.io/spread/)**
 
-          Para desenvolvimento local:
+          For local development:
 
           ```bash
           git clone https://github.com/mafhper/spread.git
@@ -184,7 +184,7 @@ jobs:
           if [ -n "$CHANGELOG" ]; then
             cat >> release-body.md << 'CHANGELOG_HEADER'
           <details>
-          <summary>Lista de mudancas</summary>
+          <summary>Changelog</summary>
 
           CHANGELOG_HEADER
             echo "$CHANGELOG" >> release-body.md

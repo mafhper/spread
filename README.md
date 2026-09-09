@@ -45,7 +45,7 @@ Spread uses a compact validation flow built from root project scripts and GitHub
 - **Local gate**: `bun run check` runs ESLint, TypeScript, Prettier, and Vitest.
 - **CI preflight**: `bun run preflight:github` adds coverage and an npm high-severity audit.
 - **Git hooks**: Husky runs `check` before commits and `preflight:github` before pushes.
-- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, and Dependabot tracks npm and GitHub Actions updates.
+- **GitHub automation**: `quality.yml` validates PRs and pushes, `dependency-guard.yml` reviews dependency changes, `deploy.yml` publishes GitHub Pages from `main`, `release.yml` creates GitHub Releases from `v*` tags, and Dependabot tracks npm and GitHub Actions updates.
 
 ---
 
@@ -130,11 +130,30 @@ bun run validate
 
 ---
 
+## Releases
+
+Spread publishes tagged releases automatically. Pushing a `vX.Y.Z` tag runs the `release.yml` workflow, which validates the version, runs the full quality suite, builds the site, and creates a GitHub Release with an image, manual notes and an auto-generated changelog.
+
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+The version in `package.json` must match the tag. Pushing to `main` does **not** create a Release.
+
+- **Manual notes**: optional, in `.github/release-notes/vX.Y.Z.md` (see the [README](.github/release-notes/README.md)).
+- **Changelog**: generated from merged PRs, categorized by `.github/release.yml`; dependency PRs are excluded.
+- **Release image**: `docs/images/releases/release.webp` represents the current `major.minor` line; a new `major.minor` line requires updating the image before tagging.
+
+---
+
 ## Repository Structure
 
 ```text
 spread/
-├── .github/workflows/  # CI validation and GitHub Pages deployment
+├── .github/workflows/  # CI validation, GitHub Pages and release automation
+├── .github/release-notes/  # Per-version release notes (optional)
+├── .github/release.yml # Changelog categories for GitHub Releases
 ├── src/
 │   ├── components/      # React interface architecture
 │   ├── store/           # State synchronization via Zustand

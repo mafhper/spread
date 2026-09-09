@@ -1,30 +1,30 @@
 # Release Notes
 
-Cada Release do Spread pode possuir notas manuais escritas em markdown.
-O arquivo deve ser nomeado com a tag exata da Release:
+Each Spread release can carry hand-written notes in markdown.
+The file must be named after the exact release tag:
 
 ```text
 .github/release-notes/v1.0.0.md
 ```
 
-## Formato
+## Format
 
-O conteudo e de markdown livre. Exemplo:
+The content is free-form markdown. Example:
 
 ```markdown
-- **Nova paleta de cores.** Paletas automaticas baseadas na imagem de capa.
-- **Correcao de exportacao.** PNG exportado agora preserva a resolucao original.
+- **New color palette.** Automatic palettes drawn from the cover image.
+- **Export fix.** Exported PNGs now preserve the original resolution.
 ```
 
-## Regras
+## Rules
 
-- Sem emojis.
-- Listas com um item por linha.
-- Informacoes relevantes para o usuario final.
-- Detalhes tecnicos devem ficar no changelog automatico.
+- No emojis.
+- One item per line.
+- Information relevant to the end user.
+- Technical details belong in the auto-generated changelog.
 
-## Comportamento
+## Behavior
 
-- Se o arquivo existir, seu conteudo e inserido na secao "O que ha de novo nesta versao".
-- Se o arquivo nao existir, a Release e criada sem notas manuais.
-- O changelog tecnico e gerado automaticamente pelo GitHub e inserido em um bloco recolhivel.
+- If the file exists, its content is inserted in the "What's new in this version" section.
+- If the file does not exist, the Release is created without manual notes.
+- The technical changelog is generated automatically by GitHub and inserted in a collapsible block.

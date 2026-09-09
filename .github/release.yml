@@ -1,16 +1,16 @@
 changelog:
   categories:
-    - title: Novidades e melhorias
+    - title: Features and improvements
       labels:
         - enhancement
         - feature
 
-    - title: Correções
+    - title: Bug fixes
       labels:
         - bug
         - fix
 
-    - title: Outras mudanças
+    - title: Other changes
       labels:
         - '*'
       exclude:
