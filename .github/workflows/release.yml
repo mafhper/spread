@@ -2,222 +2,24 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag da release (ex: v1.0.0)'
+        type: string
         required: true
+        description: 'Tag a publicar (ex: v1.0.0)'
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Resolve tag
-        id: tag
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Validate version format
-        run: |
-          VERSION="${{ steps.tag.outputs.version }}"
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
-            echo "::error::Invalid version format: $VERSION (expected: X.Y.Z or X.Y.Z-qualifier)"
-            exit 1
-          fi
-
-      - name: Validate version consistency
-        run: |
-          TAG_VERSION="${{ steps.tag.outputs.version }}"
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Version mismatch: tag=$TAG_VERSION, package.json=$PKG_VERSION"
-            exit 1
-          fi
-          echo "Version validated: $TAG_VERSION"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22.13.0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version: 1.3.13
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Type check
-        run: bun run type-check
-
-      - name: Test
-        run: bun run test:core
-
-      - name: Build
-        run: bun run build
-
-      - name: Determine release image
-        id: image
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          CURRENT_MAJOR=$(echo "${{ steps.tag.outputs.version }}" | cut -d. -f1)
-          CURRENT_MINOR=$(echo "${{ steps.tag.outputs.version }}" | cut -d. -f2)
-
-          PREVIOUS_TAG=$(gh release list --limit 100 --json tagName,isLatest --jq '
-            [.[] | select(.tagName != "'"$TAG"'")] | sort_by(.tagName) | last | .tagName // empty
-          ' 2>/dev/null || echo "")
-
-          if [ -z "$PREVIOUS_TAG" ]; then
-            echo "No previous release found. Using image from current tag."
-            IMAGE_PATH="docs/images/releases/release.webp"
-            if [ ! -f "$IMAGE_PATH" ]; then
-              echo "::error::Release image not found at $IMAGE_PATH"
-              exit 1
-            fi
-            echo "image_url=https://raw.githubusercontent.com/${{ github.repository }}/$TAG/$IMAGE_PATH" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          PREV_VERSION="${PREVIOUS_TAG#v}"
-          PREV_MAJOR=$(echo "$PREV_VERSION" | cut -d. -f1)
-          PREV_MINOR=$(echo "$PREV_VERSION" | cut -d. -f2)
-
-          if [ "$CURRENT_MAJOR" != "$PREV_MAJOR" ] || [ "$CURRENT_MINOR" != "$PREV_MINOR" ]; then
-            echo "New major.minor line detected ($PREV_MAJOR.$PREV_MINOR -> $CURRENT_MAJOR.$CURRENT_MINOR)"
-            IMAGE_PATH="docs/images/releases/release.webp"
-            if [ ! -f "$IMAGE_PATH" ]; then
-              echo "::error::Release image not found at $IMAGE_PATH"
-              exit 1
-            fi
-            DIFF=$(git diff "$PREVIOUS_TAG".."$TAG" -- "$IMAGE_PATH" 2>/dev/null || echo "changed")
-            if [ -z "$DIFF" ]; then
-              echo "::warning::New major.minor line but release.webp was not updated since $PREVIOUS_TAG"
-            fi
-          else
-            echo "Patch release ($PREV_VERSION -> ${{ steps.tag.outputs.version }}). Reusing existing image."
-          fi
-
-          echo "image_url=https://raw.githubusercontent.com/${{ github.repository }}/$TAG/docs/images/releases/release.webp" >> "$GITHUB_OUTPUT"
-
-      - name: Build release body
-        id: body
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          VERSION="${{ steps.tag.outputs.version }}"
-          IMAGE_URL="${{ steps.image.outputs.image_url }}"
-
-          NOTES_FILE=".github/release-notes/${TAG}.md"
-          NOTES=""
-          if [ -f "$NOTES_FILE" ]; then
-            NOTES=$(cat "$NOTES_FILE")
-          fi
-
-          CHANGELOG=$(gh api "repos/${{ github.repository }}/releases/generate-notes" \
-            -f tag_name="$TAG" \
-            -f target_commitish="main" \
-            --jq '.body' 2>/dev/null || echo "")
-
-          cat > release-body.md << 'HEADER'
-          <p align="center">
-          <img
-          HEADER
-
-          echo "    src=\"${IMAGE_URL}\"" >> release-body.md
-
-          cat >> release-body.md << 'MIDDLE'
-              width="960"
-              alt="Spread"
-            />
-          </p>
-
-          **Spread** generates elegant link visualizations with full customization.
-
-          MIDDLE
-
-          if [ -n "$NOTES" ]; then
-            echo "## What's new in this version" >> release-body.md
-            echo "" >> release-body.md
-            echo "$NOTES" >> release-body.md
-            echo "" >> release-body.md
-          fi
-
-          cat >> release-body.md << 'INSTALL'
-          ## Usage
-
-          Access the published version at:
-
-          **[mafhper.github.io/spread](https://mafhper.github.io/spread/)**
-
-          For local development:
-
-          ```bash
-          git clone https://github.com/mafhper/spread.git
-          cd spread
-          bun install
-          bun run dev
-          ```
-
-          INSTALL
-
-          if [ -n "$CHANGELOG" ]; then
-            cat >> release-body.md << 'CHANGELOG_HEADER'
-          <details>
-          <summary>Changelog</summary>
-
-          CHANGELOG_HEADER
-            echo "$CHANGELOG" >> release-body.md
-            echo "" >> release-body.md
-            echo "</details>" >> release-body.md
-          fi
-
-          BODY=$(cat release-body.md)
-          {
-            echo "body<<RELEASE_BODY_EOF"
-            echo "$BODY"
-            echo "RELEASE_BODY_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create or update release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          VERSION="${{ steps.tag.outputs.version }}"
-          TITLE="Spread v${VERSION}"
-
-          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
-            echo "Release $TAG already exists. Updating..."
-            gh release edit "$TAG" \
-              --repo "${{ github.repository }}" \
-              --title "$TITLE" \
-              --notes-file release-body.md
-          else
-            echo "Creating release $TAG..."
-            gh release create "$TAG" \
-              --repo "${{ github.repository }}" \
-              --title "$TITLE" \
-              --notes-file release-body.md \
-              --target main
-          fi
+    uses: mafhper/github-release-workflows/.github/workflows/release.yml@v1.0.1
+    with:
+      matrix: '[{"os":"ubuntu-latest"}]'
+      tag: ${{ inputs.tag }}
