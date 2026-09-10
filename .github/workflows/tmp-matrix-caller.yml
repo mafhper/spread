@@ -1,0 +1,19 @@
+name: TMP Matrix Caller
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description: 'Tag de teste'
+
+permissions:
+  contents: read
+
+jobs:
+  call:
+    uses: ./.github/workflows/tmp-matrix-called.yml
+    with:
+      matrix: '[{"os":"ubuntu-latest"}]'
+      tag: ${{ inputs.tag }}

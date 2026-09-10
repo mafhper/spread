@@ -1,0 +1,43 @@
+name: TMP Matrix Called
+
+on:
+  workflow_call:
+    inputs:
+      matrix:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      build_enabled: ${{ steps.report.outputs.build_enabled }}
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Tag
+        id: tag
+        run: echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+      - name: Report
+        id: report
+        run: echo "build_enabled=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.build_enabled == 'true' }}
+    runs-on: ${{ matrix.os }}
+    env:
+      TAG: ${{ needs.prepare.outputs.tag }}
+    strategy:
+      matrix:
+        include: ${{ fromJSON(inputs.matrix) }}
+      fail-fast: false
+    steps:
+      - name: Prove
+        run: echo "build ok os=${{ matrix.os }} TAG=${{ env.TAG }}"
