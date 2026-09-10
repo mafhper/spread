@@ -32,7 +32,7 @@ after the image, title and tagline. Example:
 ## Behavior
 
 - The release body is assembled by the Release Core
-  (`mafhper/github-release-workflows`) from: release image, title, tagline,
+  (`mafhper/release-core`) from: release image, title, tagline,
   notes and configured sections.
 - If the file exists, its content is inserted after the title/tagline.
 - If the file does not exist, the Release is created without manual notes.
