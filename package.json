@@ -56,7 +56,7 @@
   "dependencies": {
     "@astrojs/react": "^6.0.0",
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.3.2",
+    "astro": "^7.3.3",
     "clsx": "^2.1.1",
     "colorthief": "^3.4.0",
     "downloadjs": "^1.4.7",
@@ -113,7 +113,7 @@
     "@commitlint/config-conventional": "^20.5.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.2.2",
-    "@testing-library/dom": "^10.4.1",
+    "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.1",
