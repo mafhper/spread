@@ -4,8 +4,10 @@
     "tagline": "Generate elegant link visualizations with full customization.",
     "language": "en",
     "image": {
+      "path": "docs/images/releases",
       "required": true,
-      "granularity": "minor"
+      "granularity": "minor",
+      "changes": [{ "from": "v1.1.0", "file": "release-v1.1.webp" }]
     },
     "notes": {
       "granularity": "tag"
