@@ -75,7 +75,7 @@
     "express": "^4.22.2",
     "body-parser": "^1.20.5",
     "tmp": "0.2.7",
-    "undici": "7.29.0",
+    "undici": "8.11.2",
     "esbuild": "0.28.1",
     "glob": "^11.0.0",
     "flatted": "^3.4.2",
@@ -91,11 +91,12 @@
     "@humanfs/node": "^0.16.8",
     "nanoid": "^3.3.18",
     "postcss-selector-parser": "^7.1.5",
-    "fast-uri": "3.1.6",
+    "fast-uri": "3.1.7",
     "ip-address": "10.2.0",
     "uuid": "14.0.0",
     "svgo": "4.1.0",
     "@typescript-eslint/typescript-estree/minimatch": "^10.2.6",
+    "minimatch/brace-expansion": "5.0.12",
     "smol-toml": "^1.8.0"
   },
   "lint-staged": {
