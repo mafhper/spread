@@ -10,6 +10,20 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@astrojs/react'
 import sitemap from '@astrojs/sitemap'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { findSafePort } from './scripts/sonda-porta'
+import {
+  DEV_PORT as DEV_PORT_NOMEADO,
+  PREVIEW_PORT,
+} from './scripts/portas.mjs'
+
+// Porta nomeada: fora das faixas de incremento do Astro/Vite (4321-4323 e
+// 5173-5175), que e o default que este projeto herdava. A sonda garante que
+// ela esteja livre no loopback antes do bind.
+//
+// `process.env.PORT` e' o ponto de injecao: e por ele que o servidor de E2E
+// (`tests/e2e/server.mjs`) levanta o MESMO dev em 5261 sem duplicar numero
+// aqui. Ver `scripts/portas.mjs`.
+const DEV_PORT = Number(process.env.PORT) || DEV_PORT_NOMEADO
 
 // Check if analysis mode is enabled
 const isAnalyze = process.env.ANALYZE === 'true'
@@ -73,6 +87,20 @@ export default defineConfig({
   base: '/spread',
   output: 'static',
   devToolbar: { enabled: false },
+
+  // `strictPort` + sonda: sem isso, `astro dev` cai na proxima porta e avisa,
+  // mas quem chegou pela URL documentada bate no servidor errado.
+  server: {
+    port: await findSafePort(DEV_PORT, { rotulo: 'spread' }),
+    strictPort: true,
+  },
+
+  // `astro preview` tinha o default do Astro (4321), que esta dentro da faixa de
+  // incremento: com 4321 ocupado, ele subia em 4322 sem avisar. Nomeado em 5262.
+  preview: {
+    port: PREVIEW_PORT,
+    strictPort: true,
+  },
 
   integrations: [react(), sitemap()],
 
