@@ -1,4 +1,11 @@
 import { expect, test } from '@playwright/test'
+import { E2E_URL } from '../../scripts/portas.mjs'
+
+// Origem do servidor de E2E, de `scripts/portas.mjs`. Antes estas URLs eram
+// literais `http://127.0.0.1:4321/spread/...` repetidos em 10 lugares, e 4321 e'
+// o default do Astro — nao a porta que este projeto sobe. Um literal repetido em
+// 10 linhas e' 10 lugares para errar; a constante e' um.
+const ORIGEM = E2E_URL.replace(/\/$/, '')
 
 test('landing presents the product and opens the editor', async ({
   page,
@@ -309,9 +316,9 @@ test('local link fixtures cover metadata variants and preserve the document on f
             fixture?.image === null
               ? null
               : {
-                  url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+                  url: '${ORIGEM}/assets/social-preview.png',
                 },
-          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+          logo: { url: '${ORIGEM}/logo.svg' },
         },
       },
     })
@@ -360,13 +367,13 @@ test('rendered page capture waits for the page and exposes visual framing contro
             : 'Content loaded after the app became stable.',
           image: {
             url: isPreviousDocument
-              ? 'http://127.0.0.1:4321/spread/logo.svg'
-              : 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+              ? '${ORIGEM}/logo.svg'
+              : '${ORIGEM}/assets/social-preview.png',
           },
           screenshot: {
-            url: 'http://127.0.0.1:4321/spread/assets/social-preview.png',
+            url: '${ORIGEM}/assets/social-preview.png',
           },
-          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+          logo: { url: '${ORIGEM}/logo.svg' },
         },
       },
     })
@@ -457,7 +464,7 @@ test('legacy page media keeps its screenshot and recovers intrinsic framing', as
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop')
   const targetUrl = 'https://example.com/legacy-page'
-  const screenshotUrl = 'http://127.0.0.1:4321/spread/assets/social-preview.png'
+  const screenshotUrl = `${ORIGEM}/assets/social-preview.png`
 
   await page.route('https://api.microlink.io/**', async route => {
     await route.fulfill({
@@ -467,9 +474,9 @@ test('legacy page media keeps its screenshot and recovers intrinsic framing', as
           title: 'Legacy page',
           description: 'Metadata refreshed after draft hydration.',
           image: {
-            url: 'http://127.0.0.1:4321/spread/logo.svg',
+            url: '${ORIGEM}/logo.svg',
           },
-          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+          logo: { url: '${ORIGEM}/logo.svg' },
         },
       },
     })
@@ -602,7 +609,7 @@ test('background color editing after loading a link uses the in-app picker', asy
           description: 'Descrição do link carregado',
           author: '',
           image: null,
-          logo: { url: 'http://127.0.0.1:4321/spread/logo.svg' },
+          logo: { url: '${ORIGEM}/logo.svg' },
         },
       },
     })

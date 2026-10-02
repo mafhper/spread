@@ -12,3 +12,9 @@ audit-root.json
 quality-core/dashboard/audit-dashboard.json
 output
 output-*.png
+
+# Cópia GERENCIADA da sonda de porta (fonte: dev-dashboard/tools/sonda-porta.mjs).
+# Não formatar: o `replicar-sonda.mjs --check` compara byte a byte com a fonte, e
+# o Prettier reescreve o arquivo — os dois se contradizem e nenhum dos dois
+# portões reage. Formatá-la local só faz o `format:check` passar e quebra o sync.
+scripts/sonda-porta.ts
