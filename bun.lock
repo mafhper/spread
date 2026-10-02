@@ -10,6 +10,7 @@
         "astro": "^7.3.5",
         "clsx": "^2.1.1",
         "colorthief": "^3.5.0",
+        "devalue": "5.9.4",
         "downloadjs": "^1.4.7",
         "html-to-image": "^1.11.13",
         "lucide-react": "^0.562.0",
@@ -65,6 +66,7 @@
     "basic-ftp": "6.0.1",
     "body-parser": "^1.20.5",
     "browserslist": "^4.28.9",
+    "devalue": "5.9.4",
     "esbuild": "0.28.1",
     "express": "^4.22.2",
     "fast-uri": "3.1.7",
@@ -824,7 +826,7 @@
 
     "detect-libc": ["detect-libc@2.1.2", "", {}, ""],
 
-    "devalue": ["devalue@5.8.1", "", {}, "sha512-4CXDYRBGqN+57wVJkuXBYmpAVUSg3L6JAQa/DFqm238G73E1wuyc/JhGQJzN7vUf/CMphYau2zXbfWzDR5aTEw=="],
+    "devalue": ["devalue@5.9.4", "", {}, "sha512-sPAT4pztbu6586/hrhOnMKS17IJrvg12mXiSPSS3W5qDeN2RGgvZ0diZCm31dBbnevfVmujNO3IM2wrS4Y2Rhg=="],
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, ""],
 
