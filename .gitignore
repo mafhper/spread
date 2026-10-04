@@ -1,66 +1,93 @@
-# Build and Generated Files
-dist/
-.astro/
-coverage/
+# Workspace privado
+.dev/
+_dev/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+QWEN.md
+KIMI.md
+.codex/
+.agents/
+.claude/
+.claude-code/
+.cursor/
+.gemini/
+.gemini-clipboard/
+.kimi/
+.qwen/
+.roo/
+.windsurf/
 
-# Dependencies
+# Sistema operacional
+desktop.ini
+Thumbs.db
+ehthumbs.db
+.DS_Store
+*.lnk
+
+# Dependencias
 node_modules/
 
-# Logs and Debugging
+# Build
+dist/
+dist-ssr/
+build/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+*.local
+
+# Temporarios
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Logs
+logs/
 *.log
+*.out
+*.err
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Environment Variables and Secrets
+# Ambiente
 .env
 .env.*
-!.env.example
+!*.example
 
-# OS and IDE Files
-.DS_Store
-Thumbs.db
-.idea/
+# Editores
 .vscode/
+!/.vscode/
+/.vscode/*
+!/.vscode/extensions.json
+.idea/
+.cache/
+*.sw?
 *.sublime-project
 *.sublime-workspace
-
-# Quality and Performance Reports
-performance-reports/*
+.astro/
+performance-reports/
 lighthouse*.json
-lighthouse-report.json
 test-lighthouse.json
 audit-root.json
 REAL_REPORT.json
 .report.html
 .lighthouseci
-
-# Internal Development and Documentation
-_dev/
 conductor/
-.gemini/
-.gemini-clipboard/
-GEMINI.md
-.codex/
-.agents/
-AGENTS.md
-
-# Codex local private files
-.dev/
-.claude/
-.qwen/
-.kimi/
-
-# Codex local private files
-.roo/
-.cursor/
-.windsurf/
-.claude-code/
-CLAUDE.md
-QWEN.md
-KIMI.md
-
-# Local visual validation artifacts
 output/
 output-*.png
+!/.vscode/launch.json
+!/.vscode/settings.json
+
+
+# Sondas de porta (`sonda-porta.ts`)
+#
+# A sonda NAO e' ignorada, e o motivo esta escrito aqui porque ele ja custou um build quebrado:
+# o arquivo e' importado pelo config do build deste repo, e arquivo que o build carrega e'
+# ignorado no git nao existe no clone limpo nem na CI. A fonte vive no dev-dashboard
+# (`tools/sonda-porta.mjs`) e o `replicar-sonda.mjs` propaga o corpo; a copia local e'
+# vendorizada de proposito, e por isso e' versionada.
