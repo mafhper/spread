@@ -5,7 +5,7 @@
   "description": "Crie visualizações elegantes de links com customização completa",
   "author": "mafhper",
   "license": "MIT",
-  "packageManager": "bun@1.3.13",
+  "packageManager": "bun@1.4.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/mafhper/spread.git"
@@ -101,7 +101,6 @@
     "devalue": "5.9.4",
     "svgo": "4.1.0",
     "@typescript-eslint/typescript-estree/minimatch": "^10.2.6",
-    "minimatch/brace-expansion": "5.0.12",
     "smol-toml": "1.9.1"
   },
   "lint-staged": {
