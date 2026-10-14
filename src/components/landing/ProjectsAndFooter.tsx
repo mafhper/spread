@@ -5,7 +5,8 @@
  */
 
 import React, { memo } from 'react'
-import { ExternalLink, Heart, Github, ArrowUp } from 'lucide-react'
+import { ExternalLink, Heart, ArrowUp } from 'lucide-react'
+import { GithubIcon } from '../icons'
 import { OptimizedImage } from '../OptimizedImage'
 
 const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
@@ -112,7 +113,7 @@ const ProjectsAndFooterBase: React.FC = () => {
                     title="Ver código no GitHub"
                     onClick={e => e.stopPropagation()}
                   >
-                    <Github size={18} />
+                    <GithubIcon size={18} />
                   </a>
                 </div>
                 <p className="text-white/40 text-sm leading-relaxed mb-6">
