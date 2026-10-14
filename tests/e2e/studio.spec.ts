@@ -316,9 +316,9 @@ test('local link fixtures cover metadata variants and preserve the document on f
             fixture?.image === null
               ? null
               : {
-                  url: '${ORIGEM}/assets/social-preview.png',
+                  url: `${ORIGEM}/assets/social-preview.png`,
                 },
-          logo: { url: '${ORIGEM}/logo.svg' },
+          logo: { url: `${ORIGEM}/logo.svg` },
         },
       },
     })
@@ -367,13 +367,13 @@ test('rendered page capture waits for the page and exposes visual framing contro
             : 'Content loaded after the app became stable.',
           image: {
             url: isPreviousDocument
-              ? '${ORIGEM}/logo.svg'
-              : '${ORIGEM}/assets/social-preview.png',
+              ? `${ORIGEM}/logo.svg`
+              : `${ORIGEM}/assets/social-preview.png`,
           },
           screenshot: {
-            url: '${ORIGEM}/assets/social-preview.png',
+            url: `${ORIGEM}/assets/social-preview.png`,
           },
-          logo: { url: '${ORIGEM}/logo.svg' },
+          logo: { url: `${ORIGEM}/logo.svg` },
         },
       },
     })
@@ -474,9 +474,9 @@ test('legacy page media keeps its screenshot and recovers intrinsic framing', as
           title: 'Legacy page',
           description: 'Metadata refreshed after draft hydration.',
           image: {
-            url: '${ORIGEM}/logo.svg',
+            url: `${ORIGEM}/logo.svg`,
           },
-          logo: { url: '${ORIGEM}/logo.svg' },
+          logo: { url: `${ORIGEM}/logo.svg` },
         },
       },
     })
@@ -484,7 +484,27 @@ test('legacy page media keeps its screenshot and recovers intrinsic framing', as
 
   await page.goto('editor/')
   await expect(page.getByRole('main')).toHaveAttribute('data-ready', 'true')
-  await page.waitForTimeout(650)
+  await expect
+    .poll(async () =>
+      page.evaluate(async () => {
+        const database = await new Promise<IDBDatabase>((resolve, reject) => {
+          const request = indexedDB.open('spread-studio-v1', 1)
+          request.onsuccess = () => resolve(request.result)
+          request.onerror = () => reject(request.error)
+        })
+        try {
+          return await new Promise<boolean>((resolve, reject) => {
+            const transaction = database.transaction('drafts', 'readonly')
+            const request = transaction.objectStore('drafts').get('current')
+            request.onsuccess = () => resolve(Boolean(request.result))
+            request.onerror = () => reject(request.error)
+          })
+        } finally {
+          database.close()
+        }
+      })
+    )
+    .toBe(true)
   await page.evaluate(
     async ({ targetUrl, screenshotUrl }) => {
       const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -609,7 +629,7 @@ test('background color editing after loading a link uses the in-app picker', asy
           description: 'Descrição do link carregado',
           author: '',
           image: null,
-          logo: { url: '${ORIGEM}/logo.svg' },
+          logo: { url: `${ORIGEM}/logo.svg` },
         },
       },
     })
