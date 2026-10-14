@@ -6,18 +6,16 @@
  */
 
 import * as React from 'react'
+import { Music, Disc, Globe, Share2 } from 'lucide-react'
+// Brand icons vem do set interno: o lucide-react 1.x removeu os icones de marca
 import {
-  Youtube,
-  Twitter,
-  Instagram,
-  Music,
-  Disc,
-  Github,
-  Linkedin,
-  Facebook,
-  Globe,
-  Share2,
-} from 'lucide-react'
+  YoutubeIcon,
+  TwitterIcon,
+  InstagramIcon,
+  GithubIcon,
+  LinkedinIcon,
+  FacebookIcon,
+} from '../components/icons'
 
 /**
  * Props padrao para componentes de icone
@@ -75,22 +73,22 @@ export const SERVICE_COLORS: Record<string, string> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SERVICE_ICONS: Record<string, any> = {
   // YouTube
-  youtube: Youtube,
-  'youtube.com': Youtube,
-  'youtu.be': Youtube,
-  'youtube-nocookie.com': Youtube,
-  'music.youtube.com': Youtube,
+  youtube: YoutubeIcon,
+  'youtube.com': YoutubeIcon,
+  'youtu.be': YoutubeIcon,
+  'youtube-nocookie.com': YoutubeIcon,
+  'music.youtube.com': YoutubeIcon,
 
   // Twitter/X
-  twitter: Twitter,
-  'twitter.com': Twitter,
-  'x.com': Twitter,
-  x: Twitter,
-  'y2u.be': Youtube,
+  twitter: TwitterIcon,
+  'twitter.com': TwitterIcon,
+  'x.com': TwitterIcon,
+  x: TwitterIcon,
+  'y2u.be': YoutubeIcon,
 
   // Instagram
-  instagram: Instagram,
-  'instagram.com': Instagram,
+  instagram: InstagramIcon,
+  'instagram.com': InstagramIcon,
 
   // Spotify (using Disc/Music as fallback if icon missing)
   spotify: Music,
@@ -119,18 +117,18 @@ export const SERVICE_ICONS: Record<string, any> = {
   'tidal.com': Music,
 
   // GitHub
-  github: Github,
-  'github.com': Github,
-  'github.io': Github,
+  github: GithubIcon,
+  'github.com': GithubIcon,
+  'github.io': GithubIcon,
 
   // LinkedIn
-  linkedin: Linkedin,
-  'linkedin.com': Linkedin,
+  linkedin: LinkedinIcon,
+  'linkedin.com': LinkedinIcon,
 
   // Facebook
-  facebook: Facebook,
-  'facebook.com': Facebook,
-  'fb.com': Facebook,
+  facebook: FacebookIcon,
+  'facebook.com': FacebookIcon,
+  'fb.com': FacebookIcon,
 
   // TikTok
   tiktok: Share2, // Generic share for tiktok if missing
