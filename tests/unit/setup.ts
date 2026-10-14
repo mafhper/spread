@@ -93,6 +93,7 @@ global.IntersectionObserver = class IntersectionObserver {
   callback: IntersectionObserverCallback
   root: Element | Document | null = null
   rootMargin: string = '0px'
+  scrollMargin: string = '0px'
   thresholds: ReadonlyArray<number> = [0]
 
   constructor(callback: IntersectionObserverCallback) {
