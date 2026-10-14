@@ -11,7 +11,13 @@
 //   Dinopad/scripts/dev/serve.ts      as duas coisas, em TypeScript.
 //
 // Nenhum dos tres e shared, e nenhum dos tres e wired em tudo. Esta e a fonte;
-// `upgrade-all.mjs` copia para cada repo que a adota.
+// `replicar-sonda.mjs` copia o CORPO para cada repo da lista de adocao e
+// compara as copias com `--check`.
+//
+// O cabecalho e' do projeto, nao da fonte: e' onde o repo escreve o que so ele
+// sabe (de onde o config importa, se o arquivo e' versionado). Uma melhoria no
+// texto desta fonte NAO se propaga sozinha — por desenho, para nao apagar o que o
+// projeto mediu. O que se propaga sozinho e' o corpo, que e' a sonda.
 //
 // ============================================================================
 // A PERGUNTA QUE A SONDA FAZ
